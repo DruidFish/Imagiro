@@ -26,6 +26,9 @@ class XvsYNormalisedPlotMaker : public IPlotMaker
 		//Do the unfolding
 		virtual void Unfold( int MostIterations = 10, double ChiSquaredThreshold = 1.0, double KolmogorovThreshold = 1.0, bool WithSmoothing = false );
 
+		//Make a cross-check with MC
+                virtual int MonteCarloCrossCheck( TH1F * ReferencePlot, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing = false );
+
 		//Return some plots
 		virtual TH1F * CorrectedDistribution();
 		virtual TH1F * UncorrectedDistribution();

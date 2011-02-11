@@ -89,6 +89,12 @@ class IterativeUnfolding
 		//It should give the truth information back exactly...
 		void ClosureTest();
 
+		//Perform an unfolding cross-check
+		//Use MC truth A as a prior to unfold MC reco B
+		//Iterations cease when result is sufficiently close to MC truth B (passed as argument)
+		//Returns the number of iterations required. Convergence criteria as output arguments
+		int MonteCarloCrossCheck( TH1F * ReferencePlot, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing = false );
+
 		//Retrieve a TH1F* containing the unfolded data
 		//distribution, with or without errors
 		//NB: the error calculation is only performed

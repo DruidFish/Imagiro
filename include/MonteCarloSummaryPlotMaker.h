@@ -24,7 +24,7 @@ class MonteCarloSummaryPlotMaker
 		void StoreData( InputNtuple * DataInput );
 
 		//Do the unfolding
-		void Unfold( int MostIterations = 10, double ChiSquaredThreshold = 1.0, double KolmogorovThreshold = 1.0, bool WithSmoothing = false );
+		void Unfold( bool WithSmoothing = false );
 
 		//Return result
 		TCanvas * ResultPlot();
@@ -37,6 +37,7 @@ class MonteCarloSummaryPlotMaker
 		TCanvas * plotCanvas;
 		bool finalised, combineMode;
 		vector< IPlotMaker* > allPlots;
+		vector< IPlotMaker* > crossCheckPlots;
 		double yRangeMinimum, yRangeMaximum;
 };
 

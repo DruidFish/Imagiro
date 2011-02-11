@@ -21,6 +21,9 @@ class IPlotMaker
 		//Do the unfolding
 		virtual void Unfold( int MostIterations = 10, double ChiSquaredThreshold = 1.0, double KolmogorovThreshold = 1.0, bool WithSmoothing = false ) = 0;
 
+		//Make a cross-check with MC
+		virtual int MonteCarloCrossCheck( TH1F * ReferencePlot, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing = false ) = 0;
+
 		//Return some plots
 		virtual TH1F * CorrectedDistribution() = 0;
 		virtual TH1F * UncorrectedDistribution() = 0;

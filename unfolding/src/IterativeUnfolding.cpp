@@ -13,6 +13,8 @@
 #include <iostream>
 #include <cstdlib>
 
+const int MAX_ITERATIONS_FOR_CROSS_CHECK = 10;
+
 //Default constructor - useless
 IterativeUnfolding::IterativeUnfolding()
 {
@@ -207,15 +209,21 @@ void IterativeUnfolding::Unfold( int MostIterations, double ChiSquaredThreshold,
 		}
 
 		//Check for termination conditions
-		if ( chi2 < ChiSquaredThreshold || kolmogorov > KolmogorovThreshold )
+		if ( chi2 < ChiSquaredThreshold )
 		{
-			cout << "Converged" << endl;
+			cout << "Converged: chi2 " << chi2 << " < " << ChiSquaredThreshold << endl;
 			lastResult = adjustedDistribution;
 			break;
 		}
-		else if ( iteration == MostIterations - 1 )
+		if ( kolmogorov > KolmogorovThreshold )
 		{
-			cerr << "No convergence after " << MostIterations << " iterations" << endl;
+			cout << "Converged: KS " << kolmogorov << " > " << KolmogorovThreshold << endl;
+			lastResult = adjustedDistribution;
+			break;
+		}
+		if ( iteration == MostIterations - 1 )
+		{
+			cerr << "Maximum number of iterations (" << MostIterations << ") reached" << endl;
 			lastResult = adjustedDistribution;
 			break;
 		}
@@ -251,6 +259,84 @@ void IterativeUnfolding::ClosureTest()
 	double kolmogorov = adjustedHistogram->KolmogorovTest( priorHistogram, "" );
 	cout << endl << "Closure test - comparing unfolded MC reco with MC truth: " << endl;
 	cout << "Chi squared = " << chi2 << " and K-S probability = " << kolmogorov << endl;
+}
+
+//Perform an unfolding cross-check
+//Use MC truth A as a prior to unfold MC reco B
+//Iterations cease when result is sufficiently close to MC truth B (passed as argument)
+//Returns the number of iterations required. Convergence criteria as output arguments
+int IterativeUnfolding::MonteCarloCrossCheck( TH1F * ReferencePlot, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing )
+{
+	//Make a histogram of the truth distribution
+	char plotName[ name.size() + 20 ];
+	sprintf( plotName, "%sRawPrior%d", name.c_str(), uniqueID );
+	TH1F * priorHistogram = priorDistribution->MakeRootHistogram( plotName, "Monte Carlo raw prior distribution" );
+
+	//Make another histogram to save for use later
+	sprintf( plotName, "%sTruth%d", name.c_str(), uniqueID );
+	truthHistogram = priorDistribution->MakeRootHistogram( plotName, "Monte Carlo truth distribution" );
+
+	//Finalise the smearing matrix
+	inputSmearing->Finalise();
+
+	//Compare the uncorrected data to the truth
+	TH1F * dataHistogram = dataDistribution->MakeRootHistogram( plotName, "Uncorrected data distribution for cross check" );
+	double lastChiSquared = dataHistogram->Chi2Test( ReferencePlot, "UUCHI2" );
+	double lastKolmogorov = dataHistogram->KolmogorovTest( ReferencePlot, "" );
+	double chiSquaredResult = lastChiSquared;
+	double kolmogorovResult = lastKolmogorov;
+	delete dataHistogram;
+
+	//Iterate, making new distribution from data, old distribution and smearing matrix
+	Distribution * adjustedDistribution;
+	TH1F * adjustedHistogram;
+	char iterationName[ name.size() + 20 ];
+	for ( int iteration = 0; iteration < MAX_ITERATIONS_FOR_CROSS_CHECK; iteration++ )
+	{
+		//Smooth the prior distribution
+		if ( WithSmoothing )
+		{
+			priorDistribution->Smooth();
+		}
+
+		//Iterate
+		adjustedDistribution = new Distribution( dataDistribution, inputSmearing, priorDistribution, indexCalculator );
+
+		//Make a root histogram for comparison
+		sprintf( iterationName, "%s%dIteration%d", name.c_str(), uniqueID, iteration );
+		adjustedHistogram = adjustedDistribution->MakeRootHistogram( iterationName, iterationName );
+
+		//Compare with reference distribution
+		double referenceChi2 = adjustedHistogram->Chi2Test( ReferencePlot, "UUCHI2" );
+		double referenceKolmogorov = adjustedHistogram->KolmogorovTest( ReferencePlot, "" );
+
+		//Compare with last iteration
+		double chi2 = adjustedHistogram->Chi2Test( priorHistogram, "UUCHI2" );
+		double kolmogorov = adjustedHistogram->KolmogorovTest( priorHistogram, "" );
+
+		//Reset for next iteration
+		delete priorDistribution;
+		delete priorHistogram;
+		priorDistribution = adjustedDistribution;
+		priorHistogram = adjustedHistogram;
+
+		//Check to see if things have got worse
+		if ( referenceChi2 > lastChiSquared || referenceKolmogorov < lastKolmogorov || iteration == MAX_ITERATIONS_FOR_CROSS_CHECK - 1 )
+		{
+			//Return the criteria
+			ChiSquaredThreshold = chiSquaredResult;
+			KolmogorovThreshold = kolmogorovResult;
+			return iteration;
+		}
+		else
+		{
+			//Update the last values
+			lastChiSquared = referenceChi2;
+			lastKolmogorov = referenceKolmogorov;
+			chiSquaredResult = chi2;
+			kolmogorovResult = kolmogorov;
+		}
+	}
 }
 
 //Retrieve a TH1F* containing the unfolded data
@@ -289,8 +375,16 @@ TH2F * IterativeUnfolding::GetSmearingMatrix( string Name, string Title )
 //Retrieve the truth distribution
 TH1F * IterativeUnfolding::GetTruthDistribution( string Name, string Title )
 {
-	truthHistogram->SetName( Name.c_str() );
-	truthHistogram->SetTitle( Title.c_str() );
+	//Check that the histogram has been made (since we need it before the unfolding starts)
+	if ( !truthHistogram )
+	{
+		truthHistogram = priorDistribution->MakeRootHistogram( Name, Title );
+	}
+	else
+	{
+		truthHistogram->SetName( Name.c_str() );
+		truthHistogram->SetTitle( Title.c_str() );
+	}
 	return truthHistogram;
 }
 

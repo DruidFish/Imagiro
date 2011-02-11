@@ -40,8 +40,8 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	DistributionIndices = new DataIndices( binNumbers, minima, maxima );
 
 	//Set up the cross-check for data loss in delinearisation
-	char idString[10];
-	sprintf( idString, "%d", uniqueID );
+	char idString[20];
+	sprintf( idString, "%d", rand() );
 	string xvsyTruthName = xName + yName + priorName + "TruthCheck" + idString;
 	string xTruthName = xName + priorName + "TruthCheck" + idString;
 	xvsyTruthCheck = new TH1F( xvsyTruthName.c_str(), xvsyTruthName.c_str(), XBinNumber, XMinimum, XMaximum );
@@ -160,7 +160,7 @@ void XvsYNormalisedPlotMaker::StoreFake( InputNtuple * ReconstructedInput )
 		vector<double> reconstructedValues;
 
 		//Find out if this is the correct prior
-                bool useInPrior = ( priorName == *( ReconstructedInput->Description() ) );
+		bool useInPrior = ( priorName == *( ReconstructedInput->Description() ) );
 
 		//Retrieve the values from the Ntuple
 		double xReconstructedValue = ReconstructedInput->GetValue( xName );
@@ -309,9 +309,9 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 		if ( dataLost || averagePercentError > 0.5 )
 		{
 			cerr << "Delinearisation has caused significant changes in distribution bins compared to their reference values" << endl;
-                        cerr << "Improve the binning of " << yName << " in the " << xName << " vs " << yName << " plot" << endl;
+			cerr << "Improve the binning of " << yName << " in the " << xName << " vs " << yName << " plot" << endl;
 			cerr << "Try using a finer binning, and avoid large numbers of events in under or overflow bins" << endl;
-                        exit(1);
+			exit(1);
 		}
 
 		//Free some memory
@@ -360,6 +360,13 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 	}
 }
 
+//Make a cross-check with MC
+int XvsYNormalisedPlotMaker::MonteCarloCrossCheck( TH1F * ReferencePlot, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing )
+{
+	return XvsYUnfolder->MonteCarloCrossCheck( ReferencePlot, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
+	//return XUnfolder->MonteCarloCrossCheck( ReferencePlot, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
+}
+
 //Return some plots
 TH1F * XvsYNormalisedPlotMaker::CorrectedDistribution()
 {
@@ -393,8 +400,15 @@ TH1F * XvsYNormalisedPlotMaker::MCTruthDistribution()
 	}       
 	else
 	{
-		cerr << "Trying to retrieve mc truth plot from unfinalised XvsYNormalisedPlotMaker" << endl;
-		exit(1);
+		//Make some plot titles
+		char uniqueIDString[10];
+		sprintf( uniqueIDString, "%d", uniqueID );
+		string XvsYName = xName + "vs" + yName + priorName + uniqueIDString;
+		string XvsYTitle = xName + " vs " + yName + " using " + priorName;
+
+		//Retrieve the results
+		return XvsYUnfolder->GetTruthDistribution( XvsYName + "RawTruth", XvsYTitle + " Raw Truth Distribution" );
+		//return XUnfolder->GetTruthDistribution( XvsYName + "RawTruth", XvsYTitle + " Raw Truth Distribution" );
 	}
 }
 TH2F * XvsYNormalisedPlotMaker::SmearingMatrix()

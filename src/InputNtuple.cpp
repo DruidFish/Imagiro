@@ -1,5 +1,6 @@
 #include "InputNtuple.h"
 #include "TLeaf.h"
+#include "MonteCarloInformation.h"
 #include <iostream>
 #include <cstdlib>
 
@@ -12,7 +13,7 @@ InputNtuple::InputNtuple()
 }
 
 //Constructor taking arguments pointing to a particular Ntuple in a root file
-InputNtuple::InputNtuple( string FilePath, string NtuplePath, string Description ) : sourceDescription(Description)
+InputNtuple::InputNtuple( string FilePath, string NtuplePath, string Description, int DescriptionIndex ) : sourceDescription( Description ), sourceDescriptionIndex( DescriptionIndex )
 {
 	//Get the Ntuple from the file
 	inputFile = new TFile( FilePath.c_str(), "READ" );
@@ -190,4 +191,10 @@ long InputNtuple::CurrentRow()
 string * InputNtuple::Description()
 {
 	return &sourceDescription;
+}
+
+//Get the index of the source
+int InputNtuple::DescriptionIndex()
+{
+	return sourceDescriptionIndex;
 }

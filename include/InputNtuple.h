@@ -7,6 +7,7 @@
 #include "TFile.h"
 #include "TNtuple.h"
 #include "TBranch.h"
+#include "MonteCarloInformation.h"
 
 using namespace std;
 
@@ -14,7 +15,7 @@ class InputNtuple
 {
 	public:
 	       InputNtuple();
-	       InputNtuple( string FilePath, string NtuplePath, string Description );
+	       InputNtuple( string FilePath, string NtuplePath, string Description, int InputIndex );
 	       ~InputNtuple();
 
 	       //Change the Ntuple row being examined
@@ -34,6 +35,7 @@ class InputNtuple
 
 	       //Get the description of the source
 	       string * Description();
+	       int DescriptionIndex();
 
 	private:
 	       //Caching
@@ -53,6 +55,7 @@ class InputNtuple
 	       TFile *inputFile;
 	       TNtuple *wrappedNtuple;
 	       string sourceDescription;
+	       int sourceDescriptionIndex;
 };
 
 #endif

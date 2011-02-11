@@ -7,6 +7,8 @@
 
 using namespace std;
 
+const int MC_CHECK_OFFSET = 1;
+
 //Default constructor - useless
 MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker()
 {
@@ -20,15 +22,19 @@ MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker( IPlotMaker * TemplatePlo
 	for ( int mcIndex = 0; mcIndex < mcInfo->NumberOfSources(); mcIndex++ )
 	{
 		string mcDescription = mcInfo->Description( mcIndex );
+
+		//Don't make a redundant copy of the template
 		if ( TemplatePlotMaker->PriorName() == mcDescription )
 		{
 			allPlots.push_back( TemplatePlotMaker );
 		}
 		else
 		{
-			IPlotMaker * thisMCPlot = TemplatePlotMaker->Clone( mcDescription );
-			allPlots.push_back( thisMCPlot );
+			allPlots.push_back( TemplatePlotMaker->Clone( mcDescription ) );
 		}
+		
+		//Make plots for testing the unfolding with MC
+		crossCheckPlots.push_back( TemplatePlotMaker->Clone( mcDescription ) );
 	}
 }
 
@@ -42,6 +48,7 @@ MonteCarloSummaryPlotMaker::~MonteCarloSummaryPlotMaker()
 	}
 	else
 	{
+		crossCheckPlots.clear();
 		allPlots.clear();
 	}
 }
@@ -57,13 +64,27 @@ void MonteCarloSummaryPlotMaker::StoreMatch( InputNtuple * TruthInput, InputNtup
 	}
 	else
 	{
-		for ( int mcIndex = 0; mcIndex < allPlots.size(); mcIndex++ )
+		int inputIndex = TruthInput->DescriptionIndex();
+
+		//Add the event to the smearing matrix if it's the correct MC input, or if MC inputs are combined
+		if ( combineMode )
 		{
-			if ( combineMode || mcInfo->Description( mcIndex ) == *( TruthInput->Description() ) )
+			for ( int mcIndex = 0; mcIndex < allPlots.size(); mcIndex++ )
 			{
-				allPlots[mcIndex]->StoreMatch( TruthInput, ReconstructedInput );
+				allPlots[ mcIndex ]->StoreMatch( TruthInput, ReconstructedInput );
+				crossCheckPlots[ mcIndex ]->StoreMatch( TruthInput, ReconstructedInput );
 			}
 		}
+		else
+		{
+			allPlots[ inputIndex ]->StoreMatch( TruthInput, ReconstructedInput );
+			crossCheckPlots[ inputIndex ]->StoreMatch( TruthInput, ReconstructedInput );
+		}
+
+		//Also store the event for the cross-check unfolding
+		inputIndex += MC_CHECK_OFFSET;
+		inputIndex %= allPlots.size();
+		crossCheckPlots[ inputIndex ]->StoreData( ReconstructedInput );
 	}
 }
 void MonteCarloSummaryPlotMaker::StoreMiss( InputNtuple * TruthInput )
@@ -72,15 +93,24 @@ void MonteCarloSummaryPlotMaker::StoreMiss( InputNtuple * TruthInput )
 	{
 		cerr << "Trying to add missed MC event to finalised MonteCarloSummaryPlotMaker" << endl;
 		exit(1);
-	}       
+	}
 	else
 	{
-		for ( int mcIndex = 0; mcIndex < allPlots.size(); mcIndex++ )
+		int inputIndex = TruthInput->DescriptionIndex();
+
+		//Add the event to the smearing matrix if it's the correct MC input, or if MC inputs are combined
+		if ( combineMode )
 		{
-			if ( combineMode || mcInfo->Description( mcIndex ) == *( TruthInput->Description() ) )
+			for ( int mcIndex = 0; mcIndex < allPlots.size(); mcIndex++ )
 			{
-				allPlots[mcIndex]->StoreMiss( TruthInput );
+				allPlots[ mcIndex ]->StoreMiss( TruthInput );
+				crossCheckPlots[ mcIndex ]->StoreMiss( TruthInput );
 			}
+		}       
+		else
+		{
+			allPlots[ inputIndex ]->StoreMiss( TruthInput );
+			crossCheckPlots[ inputIndex ]->StoreMiss( TruthInput );
 		}
 	}
 }
@@ -93,13 +123,27 @@ void MonteCarloSummaryPlotMaker::StoreFake( InputNtuple * ReconstructedInput )
 	}       
 	else
 	{
-		for ( int mcIndex = 0; mcIndex < allPlots.size(); mcIndex++ )
+		int inputIndex = ReconstructedInput->DescriptionIndex();
+
+		//Add the event to the smearing matrix if it's the correct MC input, or if MC inputs are combined
+		if ( combineMode )
 		{
-			if ( combineMode || mcInfo->Description( mcIndex ) == *( ReconstructedInput->Description() ) )
+			for ( int mcIndex = 0; mcIndex < allPlots.size(); mcIndex++ )
 			{
-				allPlots[mcIndex]->StoreFake( ReconstructedInput );
+				allPlots[ mcIndex ]->StoreFake( ReconstructedInput );
+				crossCheckPlots[ mcIndex ]->StoreFake( ReconstructedInput );
 			}
 		}
+		else
+		{
+			allPlots[ inputIndex ]->StoreFake( ReconstructedInput );
+			crossCheckPlots[ inputIndex ]->StoreFake( ReconstructedInput );
+		}
+
+		//Also store the event for the cross-check unfolding
+		inputIndex += MC_CHECK_OFFSET;
+		inputIndex %= allPlots.size();
+		crossCheckPlots[ inputIndex ]->StoreData( ReconstructedInput );
 	}
 }
 void MonteCarloSummaryPlotMaker::StoreData( InputNtuple * DataInput )
@@ -119,7 +163,7 @@ void MonteCarloSummaryPlotMaker::StoreData( InputNtuple * DataInput )
 }
 
 //Do the unfolding
-void MonteCarloSummaryPlotMaker::Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing )
+void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 {
 	if ( finalised )
 	{
@@ -128,6 +172,45 @@ void MonteCarloSummaryPlotMaker::Unfold( int MostIterations, double ChiSquaredTh
 	}       
 	else
 	{
+		//Do the unfolding cross-check to find out good conditions for convergence
+		int mostIterations = 0;
+		double chiSquaredThreshold = 0.0;
+		double kolmogorovThreshold = 0.0;
+		for ( int mcIndex = 0; mcIndex < crossCheckPlots.size(); mcIndex++ )
+		{
+			int nextIndex = ( mcIndex + MC_CHECK_OFFSET ) % crossCheckPlots.size();
+			cout << "Cross check - MC " << nextIndex << " reco with MC " << mcIndex << " prior" << endl;
+
+			//Get the plot that should be produced by the unfolding from MC truth
+			string crossCheckReferencePlotName = "forCrossCheck" + crossCheckPlots[ nextIndex ]->PriorName() + "Truth";
+			TH1F * crossCheckReferencePlot = ( TH1F* )crossCheckPlots[ nextIndex ]->MCTruthDistribution()->Clone( crossCheckReferencePlotName.c_str() );
+
+			//Unfold MC reco
+			double convergenceChi2, convergenceKolmogorov;
+			mostIterations += crossCheckPlots[ mcIndex ]->MonteCarloCrossCheck( crossCheckReferencePlot, convergenceChi2, convergenceKolmogorov );
+			chiSquaredThreshold += convergenceChi2;
+			kolmogorovThreshold += convergenceKolmogorov;
+		}
+
+		//Find the average values for the convergence criteria
+		mostIterations = ceil( (double)mostIterations / (double)crossCheckPlots.size() );
+		chiSquaredThreshold /= (double)crossCheckPlots.size();
+		kolmogorovThreshold /= (double)crossCheckPlots.size();
+
+		//Check that the iteration process is useful
+		if ( mostIterations < 2 )
+		{
+			//Must apply the unfolding at least once, regardless
+			mostIterations = 1;
+
+			//Warn about potential problems
+			cerr << "Unfolding will only be applied once - no iteration. This suggests there is a problem: perhaps the smearing matrix is underpopulated?" << endl;
+		}
+		cout << "Chosen convergence criteria: max " << mostIterations << " iterations; chi2 below " << chiSquaredThreshold << "; KS above " << kolmogorovThreshold << endl;
+
+		//Tidy up
+		crossCheckPlots.clear();
+
 		//Make a canvas to display the plots
 		string plotName = allPlots[0]->Description(false) + "CorrectedDistribution";
 		string plotTitle = allPlots[0]->Description(true) + " Corrected Distribution";
@@ -141,7 +224,7 @@ void MonteCarloSummaryPlotMaker::Unfold( int MostIterations, double ChiSquaredTh
 		{
 			//Unfold
 			cout << endl << "Unfolding " << allPlots[plotIndex]->Description(true) << " with " << allPlots[plotIndex]->PriorName() << endl;
-			allPlots[plotIndex]->Unfold( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
+			allPlots[plotIndex]->Unfold( mostIterations, chiSquaredThreshold, kolmogorovThreshold, WithSmoothing );
 
 			//Get the error vector
 			vector<double> plotErrors = allPlots[ plotIndex ]->CorrectedErrors();

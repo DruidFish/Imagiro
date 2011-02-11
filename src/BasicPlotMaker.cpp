@@ -263,6 +263,12 @@ void BasicPlotMaker::Unfold( int MostIterations, double ChiSquaredThreshold, dou
 	}
 }
 
+//Make a cross-check with MC
+int BasicPlotMaker::MonteCarloCrossCheck( TH1F * ReferencePlot, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing )
+{
+        return XvsYUnfolder->MonteCarloCrossCheck( ReferencePlot, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
+}
+
 //Return some plots
 TH1F * BasicPlotMaker::CorrectedDistribution()
 {
