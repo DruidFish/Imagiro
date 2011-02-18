@@ -281,11 +281,15 @@ int IterativeUnfolding::MonteCarloCrossCheck( Distribution * ReferenceDistributi
 	distributionComparison->CompareDistributions( truthDistribution, dataDistribution, lastChiSquared, lastKolmogorov, true );
 	double chiSquaredResult = lastChiSquared;
 	double kolmogorovResult = lastKolmogorov;
+	cout << "-------------Cross-Check-------------" << endl;
+	cout << lastChiSquared << ", " << lastKolmogorov << ", 0" << endl;
 
 	//Iterate, making new distribution from data, old distribution and smearing matrix
 	Distribution * adjustedDistribution;
 	for ( int iteration = 0; iteration < MAX_ITERATIONS_FOR_CROSS_CHECK; iteration++ )
 	{
+
+
 		//Smooth the prior distribution, is asked. Don't smooth the truth
 		if ( WithSmoothing && iteration != 0 )
 		{
@@ -298,6 +302,7 @@ int IterativeUnfolding::MonteCarloCrossCheck( Distribution * ReferenceDistributi
 		//Compare with reference distribution
 		double referenceChi2, referenceKolmogorov;
 		distributionComparison->CompareDistributions( adjustedDistribution, ReferenceDistribution, referenceChi2, referenceKolmogorov, true );
+		cout << referenceChi2 << ", " << referenceKolmogorov << ", " << iteration + 1 << endl;
 
 		//Compare with last iteration
 		double chi2, kolmogorov;
@@ -317,6 +322,7 @@ int IterativeUnfolding::MonteCarloCrossCheck( Distribution * ReferenceDistributi
 			//Return the criteria
 			ChiSquaredThreshold = chiSquaredResult;
 			KolmogorovThreshold = kolmogorovResult;
+			cout << "-------------------------------------" << endl;
 			return iteration;
 		}
 		else
