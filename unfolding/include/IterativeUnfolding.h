@@ -10,6 +10,7 @@
 #ifndef ITERATIVE_UNFOLDING_H
 #define ITERATIVE_UNFOLDING_H
 
+#include "Comparison.h"
 #include "SmearingMatrix.h"
 #include "Indices.h"
 #include "Distribution.h"
@@ -93,41 +94,34 @@ class IterativeUnfolding
 		//Use MC truth A as a prior to unfold MC reco B
 		//Iterations cease when result is sufficiently close to MC truth B (passed as argument)
 		//Returns the number of iterations required. Convergence criteria as output arguments
-		int MonteCarloCrossCheck( TH1F * ReferencePlot, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing = false );
+		int MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing = false );
 
 		//Retrieve a TH1F* containing the unfolded data
 		//distribution, with or without errors
 		//NB: the error calculation is only performed
 		//when you run the method with errors for the first time
-		TH1F * UnfoldedDistribution( string Name = "unfolded", string Title = "Unfolded distribution", bool WithErrors = false );
-
-		//Retrieve the unfolded distribution from each iteration
-		//as a vector of TH1F*.
-		//The 0th entry will be the prior (MC truth) distirbution,
-		//and the last entry will be the same as that returned
-		//by UnfoldedDistribution()
-		vector< TH1F* > AllIterationResults();
+		TH1F * GetUnfoldedHistogram( string Name = "unfolded", string Title = "Unfolded distribution", bool WithErrors = false );
 
 		//Retrieve the smearing matrix used
 		TH2F * GetSmearingMatrix( string Name, string Title );
 
 		//Retrieve the truth distribution
-		TH1F * GetTruthDistribution( string Name, string Title );
+		TH1F * GetTruthHistogram( string Name, string Title );
+		Distribution * GetTruthDistribution();
 
 		//Retrieve the uncorrected data distribution
-		TH1F * GetUncorrectedDataDistribution( string Name, string Title );
+		TH1F * GetUncorrectedDataHistogram( string Name, string Title );
 
 		//Handy for error calculation
 		vector<double> SumOfDataWeightSquares();
 
 	private:
+		Comparison * distributionComparison;
 		int uniqueID;
 		string name;
-		vector< TH1F* > allResults;
 		vector< double > sumOfDataWeightSquares;
 		Indices * indexCalculator;
-		TH1F * truthHistogram;
-		Distribution *lastResult, *priorDistribution, *dataDistribution, *simulatedDistribution;
+		Distribution *dataDistribution, *unfoldedDistribution, *truthDistribution, *reconstructedDistribution;
 		SmearingMatrix * inputSmearing;
 		bool debug;
 };

@@ -181,13 +181,12 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 			int nextIndex = ( mcIndex + MC_CHECK_OFFSET ) % crossCheckPlots.size();
 			cout << "Cross check - MC " << nextIndex << " reco with MC " << mcIndex << " prior" << endl;
 
-			//Get the plot that should be produced by the unfolding from MC truth
-			string crossCheckReferencePlotName = "forCrossCheck" + crossCheckPlots[ nextIndex ]->PriorName() + "Truth";
-			TH1F * crossCheckReferencePlot = ( TH1F* )crossCheckPlots[ nextIndex ]->MCTruthDistribution()->Clone( crossCheckReferencePlotName.c_str() );
+			//Get the distribution that should be produced by the unfolding from MC truth
+			Distribution * referenceDistribution = crossCheckPlots[ nextIndex ]->MonteCarloTruthForCrossCheck();
 
 			//Unfold MC reco
 			double convergenceChi2, convergenceKolmogorov;
-			mostIterations += crossCheckPlots[ mcIndex ]->MonteCarloCrossCheck( crossCheckReferencePlot, convergenceChi2, convergenceKolmogorov );
+			mostIterations += crossCheckPlots[ mcIndex ]->MonteCarloCrossCheck( referenceDistribution, convergenceChi2, convergenceKolmogorov );
 			chiSquaredThreshold += convergenceChi2;
 			kolmogorovThreshold += convergenceKolmogorov;
 		}
@@ -204,7 +203,7 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 			mostIterations = 1;
 
 			//Warn about potential problems
-			cerr << "Unfolding will only be applied once - no iteration. This suggests there is a problem: perhaps the smearing matrix is underpopulated?" << endl;
+			cout << "Unfolding will only be applied once - no iteration. This suggests there is a problem: perhaps the smearing matrix is underpopulated?" << endl;
 		}
 		cout << "Chosen convergence criteria: max " << mostIterations << " iterations; chi2 below " << chiSquaredThreshold << "; KS above " << kolmogorovThreshold << endl;
 
@@ -223,22 +222,22 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 		for ( int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
 		{
 			//Unfold
-			cout << endl << "Unfolding " << allPlots[plotIndex]->Description(true) << " with " << allPlots[plotIndex]->PriorName() << endl;
+			cout << endl << "Unfolding " << allPlots[ plotIndex ]->Description(true) << " with " << allPlots[ plotIndex ]->PriorName() << endl;
 			allPlots[plotIndex]->Unfold( mostIterations, chiSquaredThreshold, kolmogorovThreshold, WithSmoothing );
 
 			//Get the error vector
 			vector<double> plotErrors = allPlots[ plotIndex ]->CorrectedErrors();
 
 			//Make a local copy of the truth plot
-			string truthPlotName = "localCopy" + allPlots[plotIndex]->PriorName() + "Truth";
-			TH1F * newTruthPlot = ( TH1F* )allPlots[ plotIndex ]->MCTruthDistribution()->Clone( truthPlotName.c_str() );
-			allTruthPlots.push_back(newTruthPlot);
+			string truthPlotName = "localCopy" + allPlots[ plotIndex ]->PriorName() + "Truth";
+			TH1F * newTruthHistogram = ( TH1F* )allPlots[ plotIndex ]->MCTruthHistogram()->Clone( truthPlotName.c_str() );
+			allTruthPlots.push_back( newTruthHistogram );
 
 			//Load the corrected data into the combined distribution
-			TH1F * correctedDistribution = allPlots[ plotIndex ]->CorrectedDistribution();
-			for ( int binIndex = 0; binIndex < correctedDistribution->GetNbinsX() + 2; binIndex++ )
+			TH1F * correctedHistogram = allPlots[ plotIndex ]->CorrectedHistogram();
+			for ( int binIndex = 0; binIndex < correctedHistogram->GetNbinsX() + 2; binIndex++ )
 			{
-				double binContent = correctedDistribution->GetBinContent( binIndex );
+				double binContent = correctedHistogram->GetBinContent( binIndex );
 
 				if ( plotIndex == 0 )
 				{
@@ -268,8 +267,8 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 			if ( plotIndex == 0 )
 			{
 				//Copy the format of the data histograms
-				combinedCorrectedHistogramWithSystematics = new TH1F( *correctedDistribution );
-				combinedCorrectedHistogramWithStatistics = new TH1F( *correctedDistribution );
+				combinedCorrectedHistogramWithSystematics = new TH1F( *correctedHistogram );
+				combinedCorrectedHistogramWithStatistics = new TH1F( *correctedHistogram );
 
 				//Copy a smearing matrix
 				string smearingName = allPlots[plotIndex]->Description(false) + "SmearingMatrix";

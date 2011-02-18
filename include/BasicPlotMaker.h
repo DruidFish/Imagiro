@@ -27,12 +27,15 @@ class BasicPlotMaker : public IPlotMaker
 		virtual void Unfold( int MostIterations = 10, double ChiSquaredThreshold = 1.0, double KolmogorovThreshold = 1.0, bool WithSmoothing = false );
 
 		//Make a cross-check with MC
-                virtual int MonteCarloCrossCheck( TH1F * ReferencePlot, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing = false );
+                virtual int MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing = false );
+
+		//Return a distribution for use in the cross-checks
+                virtual Distribution * MonteCarloTruthForCrossCheck();
 
 		//Return some plots
-		virtual TH1F * CorrectedDistribution();
-		virtual TH1F * UncorrectedDistribution();
-		virtual TH1F * MCTruthDistribution();
+		virtual TH1F * CorrectedHistogram();
+		virtual TH1F * UncorrectedHistogram();
+		virtual TH1F * MCTruthHistogram();
 		virtual TH2F * SmearingMatrix();
 
 		//Copy the object

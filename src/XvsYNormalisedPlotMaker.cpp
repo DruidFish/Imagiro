@@ -232,15 +232,15 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 		string XvsYTitle = xName + " vs " + yName + " using " + priorName;
 
 		//Retrieve the results
-		TH1F * XCorrected = XUnfolder->UnfoldedDistribution( XFullName + "Corrected", XFullTitle + " Corrected Distribution" );
-		TH1F * XvsYCorrected = XvsYUnfolder->UnfoldedDistribution( XvsYName + "Corrected", XvsYTitle + " Corrected Distribution" );
+		TH1F * XCorrected = XUnfolder->GetUnfoldedHistogram( XFullName + "Corrected", XFullTitle + " Corrected Distribution" );
+		TH1F * XvsYCorrected = XvsYUnfolder->GetUnfoldedHistogram( XvsYName + "Corrected", XvsYTitle + " Corrected Distribution" );
 
 		//Retrieve some other bits for debug
-		TH1F * XUncorrected = XUnfolder->GetUncorrectedDataDistribution( XFullName + "Uncorrected", XFullTitle + " Uncorrected Distribution" );
-		TH1F * XvsYUncorrected = XvsYUnfolder->GetUncorrectedDataDistribution( XvsYName + "Uncorrected", XvsYTitle + " Uncorrected Distribution" );
+		TH1F * XUncorrected = XUnfolder->GetUncorrectedDataHistogram( XFullName + "Uncorrected", XFullTitle + " Uncorrected Distribution" );
+		TH1F * XvsYUncorrected = XvsYUnfolder->GetUncorrectedDataHistogram( XvsYName + "Uncorrected", XvsYTitle + " Uncorrected Distribution" );
 
-		TH1F * XTruth = XUnfolder->GetTruthDistribution( XFullName + "Truth", XFullTitle + " Truth Distribution" );
-		TH1F * XvsYTruth = XvsYUnfolder->GetTruthDistribution( XvsYName + "Truth", XvsYTitle + " Truth Distribution" );
+		TH1F * XTruth = XUnfolder->GetTruthHistogram( XFullName + "Truth", XFullTitle + " Truth Distribution" );
+		TH1F * XvsYTruth = XvsYUnfolder->GetTruthHistogram( XvsYName + "Truth", XvsYTitle + " Truth Distribution" );
 
 		//TH2F * XSmearing = XUnfolder->GetSmearingMatrix( XFullName + "Smearing", XFullTitle + " Smearing Matrix" );
 		TH2F * XvsYSmearing = XvsYUnfolder->GetSmearingMatrix( XvsYName + "Smearing", XvsYTitle + " Smearing Matrix" );
@@ -361,14 +361,14 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 }
 
 //Make a cross-check with MC
-int XvsYNormalisedPlotMaker::MonteCarloCrossCheck( TH1F * ReferencePlot, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing )
+int XvsYNormalisedPlotMaker::MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing )
 {
-	return XvsYUnfolder->MonteCarloCrossCheck( ReferencePlot, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
+	return XvsYUnfolder->MonteCarloCrossCheck( ReferenceDistribution, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
 	//return XUnfolder->MonteCarloCrossCheck( ReferencePlot, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
 }
 
 //Return some plots
-TH1F * XvsYNormalisedPlotMaker::CorrectedDistribution()
+TH1F * XvsYNormalisedPlotMaker::CorrectedHistogram()
 {
 	if ( finalised )
 	{
@@ -380,7 +380,7 @@ TH1F * XvsYNormalisedPlotMaker::CorrectedDistribution()
 		exit(1);
 	}
 }
-TH1F * XvsYNormalisedPlotMaker::UncorrectedDistribution()
+TH1F * XvsYNormalisedPlotMaker::UncorrectedHistogram()
 {
 	if ( finalised )
 	{
@@ -392,7 +392,7 @@ TH1F * XvsYNormalisedPlotMaker::UncorrectedDistribution()
 		exit(1);
 	}
 }
-TH1F * XvsYNormalisedPlotMaker::MCTruthDistribution()
+TH1F * XvsYNormalisedPlotMaker::MCTruthHistogram()
 {
 	if ( finalised )
 	{
@@ -400,17 +400,17 @@ TH1F * XvsYNormalisedPlotMaker::MCTruthDistribution()
 	}       
 	else
 	{
-		//Make some plot titles
-		char uniqueIDString[10];
-		sprintf( uniqueIDString, "%d", uniqueID );
-		string XvsYName = xName + "vs" + yName + priorName + uniqueIDString;
-		string XvsYTitle = xName + " vs " + yName + " using " + priorName;
-
-		//Retrieve the results
-		return XvsYUnfolder->GetTruthDistribution( XvsYName + "RawTruth", XvsYTitle + " Raw Truth Distribution" );
-		//return XUnfolder->GetTruthDistribution( XvsYName + "RawTruth", XvsYTitle + " Raw Truth Distribution" );
+		cerr << "Trying to retrieve MC truth plot from unfinalised XvsYNormalisedPlotMaker" << endl;
+                exit(1);
 	}
 }
+
+//Return a distribution for use in the cross-checks
+Distribution * XvsYNormalisedPlotMaker::MonteCarloTruthForCrossCheck()
+{
+	return XvsYUnfolder->GetTruthDistribution();
+}
+
 TH2F * XvsYNormalisedPlotMaker::SmearingMatrix()
 {
 	if ( finalised )

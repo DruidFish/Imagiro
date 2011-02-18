@@ -9,8 +9,6 @@
 
 #include "Distribution.h"
 #include "UnfoldingMatrix.h"
-//#include "CovarianceMatrix.h"
-//#include "JustVariances.h"
 #include <iostream>
 #include <cstdlib>
 #include <cmath>
@@ -19,28 +17,6 @@
 Distribution::Distribution()
 {
 }
-
-//Just initialise directly from a list a data points
-/*Distribution::Distribution( vector<double> InputData, Indices * InputIndices ) : indexCalculator(InputIndices)
-  {
-//Initialise the bins
-int binNumber = InputIndices->GetBinNumber();
-binValues = vector<double>( binNumber, 0.0 );
-integral = InputData.size();
-
-//Populate the distribution
-for ( int eventIndex = 0; eventIndex < InputData.size(); eventIndex++ )
-{
-//Look up the index of the data point
-int binIndex = InputIndices->GetIndex( InputData[eventIndex] );
-
-//Add to the appropriate values
-if ( binIndex >= 0 )
-{
-binValues[binIndex]++;
-}
-}
-}*/
 
 //Just initialise an empty distribution
 Distribution::Distribution( Indices * InputIndices ) : indexCalculator(InputIndices)
@@ -79,14 +55,14 @@ Distribution::Distribution( vector< TH1F* > InputDistributions, Indices * InputI
 }
 
 //Calculate a corrected distribtion
-Distribution::Distribution( Distribution * DataDistribution, SmearingMatrix * Smearing, Distribution * PriorDistribution, Indices * InputIndices ) : integral(0.0),
-	indexCalculator(InputIndices)
+Distribution::Distribution( Distribution * DataDistribution, SmearingMatrix * Smearing, Distribution * PriorDistribution ) : integral(0.0),
+	indexCalculator( DataDistribution->indexCalculator )
 {
 	//Create the Bayes theorem inverse of the smearing matrix
-	UnfoldingMatrix * bayes = new UnfoldingMatrix( Smearing, PriorDistribution, InputIndices );
+	UnfoldingMatrix * bayes = new UnfoldingMatrix( Smearing, PriorDistribution, indexCalculator );
 
 	//Populate the distribution
-	int binNumber = InputIndices->GetBinNumber();
+	int binNumber = indexCalculator->GetBinNumber();
 	for  ( int causeIndex = 0; causeIndex < binNumber; causeIndex++ )
 	{
 		double binValue = 0.0;
@@ -100,11 +76,27 @@ Distribution::Distribution( Distribution * DataDistribution, SmearingMatrix * Sm
 		integral += binValue;
 	}
 
-	//Make the covariance matrix
-	//errorCalculator = new JustVariances( bayes, Smearing, DataDistribution, integral, InputIndices );
-
 	//Free up some memory
 	delete bayes;
+}
+
+//Make this distribution by smearing another
+Distribution::Distribution( Distribution * InputDistribution, SmearingMatrix * Smearing ) : integral(0.0), indexCalculator( InputDistribution->indexCalculator )
+{
+	//Make a new, empty distribution
+	binValues = vector< double >( InputDistribution->binValues.size(), 0.0 );
+
+	//Loop over each bin in this distribution
+	for ( int causeIndex = 0; causeIndex < binValues.size(); causeIndex++ )
+	{
+		//Loop over each bin in the smeared distribution
+		for ( int effectIndex = 0; effectIndex < binValues.size(); effectIndex++ )
+		{
+			double newValue = Smearing->GetElement( causeIndex, effectIndex ) * InputDistribution->GetBinNumber( causeIndex );
+			binValues[ effectIndex ] += newValue;
+			integral += newValue;
+		}
+	}
 }
 
 //Destructor
@@ -152,7 +144,7 @@ double Distribution::GetBinProbability( int InputIndex )
 TH1F * Distribution::MakeRootHistogram( string Name, string Title, bool WithErrors, bool MakeNormalised )
 {
 	int binNumber = indexCalculator->GetBinNumber();
-	TH1F * distributionHistogram = new TH1F( Name.c_str(), Title.c_str(), binNumber - 2, indexCalculator->GetMinima()[0], indexCalculator->GetMaxima()[0] );
+	TH1F * rootHistogram = new TH1F( Name.c_str(), Title.c_str(), binNumber - 2, indexCalculator->GetMinima()[0], indexCalculator->GetMaxima()[0] );
 
 	//Populate the bins one-by-one - note that in the TH1F, bin 0 is the underflow
 	for ( int binIndex = 0; binIndex < binNumber; binIndex++ )
@@ -160,21 +152,15 @@ TH1F * Distribution::MakeRootHistogram( string Name, string Title, bool WithErro
 		//Normalise the distribution (or not)
 		if (MakeNormalised)
 		{
-			distributionHistogram->SetBinContent( binIndex, (double)( binValues[binIndex] ) / (double)integral );
+			rootHistogram->SetBinContent( binIndex, (double)( binValues[binIndex] ) / (double)integral );
 		}
 		else
 		{
-			distributionHistogram->SetBinContent( binIndex, binValues[binIndex] );
+			rootHistogram->SetBinContent( binIndex, binValues[binIndex] );
 		}
-
-		//Add the errors if required
-		//if ( WithErrors && errorCalculator )
-		//{
-		//	distributionHistogram->SetBinError( binIndex, errorCalculator->GetStandardDeviation(binIndex) );
-		//}
 	}
 
-	return distributionHistogram;
+	return rootHistogram;
 }
 
 //Smooth the distribution using moving average

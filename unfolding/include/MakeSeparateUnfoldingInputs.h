@@ -1,6 +1,7 @@
 /**
   @class MakeSeparateUnfoldingInputs
 
+  OUTDATED
   The class to make the inputs for an unfolding process in situations where only some fraction of the events are available
 
   @author Benjamin M Wynne bwynne@cern.ch

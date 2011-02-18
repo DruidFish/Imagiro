@@ -1,6 +1,7 @@
 /**
   @class UseSeparateUnfoldingInputs
 
+  OUTDATED
   The class that performs the unfolding by using the ROOT objects made by MakeSeparateUnfoldingInputs
 
   @author Benjamin M Wynne bwynne@cern.ch

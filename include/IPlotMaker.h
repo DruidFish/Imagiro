@@ -2,6 +2,7 @@
 #define I_PLOTMAKER_H
 
 #include "InputNtuple.h"
+#include "Distribution.h"
 #include "TH1F.h"
 #include "TH2F.h"
 #include <string>
@@ -22,12 +23,15 @@ class IPlotMaker
 		virtual void Unfold( int MostIterations = 10, double ChiSquaredThreshold = 1.0, double KolmogorovThreshold = 1.0, bool WithSmoothing = false ) = 0;
 
 		//Make a cross-check with MC
-		virtual int MonteCarloCrossCheck( TH1F * ReferencePlot, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing = false ) = 0;
+		virtual int MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing = false ) = 0;
+
+		//Return a distribution for use in the cross-checks
+		virtual Distribution * MonteCarloTruthForCrossCheck() = 0;
 
 		//Return some plots
-		virtual TH1F * CorrectedDistribution() = 0;
-		virtual TH1F * UncorrectedDistribution() = 0;
-		virtual TH1F * MCTruthDistribution() = 0;
+		virtual TH1F * CorrectedHistogram() = 0;
+		virtual TH1F * UncorrectedHistogram() = 0;
+		virtual TH1F * MCTruthHistogram() = 0;
 		virtual TH2F * SmearingMatrix() = 0;
 
 		//Copy the object

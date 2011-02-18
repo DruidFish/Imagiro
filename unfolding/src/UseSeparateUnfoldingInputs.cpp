@@ -1,6 +1,7 @@
 /**
   @class UseSeparateUnfoldingInputs
 
+  OUTDATED
   The class that performs the unfolding by using the ROOT objects made by MakeSeparateUnfoldingInputs
 
   @author Benjamin M Wynne bwynne@cern.ch
@@ -122,7 +123,7 @@ void UseSeparateUnfoldingInputs::Unfold( int MostIterations, double ChiSquaredTh
 	for ( int iteration = 0; iteration < MostIterations; iteration++ )
 	{
 		//Iterate
-		adjustedDistribution = new Distribution( dataDistribution, inputSmearing, priorDistribution, indexCalculator );
+		adjustedDistribution = new Distribution( dataDistribution, inputSmearing, priorDistribution );
 		if (WithSmoothing)
 		{
 			adjustedDistribution->Smooth();

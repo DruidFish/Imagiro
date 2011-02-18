@@ -31,6 +31,7 @@ class MonteCarloSummaryPlotMaker
 		TH2F * SmearingMatrix();
 
 	private:
+		vector< Distribution* > allTruthDistributions;
 		vector< TH1F* > allTruthPlots;
 		TH2F * smearingMatrix;
 		MonteCarloInformation * mcInfo;

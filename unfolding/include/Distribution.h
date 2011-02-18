@@ -25,16 +25,19 @@ class Distribution
 {
 	public:
 		Distribution();
-		Distribution( Indices* );
-		Distribution( vector< TH1F* >, Indices* );
-		Distribution( Distribution*, SmearingMatrix*, Distribution*, Indices* );
+		Distribution( Indices * InputIndices );
+		Distribution( vector< TH1F* > InputDistributions, Indices * InputIndices );
+		Distribution( Distribution * DataDistribution, SmearingMatrix * Smearing, Distribution * PriorDistribution );
+		Distribution( Distribution * InputDistribution, SmearingMatrix * Smearing );
 		~Distribution();
 
 		void StoreEvent( vector<double> Value, double Weight = 1.0 );
 
-		double GetBinNumber(int);
-		double GetBinProbability(int);
-		TH1F * MakeRootHistogram( string, string, bool WithErrors = false, bool MakeNormalised = false );
+		double GetBinNumber( int BinIndex );
+		double GetBinProbability( int BinIndex );
+		TH1F * MakeRootHistogram( string Name, string Title, bool WithErrors = false, bool MakeNormalised = false );
+
+		//Try and account for statistical fluctuations with a moving-average smearing
 		void Smooth( int SideBinNumber = 1 );
 
 	protected:

@@ -8,10 +8,10 @@
  */
 
 #include "IterativeUnfolding.h"
-#include "Distribution.h"
 #include "TFile.h"
 #include <iostream>
 #include <cstdlib>
+#include <sstream>
 
 const int MAX_ITERATIONS_FOR_CROSS_CHECK = 10;
 
@@ -26,35 +26,50 @@ IterativeUnfolding::IterativeUnfolding()
 //error calculation scales roughly with bin number ^ 3.
 IterativeUnfolding::IterativeUnfolding( int BinNumber, double Minimum, double Maximum, string Name, int UniqueID, bool DebugMode ) : debug(DebugMode), name(Name), uniqueID(UniqueID)
 {
-	//Make new vectors just with the one entry
 	indexCalculator = new Indices( vector<int>( 1, BinNumber ), vector<double>( 1, Minimum ), vector<double>( 1, Maximum ) );
+
 	inputSmearing = new SmearingMatrix(indexCalculator);
-	priorDistribution = new Distribution(indexCalculator);
+
 	dataDistribution = new Distribution(indexCalculator);
-	simulatedDistribution = new Distribution(indexCalculator);
+	unfoldedDistribution = new Distribution(indexCalculator);
+	truthDistribution = new Distribution(indexCalculator);
+	reconstructedDistribution = new Distribution(indexCalculator);
+
 	sumOfDataWeightSquares = vector<double>( indexCalculator->GetBinNumber(), 0.0 );
+
+	distributionComparison = new Comparison( Name, UniqueID );
 }
 
 //N-Dimensional version
 IterativeUnfolding::IterativeUnfolding( vector<int> BinNumbers, vector<double> Minima, vector<double> Maxima, string Name, int UniqueID, bool DebugMode ) : debug(DebugMode), name(Name), uniqueID(UniqueID)
 {
 	indexCalculator = new Indices( BinNumbers, Minima, Maxima );
+
 	inputSmearing = new SmearingMatrix(indexCalculator);
-	priorDistribution = new Distribution(indexCalculator);
+
 	dataDistribution = new Distribution(indexCalculator);
-	simulatedDistribution = new Distribution(indexCalculator);
+	unfoldedDistribution = new Distribution(indexCalculator);
+	truthDistribution = new Distribution(indexCalculator);
+	reconstructedDistribution = new Distribution(indexCalculator);
+
 	sumOfDataWeightSquares = vector<double>( indexCalculator->GetBinNumber(), 0.0 );
+
+	distributionComparison = new Comparison( Name, UniqueID );
 }
 
 //Destructor
 IterativeUnfolding::~IterativeUnfolding()
 {
 	delete indexCalculator;
+
 	delete inputSmearing;
-	delete priorDistribution;
+
 	delete dataDistribution;
-	delete simulatedDistribution;
-	allResults.clear();
+	delete unfoldedDistribution;
+	delete truthDistribution;
+	delete reconstructedDistribution;
+
+	delete distributionComparison;
 }
 
 //Use this method to supply a value from the truth
@@ -66,8 +81,8 @@ void IterativeUnfolding::StoreTruthRecoPair( double Truth, double Reco, double T
 {
 	if (UseInPrior)
 	{
-		priorDistribution->StoreEvent( vector<double>( 1, Truth ), TruthWeight );
-		simulatedDistribution->StoreEvent( vector<double>( 1, Reco ), RecoWeight );
+		truthDistribution->StoreEvent( vector<double>( 1, Truth ), TruthWeight );
+		reconstructedDistribution->StoreEvent( vector<double>( 1, Reco ), RecoWeight );
 	}
 	inputSmearing->StoreTruthRecoPair( vector<double>( 1, Truth ), vector<double>( 1, Reco ), TruthWeight * RecoWeight );
 }
@@ -77,8 +92,8 @@ void IterativeUnfolding::StoreTruthRecoPair( vector<double> Truth, vector<double
 {
 	if (UseInPrior)
 	{
-		priorDistribution->StoreEvent( Truth, TruthWeight );
-		simulatedDistribution->StoreEvent( Reco, RecoWeight );
+		truthDistribution->StoreEvent( Truth, TruthWeight );
+		reconstructedDistribution->StoreEvent( Reco, RecoWeight );
 	}
 	inputSmearing->StoreTruthRecoPair( Truth, Reco, TruthWeight * RecoWeight );
 }
@@ -89,7 +104,7 @@ void IterativeUnfolding::StoreUnreconstructedTruth( double Truth, double Weight,
 {
 	if (UseInPrior)
 	{
-		priorDistribution->StoreEvent( vector<double>( 1, Truth ), Weight );
+		truthDistribution->StoreEvent( vector<double>( 1, Truth ), Weight );
 	}
 	inputSmearing->StoreUnreconstructedTruth( vector<double>( 1, Truth ), Weight );
 }
@@ -99,7 +114,7 @@ void IterativeUnfolding::StoreUnreconstructedTruth( vector<double> Truth, double
 {
 	if (UseInPrior)
 	{
-		priorDistribution->StoreEvent( Truth, Weight );
+		truthDistribution->StoreEvent( Truth, Weight );
 	}
 	inputSmearing->StoreUnreconstructedTruth( Truth, Weight );
 }
@@ -110,7 +125,7 @@ void IterativeUnfolding::StoreReconstructedFake( double Reco, double Weight, boo
 {
 	if (UseInPrior)
 	{
-		simulatedDistribution->StoreEvent( vector<double>( 1, Reco ), Weight );
+		reconstructedDistribution->StoreEvent( vector<double>( 1, Reco ), Weight );
 	}
 	inputSmearing->StoreReconstructedFake( vector<double>( 1, Reco ), Weight );
 }
@@ -120,7 +135,7 @@ void IterativeUnfolding::StoreReconstructedFake( vector<double> Reco, double Wei
 {
 	if (UseInPrior)
 	{
-		simulatedDistribution->StoreEvent( Reco, Weight );
+		reconstructedDistribution->StoreEvent( Reco, Weight );
 	}
 	inputSmearing->StoreReconstructedFake( Reco, Weight );
 }
@@ -149,15 +164,8 @@ void IterativeUnfolding::StoreDataValue( vector<double> Data, double Weight )
 //the Kolmogorov-Smirnof comparison value is higher
 void IterativeUnfolding::Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing )
 {
-	//Make a histogram of the truth distribution
-	char plotName[ name.size() + 20 ];
-	sprintf( plotName, "%sPrior%d", name.c_str(), uniqueID );
-	TH1F * priorHistogram = priorDistribution->MakeRootHistogram( plotName, "Monte Carlo prior distribution" );
-	allResults.push_back(priorHistogram);
-
-	//Make another histogram to save for use later
-	sprintf( plotName, "%sTruth%d", name.c_str(), uniqueID );
-	truthHistogram = priorDistribution->MakeRootHistogram( plotName, "Monte Carlo truth distribution" );
+	//Use the truth distribution as the prior
+	Distribution * priorDistribution = truthDistribution;
 
 	//Finalise the smearing matrix
 	inputSmearing->Finalise();
@@ -167,64 +175,58 @@ void IterativeUnfolding::Unfold( int MostIterations, double ChiSquaredThreshold,
 	if (debug)
 	{
 		debugFile = new TFile( "unfoldingDebugOutput.root", "RECREATE" );
-		priorHistogram->Write();
+		priorDistribution->MakeRootHistogram( "prior", "MC truth distribution as prior" )->Write();
 		dataDistribution->MakeRootHistogram( "data", "Uncorrected data distribution" )->Write();
 		inputSmearing->MakeRootHistogram( "smearing", "Smearing matrix" )->Write();
 	}
 
 	//Iterate, making new distribution from data, old distribution and smearing matrix
-	Distribution * adjustedDistribution;
-	TH1F * adjustedHistogram;
-	char iterationName[ name.size() + 20 ];
 	for ( int iteration = 0; iteration < MostIterations; iteration++ )
 	{
-		//Smooth the prior distribution
-		if ( WithSmoothing )
+		//Smooth the prior distribution, if asked. Don't smooth the truth
+		if ( WithSmoothing && iteration != 0 )
 		{
 			priorDistribution->Smooth();
 		}
 
 		//Iterate
-		adjustedDistribution = new Distribution( dataDistribution, inputSmearing, priorDistribution, indexCalculator );
-
-		//Make a root histogram
-		sprintf( iterationName, "%s%dIteration%d", name.c_str(), uniqueID, iteration );
-		adjustedHistogram = adjustedDistribution->MakeRootHistogram( iterationName, iterationName );
-		allResults.push_back(adjustedHistogram);
+		unfoldedDistribution = new Distribution( dataDistribution, inputSmearing, priorDistribution );
 
 		//Compare with previous distribution
-		double chi2 = adjustedHistogram->Chi2Test( priorHistogram, "UUCHI2" );
-		double kolmogorov = adjustedHistogram->KolmogorovTest( priorHistogram, "" );
+		double chi2, kolmogorov;
+		distributionComparison->CompareDistributions( unfoldedDistribution, priorDistribution, chi2, kolmogorov, false );
 
 		//Reset for next iteration
-		delete priorDistribution;
-		priorDistribution = adjustedDistribution;
-		priorHistogram = adjustedHistogram;
+		if ( iteration != 0 )
+		{
+			//Don't delete the MC truth
+			delete priorDistribution;
+		}
+		priorDistribution = unfoldedDistribution;
 
 		//Debug output
 		if (debug)
 		{
 			cout << "Chi squared = " << chi2 << " and K-S probability = " << kolmogorov << " for iteration " << iteration << endl;
-			adjustedHistogram->Write();
+			stringstream iterationName;
+			iterationName << "iteration" << iteration;
+			unfoldedDistribution->MakeRootHistogram( iterationName.str(), iterationName.str() )->Write();
 		}
 
 		//Check for termination conditions
 		if ( chi2 < ChiSquaredThreshold )
 		{
 			cout << "Converged: chi2 " << chi2 << " < " << ChiSquaredThreshold << endl;
-			lastResult = adjustedDistribution;
 			break;
 		}
 		if ( kolmogorov > KolmogorovThreshold )
 		{
 			cout << "Converged: KS " << kolmogorov << " > " << KolmogorovThreshold << endl;
-			lastResult = adjustedDistribution;
 			break;
 		}
 		if ( iteration == MostIterations - 1 )
 		{
-			cerr << "Maximum number of iterations (" << MostIterations << ") reached" << endl;
-			lastResult = adjustedDistribution;
+			cout << "Maximum number of iterations (" << MostIterations << ") reached" << endl;
 			break;
 		}
 	}
@@ -241,84 +243,73 @@ void IterativeUnfolding::Unfold( int MostIterations, double ChiSquaredThreshold,
 //It should give the truth information back exactly...
 void IterativeUnfolding::ClosureTest()
 {
-	//Make a histogram for the Root comparisons
-	char plotName[ name.size() + 20 ];
-	sprintf( plotName, "%sClosurePrior%d", name.c_str(), uniqueID );
-	TH1F * priorHistogram = priorDistribution->MakeRootHistogram( plotName, "Closure test prior distribution" );
-
 	//Finalise the smearing matrix
 	inputSmearing->Finalise();
 
 	//Unfold once only
-	Distribution * adjustedDistribution = new Distribution( simulatedDistribution, inputSmearing, priorDistribution, indexCalculator );
-	sprintf( plotName, "%sClosureResult%d", name.c_str(), uniqueID );
-	TH1F * adjustedHistogram = adjustedDistribution->MakeRootHistogram( plotName, plotName );
+	Distribution * unfoldedReconstructedDistribution = new Distribution( reconstructedDistribution, inputSmearing, truthDistribution );
 
 	//Compare with truth distribution
-	double chi2 = adjustedHistogram->Chi2Test( priorHistogram, "UUCHI2" );
-	double kolmogorov = adjustedHistogram->KolmogorovTest( priorHistogram, "" );
-	cout << endl << "Closure test - comparing unfolded MC reco with MC truth: " << endl;
-	cout << "Chi squared = " << chi2 << " and K-S probability = " << kolmogorov << endl;
+	double chi2, kolmogorov;
+	distributionComparison->CompareDistributions( truthDistribution, unfoldedReconstructedDistribution, chi2, kolmogorov, false );
+
+	//Output result
+	if ( chi2 < 1.0 && kolmogorov > 0.9 )
+	{
+		cout << "Closure test passed: chi squared = " << chi2 << " and K-S probability = " << kolmogorov << endl;
+	}
+	else
+	{
+		cout << "Closure test failed: chi squared = " << chi2 << " and K-S probability = " << kolmogorov << endl;
+	}
 }
 
 //Perform an unfolding cross-check
 //Use MC truth A as a prior to unfold MC reco B
 //Iterations cease when result is sufficiently close to MC truth B (passed as argument)
 //Returns the number of iterations required. Convergence criteria as output arguments
-int IterativeUnfolding::MonteCarloCrossCheck( TH1F * ReferencePlot, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing )
+int IterativeUnfolding::MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing )
 {
-	//Make a histogram of the truth distribution
-	char plotName[ name.size() + 20 ];
-	sprintf( plotName, "%sRawPrior%d", name.c_str(), uniqueID );
-	TH1F * priorHistogram = priorDistribution->MakeRootHistogram( plotName, "Monte Carlo raw prior distribution" );
-
-	//Make another histogram to save for use later
-	sprintf( plotName, "%sTruth%d", name.c_str(), uniqueID );
-	truthHistogram = priorDistribution->MakeRootHistogram( plotName, "Monte Carlo truth distribution" );
+        //Use the truth distribution as the prior
+	Distribution * priorDistribution = truthDistribution;
 
 	//Finalise the smearing matrix
 	inputSmearing->Finalise();
 
 	//Compare the uncorrected data to the truth
-	TH1F * dataHistogram = dataDistribution->MakeRootHistogram( plotName, "Uncorrected data distribution for cross check" );
-	double lastChiSquared = dataHistogram->Chi2Test( ReferencePlot, "UUCHI2" );
-	double lastKolmogorov = dataHistogram->KolmogorovTest( ReferencePlot, "" );
+	double lastChiSquared, lastKolmogorov;
+	distributionComparison->CompareDistributions( truthDistribution, dataDistribution, lastChiSquared, lastKolmogorov, true );
 	double chiSquaredResult = lastChiSquared;
 	double kolmogorovResult = lastKolmogorov;
-	delete dataHistogram;
 
 	//Iterate, making new distribution from data, old distribution and smearing matrix
 	Distribution * adjustedDistribution;
-	TH1F * adjustedHistogram;
-	char iterationName[ name.size() + 20 ];
 	for ( int iteration = 0; iteration < MAX_ITERATIONS_FOR_CROSS_CHECK; iteration++ )
 	{
-		//Smooth the prior distribution
-		if ( WithSmoothing )
+		//Smooth the prior distribution, is asked. Don't smooth the truth
+		if ( WithSmoothing && iteration != 0 )
 		{
 			priorDistribution->Smooth();
 		}
 
 		//Iterate
-		adjustedDistribution = new Distribution( dataDistribution, inputSmearing, priorDistribution, indexCalculator );
-
-		//Make a root histogram for comparison
-		sprintf( iterationName, "%s%dIteration%d", name.c_str(), uniqueID, iteration );
-		adjustedHistogram = adjustedDistribution->MakeRootHistogram( iterationName, iterationName );
+		adjustedDistribution = new Distribution( dataDistribution, inputSmearing, priorDistribution );
 
 		//Compare with reference distribution
-		double referenceChi2 = adjustedHistogram->Chi2Test( ReferencePlot, "UUCHI2" );
-		double referenceKolmogorov = adjustedHistogram->KolmogorovTest( ReferencePlot, "" );
+		double referenceChi2, referenceKolmogorov;
+		distributionComparison->CompareDistributions( adjustedDistribution, ReferenceDistribution, referenceChi2, referenceKolmogorov, true );
 
 		//Compare with last iteration
-		double chi2 = adjustedHistogram->Chi2Test( priorHistogram, "UUCHI2" );
-		double kolmogorov = adjustedHistogram->KolmogorovTest( priorHistogram, "" );
+		double chi2, kolmogorov;
+		distributionComparison->CompareDistributions( adjustedDistribution, priorDistribution, chi2, kolmogorov, false );
 
 		//Reset for next iteration
-		delete priorDistribution;
-		delete priorHistogram;
+		if ( iteration != 0 )
+		{
+			//Don't delete the MC truth
+			delete priorDistribution;
+		}
 		priorDistribution = adjustedDistribution;
-		priorHistogram = adjustedHistogram;
 
 		//Check to see if things have got worse
 		if ( referenceChi2 > lastChiSquared || referenceKolmogorov < lastKolmogorov || iteration == MAX_ITERATIONS_FOR_CROSS_CHECK - 1 )
@@ -343,27 +334,14 @@ int IterativeUnfolding::MonteCarloCrossCheck( TH1F * ReferencePlot, double & Chi
 //distribution, with or without errors
 //NB: the error calculation is only performed
 //when you run the method with errors for the first time
-TH1F * IterativeUnfolding::UnfoldedDistribution( string Name, string Title, bool WithErrors )
+TH1F * IterativeUnfolding::GetUnfoldedHistogram( string Name, string Title, bool WithErrors )
 {
 	if (WithErrors)
 	{
 		Title += " with errors";
-		return lastResult->MakeRootHistogram( Name, Title, true );
 	}
-	else
-	{
-		return lastResult->MakeRootHistogram( Name, Title, false );
-	}
-}
 
-//Retrieve the unfolded distribution from each iteration
-//as a vector of TH1F*.
-//The 0th entry will be the prior (MC truth) distirbution,
-//and the last entry will be the same as that returned
-//by UnfoldedDistribution()
-vector< TH1F* > IterativeUnfolding::AllIterationResults()
-{
-	return allResults;
+	return unfoldedDistribution->MakeRootHistogram( Name, Title, WithErrors );
 }
 
 //Retrieve the smearing matrix used
@@ -373,23 +351,17 @@ TH2F * IterativeUnfolding::GetSmearingMatrix( string Name, string Title )
 }
 
 //Retrieve the truth distribution
-TH1F * IterativeUnfolding::GetTruthDistribution( string Name, string Title )
+TH1F * IterativeUnfolding::GetTruthHistogram( string Name, string Title )
 {
-	//Check that the histogram has been made (since we need it before the unfolding starts)
-	if ( !truthHistogram )
-	{
-		truthHistogram = priorDistribution->MakeRootHistogram( Name, Title );
-	}
-	else
-	{
-		truthHistogram->SetName( Name.c_str() );
-		truthHistogram->SetTitle( Title.c_str() );
-	}
-	return truthHistogram;
+	return truthDistribution->MakeRootHistogram( Name, Title );
+}
+Distribution * IterativeUnfolding::GetTruthDistribution()
+{
+	return truthDistribution;
 }
 
 //Retrieve the uncorrected data distribution
-TH1F * IterativeUnfolding::GetUncorrectedDataDistribution( string Name, string Title )
+TH1F * IterativeUnfolding::GetUncorrectedDataHistogram( string Name, string Title )
 {
 	return dataDistribution->MakeRootHistogram( Name, Title );
 }
