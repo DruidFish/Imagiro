@@ -24,7 +24,7 @@ class SmearingMatrix
 		SmearingMatrix( Indices* );
 		~SmearingMatrix();
 
-		void StoreTruthRecoPair( vector<double> Truth, vector<double> Reco, double Weight = 1.0 );
+		void StoreTruthRecoPair( vector<double> Truth, vector<double> Reco, double TruthWeight = 1.0, double RecoWeight = 1.0 );
 		void StoreUnreconstructedTruth( vector<double> Truth, double Weight = 1.0 );
 		void StoreReconstructedFake( vector<double> Reco, double Weight = 1.0 );
 		void StoreUnnormalisedMatrix( TH2F* );
@@ -32,14 +32,15 @@ class SmearingMatrix
 		void Finalise();
 
 		double GetElement( int, int );
-		double GetEfficiency( int );
-		double GetCovarianceElement( int, int, int );
+                double GetEfficiency( int );
+		double GetFakeRatio();
+		double GetMissedRatio();
 		TH2F * MakeRootHistogram( string, string, bool MakeNormalised = true );
 
 	private:
 		vector< vector<double> > matrix;
-		//vector< vector< vector<double> > > smearingCovariance;
-		vector<double> efficiencies, normalisation;
+		vector<double> normalisation, efficiencies;
+		double totalPaired, totalMissed, totalFake;
 		Indices * indexCalculator;
 		bool isFinalised;
 };

@@ -18,20 +18,21 @@ SmearingMatrix::SmearingMatrix()
 }
 
 //Constructor from MC data
-SmearingMatrix::SmearingMatrix( Indices * InputIndices ) : indexCalculator(InputIndices), isFinalised(false)
+SmearingMatrix::SmearingMatrix( Indices * InputIndices ) : indexCalculator(InputIndices), isFinalised(false), totalPaired(0.0),
+	totalMissed(0.0), totalFake(0.0)
 {
 	//Initialise the matrix and normalisation
 	int binNumber = indexCalculator->GetBinNumber() + 1;
-
-	vector<double> temporaryMatrixRow( binNumber, 0.0 );
-	matrix = vector< vector<double> >( binNumber, temporaryMatrixRow );
-
+	matrix = vector< vector<double> >( binNumber, vector<double>( binNumber, 0.0 ) );
 	normalisation = vector<double>( binNumber, 0.0 );
 }
 
 //Populate the matrix with unnormalised input smearing matrices to combine
 void SmearingMatrix::StoreUnnormalisedMatrix( TH2F * InputMatrix )
 {
+	cerr << "This won't work" << endl;
+	exit(1);
+
 	//Check the matrix is the right size
 	int binNumber = indexCalculator->GetBinNumber() + 1;
 	int xBins = InputMatrix->GetNbinsX();
@@ -61,15 +62,16 @@ void SmearingMatrix::StoreUnnormalisedMatrix( TH2F * InputMatrix )
 }
 
 //Populate the matrix with values from events
-void SmearingMatrix::StoreTruthRecoPair( vector<double> Truth, vector<double> Reco, double Weight )
+void SmearingMatrix::StoreTruthRecoPair( vector<double> Truth, vector<double> Reco, double TruthWeight, double RecoWeight )
 {
 	//Look up the indices of the truth and reco
 	int truthIndex = indexCalculator->GetIndex(Truth);
 	int recoIndex = indexCalculator->GetIndex(Reco);
 
 	//Increment values
-	matrix[truthIndex][recoIndex] += Weight;
-	normalisation[truthIndex] += Weight;
+	matrix[truthIndex][recoIndex] += RecoWeight;
+	normalisation[truthIndex] += TruthWeight;
+	totalPaired += TruthWeight;
 }
 void SmearingMatrix::StoreUnreconstructedTruth( vector<double> Truth, double Weight )
 {
@@ -80,6 +82,7 @@ void SmearingMatrix::StoreUnreconstructedTruth( vector<double> Truth, double Wei
 	//Increment values
 	matrix[truthIndex][recoIndex] += Weight;
 	normalisation[truthIndex] += Weight;
+	totalMissed += Weight;
 }
 void SmearingMatrix::StoreReconstructedFake( vector<double> Reco, double Weight )
 {
@@ -90,6 +93,7 @@ void SmearingMatrix::StoreReconstructedFake( vector<double> Reco, double Weight 
 	//Increment values
 	matrix[truthIndex][recoIndex] += Weight;
 	normalisation[truthIndex] += Weight;
+	totalFake += Weight;
 }
 
 //Do a bunch of extra calculations that aren't necessary if you just want the raw smearing matrix
@@ -97,97 +101,44 @@ void SmearingMatrix::Finalise()
 {
 	if ( !isFinalised )
 	{
-		//Normalise and calculate efficiencies
-		int binNumber = indexCalculator->GetBinNumber();
+		//Find matrix dimensions (include a bad bin)
+		int binNumber = indexCalculator->GetBinNumber() + 1;
+
+		//Prepare storage for the efficiencies
 		efficiencies = vector<double>( binNumber, 0.0 );
-		for ( int effectIndex = 0; effectIndex < binNumber; effectIndex++ )
-		{
-			//Calculate the fake rate for this effect index
-			double fakeRate = matrix[binNumber][effectIndex] / binNumber;
 
-			for ( int causeIndex = 0; causeIndex < binNumber; causeIndex++ )
-			{
-				//Add in the fakes, evenly distributed over all causes
-				matrix[causeIndex][effectIndex] += fakeRate;
-
-				//Fix nasty div0 errors caused by the treatment of fakes above
-				if ( normalisation[causeIndex] == 0 && fakeRate == matrix[causeIndex][effectIndex] )
-				{
-					//Assume that the truth distribution has no entries in this bin, so it should purely have fakes
-					matrix[causeIndex][effectIndex] = 1.0 / binNumber;
-				}
-				else
-				{
-					//Normalise
-					matrix[causeIndex][effectIndex] /= normalisation[causeIndex];
-				}
-
-				//Check for divide-by-zero problems
-				if ( isinf( matrix[causeIndex][effectIndex] ) )
-				{
-					cerr << "SMEARING: Divide by zero error (truth) in the normalisation" << endl;
-					exit(1);
-				}
-				else if ( isnan( matrix[causeIndex][effectIndex] ) )
-				{
-					matrix[causeIndex][effectIndex] = 0.0;
-				}
-
-				efficiencies[causeIndex] += matrix[causeIndex][effectIndex];
-			}
-		}
-
-		//Also normalise the fakes and unreconstructed events, just for nice presentation
 		for ( int causeIndex = 0; causeIndex < binNumber; causeIndex++ )
 		{
-			//Normalise unreconstructed
-			matrix[causeIndex][binNumber] /= normalisation[causeIndex];
-		}
-		for ( int effectIndex = 0; effectIndex < binNumber; effectIndex++ )
-		{
-			//Normalise fakes
-			matrix[binNumber][effectIndex] /= normalisation[binNumber];
-		}
+			//If there's no information, just make a uniform row
+			if ( normalisation[ causeIndex ] == 0.0 )
+			{
+				for ( int effectIndex = 0; effectIndex < binNumber; effectIndex++ )
+				{
+					matrix[ causeIndex ][ effectIndex ] = matrix[ binNumber - 1 ][ effectIndex ] / (double)( binNumber - 1 );
+				}
 
-		//Initialise the tensor, apologies for the horrible syntax
-		/*smearingCovariance = vector< vector< vector<double> > >( binNumber, vector< vector<double> >( binNumber, vector<double>( binNumber, 0.0 ) ) );
+				efficiencies[ causeIndex ] = normalisation[ binNumber - 1 ] / (double)( binNumber - 1 );
+			}
+			else
+			{
+				for ( int effectIndex = 0; effectIndex < binNumber; effectIndex++ )
+				{
+					//Add the fakes
+					if ( causeIndex != binNumber - 1 )
+					{
+						matrix[ causeIndex ][ effectIndex ] += ( matrix[ binNumber - 1 ][ effectIndex ] / (double)( binNumber - 1 ) );
+					}
 
-		//Loop over all r, s and u to populate the tensor
-		for ( int indexR = 0; indexR < binNumber; indexR++ )
-		{
-		for ( int indexS = 0; indexS < binNumber; indexS++ )
-		{
-		for ( int indexU = 0; indexU < binNumber; indexU++ )
-		{
-		//Calculate the term
-		double term = matrix[indexU][indexR];
-		if ( indexR != indexS )
-		{
-		term *= -matrix[indexU][indexS];
-		}
-		else
-		{
-		term *= ( 1 - term );
-		}
+					//Calculate the efficiency
+					efficiencies[ causeIndex ] += matrix[ causeIndex ][ effectIndex ];
 
-		term /= normalisation[indexU];
+					//Normalise
+					matrix[ causeIndex ][ effectIndex ] /= normalisation[ causeIndex ];
+				}
 
-		//Check for divide-by-zero errors
-		if ( isinf(term) )
-		{
-		cerr << "SMEARING: Divide by zero error (truth) in the error analysis" << endl;
-		exit(1);
+				efficiencies[ causeIndex ] /= normalisation[ causeIndex ];
+			}
 		}
-		else if ( isnan(term) )
-		{
-		term = 0.0;
-		}
-
-		//Store the term
-		smearingCovariance[indexR][indexS][indexU] = term;
-		}
-		}
-		}*/
 
 		isFinalised = true;
 	}
@@ -208,7 +159,7 @@ double SmearingMatrix::GetElement( int CauseIndex, int EffectIndex )
 		Finalise();
 	}
 
-	return matrix[CauseIndex][EffectIndex];
+	return matrix[ CauseIndex ][ EffectIndex ];
 }
 
 //Return efficiency of a given cause
@@ -223,19 +174,16 @@ double SmearingMatrix::GetEfficiency( int CauseIndex )
 	return efficiencies[CauseIndex];
 }
 
-//Return smearing covariance tensor element
-double SmearingMatrix::GetCovarianceElement( int IndexR, int IndexS, int IndexU )
+//Return ratio of fake events to paired + missed
+double SmearingMatrix::GetFakeRatio()
 {
-	cerr << "Don't use this. It's a waste of time" << endl;
-	exit(1);
+	return totalFake / ( totalPaired + totalMissed );
+}
 
-	//Check if smearing covariance is already calculated
-	/*if ( !isFinalised )
-	  {
-	  Finalise();
-	  }
-
-	  return smearingCovariance[IndexR][IndexS][IndexU];*/
+//Return ratio of missed events to paired + fake
+double SmearingMatrix::GetMissedRatio()
+{
+	return totalMissed / ( totalPaired + totalFake );
 }
 
 //Return a root 2D histogram containing the smearing matrix

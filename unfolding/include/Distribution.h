@@ -32,10 +32,12 @@ class Distribution
 		~Distribution();
 
 		void StoreEvent( vector<double> Value, double Weight = 1.0 );
+		void StoreBadEvent( double Weight = 1.0 );
 
 		double GetBinNumber( int BinIndex );
 		double GetBinProbability( int BinIndex );
-		TH1F * MakeRootHistogram( string Name, string Title, bool WithErrors = false, bool MakeNormalised = false );
+
+		TH1F * MakeRootHistogram( string Name, string Title, bool WithErrors = false, bool MakeNormalised = false, bool WithBadBin = false );
 
 		//Try and account for statistical fluctuations with a moving-average smearing
 		void Smooth( int SideBinNumber = 1 );

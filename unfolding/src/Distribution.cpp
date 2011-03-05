@@ -21,16 +21,18 @@ Distribution::Distribution()
 //Just initialise an empty distribution
 Distribution::Distribution( Indices * InputIndices ) : indexCalculator(InputIndices)
 {
-	//Initialise the bins
-	binValues = vector<double>( InputIndices->GetBinNumber(), 0.0 );
+	//Initialise the bins (include a bad bin)
+	binValues = vector<double>( InputIndices->GetBinNumber() + 1, 0.0 );
 	integral = 0.0;
 }
 
 //Initialise by summing a bunch of TH1Fs
-Distribution::Distribution( vector< TH1F* > InputDistributions, Indices * InputIndices ) : indexCalculator(InputIndices)
+Distribution::Distribution( vector< TH1F* > InputDistributions, Indices * InputIndices ) : integral(0.0), indexCalculator(InputIndices)
 {
+	//Get the number of bins in the distribution (include a bad bin)
+	int binNumber = InputIndices->GetBinNumber() + 1;
+
 	//Check all inputs have the right number of bins
-	int binNumber = InputIndices->GetBinNumber();
 	for ( int inputIndex = 0; inputIndex < InputDistributions.size(); inputIndex++ )
 	{
 		int inputBinNumber = InputDistributions[inputIndex]->GetNbinsX();
@@ -43,7 +45,6 @@ Distribution::Distribution( vector< TH1F* > InputDistributions, Indices * InputI
 
 	//Initialise and populate the distribution
 	binValues = vector<double>( binNumber, 0.0 );
-	integral = 0.0;
 	for ( int binIndex = 0; binIndex < binNumber; binIndex++ )
 	{
 		for ( int inputIndex = 0; inputIndex < InputDistributions.size(); inputIndex++ )
@@ -58,22 +59,39 @@ Distribution::Distribution( vector< TH1F* > InputDistributions, Indices * InputI
 Distribution::Distribution( Distribution * DataDistribution, SmearingMatrix * Smearing, Distribution * PriorDistribution ) : integral(0.0),
 	indexCalculator( DataDistribution->indexCalculator )
 {
+	//Get the number of bins in the distribution (include a bad bin)
+	int binNumber = indexCalculator->GetBinNumber() + 1;
+
+	//Make a new, empty distribution
+	binValues = vector< double >( binNumber, 0.0 );
+
 	//Create the Bayes theorem inverse of the smearing matrix
 	UnfoldingMatrix * bayes = new UnfoldingMatrix( Smearing, PriorDistribution, indexCalculator );
 
-	//Populate the distribution
-	int binNumber = indexCalculator->GetBinNumber();
-	for  ( int causeIndex = 0; causeIndex < binNumber; causeIndex++ )
-	{
-		double binValue = 0.0;
+	//Keep count of the number of events in the source distribution
+	double totalEffectNumber = 0.0;
 
-		for ( int effectIndex = 0; effectIndex < binNumber; effectIndex++ )
+	//Populate the distribution
+	for ( int effectIndex = 0; effectIndex < binNumber; effectIndex++ )
+	{
+		double effectNumber;
+		if ( effectIndex == binNumber - 1 )
 		{
-			binValue += ( DataDistribution->GetBinNumber(effectIndex) * bayes->GetElement( causeIndex, effectIndex ) );
+			//Extrapolate the number missed
+			effectNumber = totalEffectNumber * Smearing->GetMissedRatio();
+		}
+		else
+		{
+			effectNumber = DataDistribution->GetBinNumber( effectIndex );
+			totalEffectNumber += effectNumber;
 		}
 
-		binValues.push_back(binValue);
-		integral += binValue;
+		for  ( int causeIndex = 0; causeIndex < binNumber; causeIndex++ )
+		{
+			double newValue = bayes->GetElement( causeIndex, effectIndex ) * effectNumber;
+			binValues[ causeIndex ] += newValue;
+			integral += newValue;
+		}
 	}
 
 	//Free up some memory
@@ -83,16 +101,36 @@ Distribution::Distribution( Distribution * DataDistribution, SmearingMatrix * Sm
 //Make this distribution by smearing another
 Distribution::Distribution( Distribution * InputDistribution, SmearingMatrix * Smearing ) : integral(0.0), indexCalculator( InputDistribution->indexCalculator )
 {
+	//Get the number of bins in the distribution (include a bad bin)
+	int binNumber = indexCalculator->GetBinNumber() + 1;
+
 	//Make a new, empty distribution
-	binValues = vector< double >( InputDistribution->binValues.size(), 0.0 );
+	binValues = vector< double >( binNumber, 0.0 );
+
+	//Keep count of the number of events in the source distribution
+	double totalCauseNumber = 0.0;
 
 	//Loop over each bin in this distribution
-	for ( int causeIndex = 0; causeIndex < binValues.size(); causeIndex++ )
+	for ( int causeIndex = 0; causeIndex < binNumber; causeIndex++ )
 	{
-		//Loop over each bin in the smeared distribution
-		for ( int effectIndex = 0; effectIndex < binValues.size(); effectIndex++ )
+		//Get the number of events in this bin of the truth distribution
+		double causeNumber;
+		if ( causeIndex == binNumber - 1 )
 		{
-			double newValue = Smearing->GetElement( causeIndex, effectIndex ) * InputDistribution->GetBinNumber( causeIndex );
+			//Extrapolate the number of fakes
+			//causeNumber = totalCauseNumber * Smearing->GetFakeRatio();
+			causeNumber = 0.0;
+		}
+		else
+		{
+			causeNumber = InputDistribution->GetBinNumber( causeIndex );
+			totalCauseNumber += causeNumber;
+		}
+
+		//Loop over each bin in the smeared distribution
+		for ( int effectIndex = 0; effectIndex < binNumber; effectIndex++ )
+		{
+			double newValue = Smearing->GetElement( causeIndex, effectIndex ) * causeNumber;
 			binValues[ effectIndex ] += newValue;
 			integral += newValue;
 		}
@@ -107,15 +145,21 @@ Distribution::~Distribution()
 //Store an event
 void Distribution::StoreEvent( vector<double> Value, double Weight )
 {
-	int binIndex = indexCalculator->GetIndex(Value);
-	binValues[binIndex] += Weight;
+	int binIndex = indexCalculator->GetIndex( Value );
+	binValues[ binIndex ] += Weight;
+	integral += Weight;
+}
+
+void Distribution::StoreBadEvent( double Weight )
+{
+	binValues[ binValues.size() ] += Weight;
 	integral += Weight;
 }
 
 //Return the contents of the bin with the given index
 double Distribution::GetBinNumber( int InputIndex )
 {
-	if ( InputIndex >= 0 && InputIndex < indexCalculator->GetBinNumber() )
+	if ( InputIndex >= 0 && InputIndex <= indexCalculator->GetBinNumber() )
 	{
 		return binValues[InputIndex];
 	}
@@ -129,7 +173,7 @@ double Distribution::GetBinNumber( int InputIndex )
 //Return the normalised contents of the bin with the given index
 double Distribution::GetBinProbability( int InputIndex )
 {
-	if ( InputIndex >= 0 && InputIndex < indexCalculator->GetBinNumber() )
+	if ( InputIndex >= 0 && InputIndex <= indexCalculator->GetBinNumber() )
 	{
 		return (double)( binValues[InputIndex] ) / (double)integral;
 	}
@@ -141,9 +185,16 @@ double Distribution::GetBinProbability( int InputIndex )
 }
 
 //Make a root histogram from the distribution
-TH1F * Distribution::MakeRootHistogram( string Name, string Title, bool WithErrors, bool MakeNormalised )
+TH1F * Distribution::MakeRootHistogram( string Name, string Title, bool WithErrors, bool MakeNormalised, bool WithBadBin )
 {
+	//Get the correct number of bins
 	int binNumber = indexCalculator->GetBinNumber();
+	if (WithBadBin)
+	{
+		binNumber += 1;
+	}
+
+	//Make a new root histogram
 	TH1F * rootHistogram = new TH1F( Name.c_str(), Title.c_str(), binNumber - 2, indexCalculator->GetMinima()[0], indexCalculator->GetMaxima()[0] );
 
 	//Populate the bins one-by-one - note that in the TH1F, bin 0 is the underflow

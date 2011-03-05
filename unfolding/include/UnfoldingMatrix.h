@@ -25,7 +25,6 @@ class UnfoldingMatrix
 		~UnfoldingMatrix();
 
 		double GetElement( int, int );
-		double GetCovarianceTerm( int, int );
 
 	private:
 		vector< vector<double> > matrix, covariance;

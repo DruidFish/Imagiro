@@ -311,7 +311,7 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 			cerr << "Delinearisation has caused significant changes in distribution bins compared to their reference values" << endl;
 			cerr << "Improve the binning of " << yName << " in the " << xName << " vs " << yName << " plot" << endl;
 			cerr << "Try using a finer binning, and avoid large numbers of events in under or overflow bins" << endl;
-			exit(1);
+			//exit(1);
 		}
 
 		//Free some memory

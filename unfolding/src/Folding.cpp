@@ -69,7 +69,7 @@ void Folding::StoreTruthRecoPair( double Truth, double Reco, double TruthWeight,
 		truthDistribution->StoreEvent( vector<double>( 1, Truth ), TruthWeight );
 		reconstructedDistribution->StoreEvent( vector<double>( 1, Reco ), RecoWeight );
 	}
-	inputSmearing->StoreTruthRecoPair( vector<double>( 1, Truth ), vector<double>( 1, Reco ), TruthWeight * RecoWeight );
+	inputSmearing->StoreTruthRecoPair( vector<double>( 1, Truth ), vector<double>( 1, Reco ), TruthWeight, RecoWeight );
 }
 
 //N-Dimensional version
@@ -80,7 +80,7 @@ void Folding::StoreTruthRecoPair( vector<double> Truth, vector<double> Reco, dou
 		truthDistribution->StoreEvent( Truth, TruthWeight );
 		reconstructedDistribution->StoreEvent( Reco, RecoWeight );
 	}
-	inputSmearing->StoreTruthRecoPair( Truth, Reco, TruthWeight * RecoWeight );
+	inputSmearing->StoreTruthRecoPair( Truth, Reco, TruthWeight, RecoWeight );
 }
 
 //If an MC event is not reconstructed at all, use this
@@ -130,14 +130,14 @@ void Folding::StoreValueToFold( double Input, double Weight )
 {
 	vector<double> inputVector( 1, Input );
 	inputDistribution->StoreEvent( inputVector, Weight );
-	sumOfInputWeightSquares[ indexCalculator->GetIndex( inputVector ) ] += ( Weight * Weight );
+	sumOfInputWeightSquares[ indexCalculator->GetIndex( inputVector ) ] += Weight;
 }
 
 //N-Dimensional version
 void Folding::StoreValueToFold( vector<double> Input, double Weight )
 {
 	inputDistribution->StoreEvent( Input, Weight );
-	sumOfInputWeightSquares[ indexCalculator->GetIndex( Input ) ] += ( Weight * Weight );
+	sumOfInputWeightSquares[ indexCalculator->GetIndex( Input ) ] += Weight;
 }
 
 //Smear the input distribution
