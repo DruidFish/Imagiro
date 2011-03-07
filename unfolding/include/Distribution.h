@@ -33,6 +33,7 @@ class Distribution
 
 		void StoreEvent( vector<double> Value, double Weight = 1.0 );
 		void StoreBadEvent( double Weight = 1.0 );
+		void SetBadBin( double Ratio );
 
 		double GetBinNumber( int BinIndex );
 		double GetBinProbability( int BinIndex );

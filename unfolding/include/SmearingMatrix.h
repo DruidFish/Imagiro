@@ -33,14 +33,11 @@ class SmearingMatrix
 
 		double GetElement( int, int );
                 double GetEfficiency( int );
-		double GetFakeRatio();
-		double GetMissedRatio();
 		TH2F * MakeRootHistogram( string, string, bool MakeNormalised = true );
 
 	private:
 		vector< vector<double> > matrix;
 		vector<double> normalisation, efficiencies;
-		double totalPaired, totalMissed, totalFake;
 		Indices * indexCalculator;
 		bool isFinalised;
 };

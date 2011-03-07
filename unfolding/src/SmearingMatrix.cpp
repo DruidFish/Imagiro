@@ -18,8 +18,7 @@ SmearingMatrix::SmearingMatrix()
 }
 
 //Constructor from MC data
-SmearingMatrix::SmearingMatrix( Indices * InputIndices ) : indexCalculator(InputIndices), isFinalised(false), totalPaired(0.0),
-	totalMissed(0.0), totalFake(0.0)
+SmearingMatrix::SmearingMatrix( Indices * InputIndices ) : indexCalculator(InputIndices), isFinalised(false)
 {
 	//Initialise the matrix and normalisation
 	int binNumber = indexCalculator->GetBinNumber() + 1;
@@ -71,7 +70,6 @@ void SmearingMatrix::StoreTruthRecoPair( vector<double> Truth, vector<double> Re
 	//Increment values
 	matrix[truthIndex][recoIndex] += RecoWeight;
 	normalisation[truthIndex] += TruthWeight;
-	totalPaired += TruthWeight;
 }
 void SmearingMatrix::StoreUnreconstructedTruth( vector<double> Truth, double Weight )
 {
@@ -82,7 +80,6 @@ void SmearingMatrix::StoreUnreconstructedTruth( vector<double> Truth, double Wei
 	//Increment values
 	matrix[truthIndex][recoIndex] += Weight;
 	normalisation[truthIndex] += Weight;
-	totalMissed += Weight;
 }
 void SmearingMatrix::StoreReconstructedFake( vector<double> Reco, double Weight )
 {
@@ -93,7 +90,6 @@ void SmearingMatrix::StoreReconstructedFake( vector<double> Reco, double Weight 
 	//Increment values
 	matrix[truthIndex][recoIndex] += Weight;
 	normalisation[truthIndex] += Weight;
-	totalFake += Weight;
 }
 
 //Do a bunch of extra calculations that aren't necessary if you just want the raw smearing matrix
@@ -104,39 +100,35 @@ void SmearingMatrix::Finalise()
 		//Find matrix dimensions (include a bad bin)
 		int binNumber = indexCalculator->GetBinNumber() + 1;
 
-		//Prepare storage for the efficiencies
+		//Prepare storage for the efficiencies and effect probabilities
 		efficiencies = vector<double>( binNumber, 0.0 );
 
+		//Make the smearing matrix
 		for ( int causeIndex = 0; causeIndex < binNumber; causeIndex++ )
 		{
-			//If there's no information, just make a uniform row
 			if ( normalisation[ causeIndex ] == 0.0 )
 			{
+				//If there's no information, just make a uniform row
 				for ( int effectIndex = 0; effectIndex < binNumber; effectIndex++ )
 				{
-					matrix[ causeIndex ][ effectIndex ] = matrix[ binNumber - 1 ][ effectIndex ] / (double)( binNumber - 1 );
-				}
+					//One over the number of bins
+					matrix[ causeIndex ][ effectIndex ] = 1.0 / (double)( binNumber - 1 );
 
-				efficiencies[ causeIndex ] = normalisation[ binNumber - 1 ] / (double)( binNumber - 1 );
+					//Increment the efficiency
+					efficiencies[ causeIndex ] += matrix[ causeIndex ][ effectIndex ];
+				}
 			}
 			else
 			{
+				//Make a regular matrix row
 				for ( int effectIndex = 0; effectIndex < binNumber; effectIndex++ )
 				{
-					//Add the fakes
-					if ( causeIndex != binNumber - 1 )
-					{
-						matrix[ causeIndex ][ effectIndex ] += ( matrix[ binNumber - 1 ][ effectIndex ] / (double)( binNumber - 1 ) );
-					}
-
-					//Calculate the efficiency
-					efficiencies[ causeIndex ] += matrix[ causeIndex ][ effectIndex ];
-
 					//Normalise
 					matrix[ causeIndex ][ effectIndex ] /= normalisation[ causeIndex ];
-				}
 
-				efficiencies[ causeIndex ] /= normalisation[ causeIndex ];
+					//Increment the sums
+					efficiencies[ causeIndex ] += matrix[ causeIndex ][ effectIndex ];
+				}
 			}
 		}
 
@@ -172,18 +164,6 @@ double SmearingMatrix::GetEfficiency( int CauseIndex )
 	}
 
 	return efficiencies[CauseIndex];
-}
-
-//Return ratio of fake events to paired + missed
-double SmearingMatrix::GetFakeRatio()
-{
-	return totalFake / ( totalPaired + totalMissed );
-}
-
-//Return ratio of missed events to paired + fake
-double SmearingMatrix::GetMissedRatio()
-{
-	return totalMissed / ( totalPaired + totalFake );
 }
 
 //Return a root 2D histogram containing the smearing matrix

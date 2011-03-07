@@ -123,6 +123,7 @@ class IterativeUnfolding
 		Indices * indexCalculator;
 		Distribution *dataDistribution, *unfoldedDistribution, *truthDistribution, *reconstructedDistribution;
 		SmearingMatrix * inputSmearing;
+		double totalPaired, totalFake, totalMissed;
 		bool debug;
 };
 

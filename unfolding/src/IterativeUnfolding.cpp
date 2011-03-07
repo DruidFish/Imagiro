@@ -24,7 +24,8 @@ IterativeUnfolding::IterativeUnfolding()
 //minimum and maximum of the output distribution as arguments
 //NB: the unfolding scales roughly with bin number ^ 2, the
 //error calculation scales roughly with bin number ^ 3.
-IterativeUnfolding::IterativeUnfolding( int BinNumber, double Minimum, double Maximum, string Name, int UniqueID, bool DebugMode ) : debug(DebugMode), name(Name), uniqueID(UniqueID)
+IterativeUnfolding::IterativeUnfolding( int BinNumber, double Minimum, double Maximum, string Name, int UniqueID, bool DebugMode ) : debug(DebugMode), name(Name), uniqueID(UniqueID),
+	totalPaired(0.0), totalFake(0.0), totalMissed(0.0)
 {
 	indexCalculator = new Indices( vector<int>( 1, BinNumber ), vector<double>( 1, Minimum ), vector<double>( 1, Maximum ) );
 
@@ -41,7 +42,8 @@ IterativeUnfolding::IterativeUnfolding( int BinNumber, double Minimum, double Ma
 }
 
 //N-Dimensional version
-IterativeUnfolding::IterativeUnfolding( vector<int> BinNumbers, vector<double> Minima, vector<double> Maxima, string Name, int UniqueID, bool DebugMode ) : debug(DebugMode), name(Name), uniqueID(UniqueID)
+IterativeUnfolding::IterativeUnfolding( vector<int> BinNumbers, vector<double> Minima, vector<double> Maxima, string Name, int UniqueID, bool DebugMode ) : debug(DebugMode), name(Name), uniqueID(UniqueID),
+	totalPaired(0.0), totalFake(0.0), totalMissed(0.0)
 {
 	indexCalculator = new Indices( BinNumbers, Minima, Maxima );
 
@@ -83,8 +85,10 @@ void IterativeUnfolding::StoreTruthRecoPair( double Truth, double Reco, double T
 	{
 		truthDistribution->StoreEvent( vector<double>( 1, Truth ), TruthWeight );
 		reconstructedDistribution->StoreEvent( vector<double>( 1, Reco ), RecoWeight );
+		totalPaired += TruthWeight;
 	}
-	inputSmearing->StoreTruthRecoPair( vector<double>( 1, Truth ), vector<double>( 1, Reco ), TruthWeight * RecoWeight );
+
+	inputSmearing->StoreTruthRecoPair( vector<double>( 1, Truth ), vector<double>( 1, Reco ), TruthWeight, RecoWeight );
 }
 
 //N-Dimensional version
@@ -94,8 +98,10 @@ void IterativeUnfolding::StoreTruthRecoPair( vector<double> Truth, vector<double
 	{
 		truthDistribution->StoreEvent( Truth, TruthWeight );
 		reconstructedDistribution->StoreEvent( Reco, RecoWeight );
+		totalPaired += TruthWeight;
 	}
-	inputSmearing->StoreTruthRecoPair( Truth, Reco, TruthWeight * RecoWeight );
+
+	inputSmearing->StoreTruthRecoPair( Truth, Reco, TruthWeight, RecoWeight );
 }
 
 //If an MC event is not reconstructed at all, use this
@@ -105,7 +111,10 @@ void IterativeUnfolding::StoreUnreconstructedTruth( double Truth, double Weight,
 	if (UseInPrior)
 	{
 		truthDistribution->StoreEvent( vector<double>( 1, Truth ), Weight );
+		reconstructedDistribution->StoreBadEvent( Weight );
+		totalMissed += Weight;
 	}
+
 	inputSmearing->StoreUnreconstructedTruth( vector<double>( 1, Truth ), Weight );
 }
 
@@ -115,7 +124,10 @@ void IterativeUnfolding::StoreUnreconstructedTruth( vector<double> Truth, double
 	if (UseInPrior)
 	{
 		truthDistribution->StoreEvent( Truth, Weight );
+		reconstructedDistribution->StoreBadEvent( Weight );
+		totalMissed += Weight;
 	}
+
 	inputSmearing->StoreUnreconstructedTruth( Truth, Weight );
 }
 
@@ -125,8 +137,11 @@ void IterativeUnfolding::StoreReconstructedFake( double Reco, double Weight, boo
 {
 	if (UseInPrior)
 	{
+		truthDistribution->StoreBadEvent( Weight );
 		reconstructedDistribution->StoreEvent( vector<double>( 1, Reco ), Weight );
+		totalFake += Weight;
 	}
+
 	inputSmearing->StoreReconstructedFake( vector<double>( 1, Reco ), Weight );
 }
 
@@ -135,8 +150,11 @@ void IterativeUnfolding::StoreReconstructedFake( vector<double> Reco, double Wei
 {
 	if (UseInPrior)
 	{
+		truthDistribution->StoreBadEvent( Weight );
 		reconstructedDistribution->StoreEvent( Reco, Weight );
+		totalFake += Weight;
 	}
+
 	inputSmearing->StoreReconstructedFake( Reco, Weight );
 }
 
@@ -164,6 +182,9 @@ void IterativeUnfolding::StoreDataValue( vector<double> Data, double Weight )
 //the Kolmogorov-Smirnof comparison value is higher
 void IterativeUnfolding::Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing )
 {
+	//Extrapolate the number of missed events in the data
+	dataDistribution->SetBadBin( totalMissed / ( totalPaired + totalFake ) );
+
 	//Use the truth distribution as the prior
 	Distribution * priorDistribution = truthDistribution;
 
@@ -270,6 +291,9 @@ void IterativeUnfolding::ClosureTest()
 //Returns the number of iterations required. Convergence criteria as output arguments
 int IterativeUnfolding::MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing )
 {
+	//Extrapolate the number of missed events in the data
+	dataDistribution->SetBadBin( totalMissed / ( totalPaired + totalFake ) );
+
         //Use the truth distribution as the prior
 	Distribution * priorDistribution = truthDistribution;
 
@@ -288,8 +312,6 @@ int IterativeUnfolding::MonteCarloCrossCheck( Distribution * ReferenceDistributi
 	Distribution * adjustedDistribution;
 	for ( int iteration = 0; iteration < MAX_ITERATIONS_FOR_CROSS_CHECK; iteration++ )
 	{
-
-
 		//Smooth the prior distribution, is asked. Don't smooth the truth
 		if ( WithSmoothing && iteration != 0 )
 		{

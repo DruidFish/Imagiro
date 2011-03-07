@@ -23,13 +23,20 @@ UnfoldingMatrix::UnfoldingMatrix( SmearingMatrix * InputSmearing, Distribution *
 	//Get the dimension of the matrix (include a bad bin)
 	int binNumber = InputIndices->GetBinNumber() + 1;
 
+	//Keep count of the number of events in the source distribution
+	double totalCauseProbability = 0.0;
+
 	//Calculate the probabilities of the effects
 	vector<double> effectProbabilities( binNumber, 0.0 );
-	for ( int effectIndex = 0; effectIndex < binNumber; effectIndex++ )
+	for ( int causeIndex = 0; causeIndex < binNumber; causeIndex++ )
 	{
-		for ( int causeIndex = 0; causeIndex < binNumber; causeIndex++ )
+		//Find out the probability of a particular cause
+		double causeProbability = InputDistribution->GetBinProbability( causeIndex );
+
+		for ( int effectIndex = 0; effectIndex < binNumber; effectIndex++ )
 		{
-			effectProbabilities[ effectIndex ] += ( InputSmearing->GetElement( causeIndex, effectIndex ) * InputDistribution->GetBinProbability( causeIndex ) );
+			//Add to the effect probability
+			effectProbabilities[ effectIndex ] += ( InputSmearing->GetElement( causeIndex, effectIndex ) * causeProbability );
 		}
 	}
 
@@ -37,9 +44,13 @@ UnfoldingMatrix::UnfoldingMatrix( SmearingMatrix * InputSmearing, Distribution *
 	matrix = vector< vector<double> >( binNumber, vector<double>( binNumber, 0.0 ) );
 	for ( int causeIndex = 0; causeIndex < binNumber; causeIndex++ )
 	{
+		//Find out the probability of a particular cause
+		double causeProbability = InputDistribution->GetBinProbability( causeIndex );
+
+		//Work out the corresponding matrix elements
 		for ( int effectIndex = 0; effectIndex < binNumber; effectIndex++ )
 		{
-			double numerator = InputSmearing->GetElement( causeIndex, effectIndex ) * InputDistribution->GetBinProbability( causeIndex );
+			double numerator = InputSmearing->GetElement( causeIndex, effectIndex ) * causeProbability;
 			numerator /= ( effectProbabilities[ effectIndex ] * InputSmearing->GetEfficiency( causeIndex ) );
 
 			//Check for divide-by-zero issues

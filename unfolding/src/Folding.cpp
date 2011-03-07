@@ -21,7 +21,8 @@ Folding::Folding()
 //minimum and maximum of the output distribution as arguments
 //NB: the unfolding scales roughly with bin number ^ 2, the
 //error calculation scales roughly with bin number ^ 3.
-Folding::Folding( int BinNumber, double Minimum, double Maximum, string Name, int UniqueID ) : name(Name), uniqueID(UniqueID)
+Folding::Folding( int BinNumber, double Minimum, double Maximum, string Name, int UniqueID ) : name(Name), uniqueID(UniqueID),
+	totalPaired(0.0), totalMissed(0.0), totalFake(0.0)
 {
 	//Make new vectors just with the one entry
 	indexCalculator = new Indices( vector<int>( 1, BinNumber ), vector<double>( 1, Minimum ), vector<double>( 1, Maximum ) );
@@ -34,7 +35,8 @@ Folding::Folding( int BinNumber, double Minimum, double Maximum, string Name, in
 }
 
 //N-Dimensional version
-Folding::Folding( vector<int> BinNumbers, vector<double> Minima, vector<double> Maxima, string Name, int UniqueID ) : name(Name), uniqueID(UniqueID)
+Folding::Folding( vector<int> BinNumbers, vector<double> Minima, vector<double> Maxima, string Name, int UniqueID ) : name(Name), uniqueID(UniqueID),
+	totalPaired(0.0), totalMissed(0.0), totalFake(0.0)
 {
 	indexCalculator = new Indices( BinNumbers, Minima, Maxima );
 	inputSmearing = new SmearingMatrix(indexCalculator);
@@ -68,7 +70,9 @@ void Folding::StoreTruthRecoPair( double Truth, double Reco, double TruthWeight,
 	{
 		truthDistribution->StoreEvent( vector<double>( 1, Truth ), TruthWeight );
 		reconstructedDistribution->StoreEvent( vector<double>( 1, Reco ), RecoWeight );
+		totalPaired += TruthWeight;
 	}
+
 	inputSmearing->StoreTruthRecoPair( vector<double>( 1, Truth ), vector<double>( 1, Reco ), TruthWeight, RecoWeight );
 }
 
@@ -79,7 +83,9 @@ void Folding::StoreTruthRecoPair( vector<double> Truth, vector<double> Reco, dou
 	{
 		truthDistribution->StoreEvent( Truth, TruthWeight );
 		reconstructedDistribution->StoreEvent( Reco, RecoWeight );
+		totalPaired += TruthWeight;
 	}
+
 	inputSmearing->StoreTruthRecoPair( Truth, Reco, TruthWeight, RecoWeight );
 }
 
@@ -90,7 +96,10 @@ void Folding::StoreUnreconstructedTruth( double Truth, double Weight, bool UseIn
 	if (UseInPrior)
 	{
 		truthDistribution->StoreEvent( vector<double>( 1, Truth ), Weight );
+		reconstructedDistribution->StoreBadEvent( Weight );
+		totalMissed += Weight;
 	}
+
 	inputSmearing->StoreUnreconstructedTruth( vector<double>( 1, Truth ), Weight );
 }
 
@@ -100,7 +109,10 @@ void Folding::StoreUnreconstructedTruth( vector<double> Truth, double Weight, bo
 	if (UseInPrior)
 	{
 		truthDistribution->StoreEvent( Truth, Weight );
+		reconstructedDistribution->StoreBadEvent( Weight );
+		totalMissed += Weight;
 	}
+
 	inputSmearing->StoreUnreconstructedTruth( Truth, Weight );
 }
 
@@ -110,8 +122,11 @@ void Folding::StoreReconstructedFake( double Reco, double Weight, bool UseInPrio
 {
 	if (UseInPrior)
 	{
+		truthDistribution->StoreBadEvent( Weight );
 		reconstructedDistribution->StoreEvent( vector<double>( 1, Reco ), Weight );
+		totalFake += Weight;
 	}
+
 	inputSmearing->StoreReconstructedFake( vector<double>( 1, Reco ), Weight );
 }
 
@@ -120,8 +135,11 @@ void Folding::StoreReconstructedFake( vector<double> Reco, double Weight, bool U
 {
 	if (UseInPrior)
 	{
+		truthDistribution->StoreBadEvent( Weight );
 		reconstructedDistribution->StoreEvent( Reco, Weight );
+		totalFake += Weight;
 	}
+
 	inputSmearing->StoreReconstructedFake( Reco, Weight );
 }
 
@@ -130,14 +148,14 @@ void Folding::StoreValueToFold( double Input, double Weight )
 {
 	vector<double> inputVector( 1, Input );
 	inputDistribution->StoreEvent( inputVector, Weight );
-	sumOfInputWeightSquares[ indexCalculator->GetIndex( inputVector ) ] += Weight;
+	sumOfInputWeightSquares[ indexCalculator->GetIndex( inputVector ) ] += ( Weight * Weight );
 }
 
 //N-Dimensional version
 void Folding::StoreValueToFold( vector<double> Input, double Weight )
 {
 	inputDistribution->StoreEvent( Input, Weight );
-	sumOfInputWeightSquares[ indexCalculator->GetIndex( Input ) ] += Weight;
+	sumOfInputWeightSquares[ indexCalculator->GetIndex( Input ) ] += ( Weight * Weight );
 }
 
 //Smear the input distribution
@@ -145,6 +163,9 @@ void Folding::Fold()
 {
 	//Finalise the smearing matrix
 	inputSmearing->Finalise();
+
+	//Extrapolate the number of fake events in the input distribution
+	inputDistribution->SetBadBin( totalFake / ( totalPaired + totalMissed ) );
 
 	//Make the smeared distribution
 	smearedDistribution = new Distribution( inputDistribution, inputSmearing );

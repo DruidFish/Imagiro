@@ -68,24 +68,13 @@ Distribution::Distribution( Distribution * DataDistribution, SmearingMatrix * Sm
 	//Create the Bayes theorem inverse of the smearing matrix
 	UnfoldingMatrix * bayes = new UnfoldingMatrix( Smearing, PriorDistribution, indexCalculator );
 
-	//Keep count of the number of events in the source distribution
-	double totalEffectNumber = 0.0;
-
 	//Populate the distribution
 	for ( int effectIndex = 0; effectIndex < binNumber; effectIndex++ )
 	{
-		double effectNumber;
-		if ( effectIndex == binNumber - 1 )
-		{
-			//Extrapolate the number missed
-			effectNumber = totalEffectNumber * Smearing->GetMissedRatio();
-		}
-		else
-		{
-			effectNumber = DataDistribution->GetBinNumber( effectIndex );
-			totalEffectNumber += effectNumber;
-		}
+		//Retrieve the uncorrected value
+		double effectNumber = DataDistribution->GetBinNumber( effectIndex );
 
+		//Apply the unfolding matrix
 		for  ( int causeIndex = 0; causeIndex < binNumber; causeIndex++ )
 		{
 			double newValue = bayes->GetElement( causeIndex, effectIndex ) * effectNumber;
@@ -107,27 +96,13 @@ Distribution::Distribution( Distribution * InputDistribution, SmearingMatrix * S
 	//Make a new, empty distribution
 	binValues = vector< double >( binNumber, 0.0 );
 
-	//Keep count of the number of events in the source distribution
-	double totalCauseNumber = 0.0;
-
 	//Loop over each bin in this distribution
 	for ( int causeIndex = 0; causeIndex < binNumber; causeIndex++ )
 	{
-		//Get the number of events in this bin of the truth distribution
-		double causeNumber;
-		if ( causeIndex == binNumber - 1 )
-		{
-			//Extrapolate the number of fakes
-			//causeNumber = totalCauseNumber * Smearing->GetFakeRatio();
-			causeNumber = 0.0;
-		}
-		else
-		{
-			causeNumber = InputDistribution->GetBinNumber( causeIndex );
-			totalCauseNumber += causeNumber;
-		}
+		//Retrieve the correct value
+		double causeNumber = InputDistribution->GetBinNumber( causeIndex );
 
-		//Loop over each bin in the smeared distribution
+		//Apply the smearing matrix
 		for ( int effectIndex = 0; effectIndex < binNumber; effectIndex++ )
 		{
 			double newValue = Smearing->GetElement( causeIndex, effectIndex ) * causeNumber;
@@ -152,8 +127,22 @@ void Distribution::StoreEvent( vector<double> Value, double Weight )
 
 void Distribution::StoreBadEvent( double Weight )
 {
-	binValues[ binValues.size() ] += Weight;
+	binValues[ binValues.size() - 1 ] += Weight;
 	integral += Weight;
+}
+
+void Distribution::SetBadBin( double Ratio )
+{
+	//Check for existing bad bin values
+	if ( binValues[ binValues.size() - 1 ] != 0.0 )
+	{
+		cerr << "WARNING: Overwriting bad bin value suggests that unnecessary extrapolation is being made" << endl;
+		integral -= binValues[ binValues.size() - 1 ];
+	}
+
+	//Set the new bin value as the total volume of the distribution scaled by the given ratio
+	binValues[ binValues.size() - 1 ] = integral * Ratio;
+	integral += binValues[ binValues.size() - 1 ];
 }
 
 //Return the contents of the bin with the given index

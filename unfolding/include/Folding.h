@@ -108,6 +108,7 @@ class Folding
 		vector< double > sumOfInputWeightSquares;
 		Indices * indexCalculator;
 		Distribution *inputDistribution, *smearedDistribution, *truthDistribution, *reconstructedDistribution;
+		double totalPaired, totalFake, totalMissed;
 		SmearingMatrix * inputSmearing;
 };
 
