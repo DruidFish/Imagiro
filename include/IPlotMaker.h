@@ -1,3 +1,12 @@
+/**
+  @interface IPlotMaker
+
+  Gives all of the individual folding/unfolding plot classes a common interface, so that they call all be used by MonteCarloSummaryPlotMaker
+
+  @author Benjamin M Wynne
+  @date 08-03-2011
+  */
+
 #ifndef I_PLOTMAKER_H
 #define I_PLOTMAKER_H
 

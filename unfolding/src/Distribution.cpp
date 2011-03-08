@@ -1,7 +1,7 @@
 /**
   @class Distribution
 
-  A 1D data histogram / probability distribution. Contains the unfolding method
+  A 1D data histogram / probability distribution. Contains the folding and unfolding methods
 
   @author Benjamin M Wynne bwynne@cern.ch
   @date 17-06-2010

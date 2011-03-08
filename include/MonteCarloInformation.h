@@ -1,3 +1,12 @@
+/**
+  @class MonteCarloInformation
+
+  A simple class that holds lists of file locations and formatting instructions for input Monte Carlo samples
+
+  @author Benjamin M Wynne bwynne@cern.ch
+  @date 06-01-2011
+ */
+
 #ifndef MONTE_CARLO_INFORMATION_H
 #define MONTE_CARLO_INFORMATION_H
 

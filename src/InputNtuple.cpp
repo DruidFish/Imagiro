@@ -1,3 +1,12 @@
+/**
+  @class InputNtuple
+
+  Loads data from a file containing a Root Ntuple, and uses hashtables to provide efficient access to that data
+
+  @author Benjamin M Wynne bwynne@cern.ch
+  @date 06-01-2011
+ */
+
 #include "InputNtuple.h"
 #include "TLeaf.h"
 #include "MonteCarloInformation.h"
@@ -72,8 +81,8 @@ InputNtuple::InputNtuple( string FilePath, string NtuplePath, string Description
 		//Map the column name
 		columnNameToIndex[ leafName ] = columnIndex;
 
-                //Do the nasty root Ntuple access thing
-                wrappedNtuple->SetBranchAddress( leafName.c_str(), &( currentValues[ columnIndex ] ), &( branches[ columnIndex ] ) );
+		//Do the nasty root Ntuple access thing
+		wrappedNtuple->SetBranchAddress( leafName.c_str(), &( currentValues[ columnIndex ] ), &( branches[ columnIndex ] ) );
 	}
 
 	//Loop over all rows to map event number to row index

@@ -1,3 +1,14 @@
+/**
+  @class MonteCarloSummaryPlotMaker
+
+  Creates instances of a given "template" plot for each Monte Carlo sample, and then combines the results
+  Systematic errors are given by the range of different resutls from using each Monte Carlo sample
+  Cross-checks between samples are used to calculate convergence criteria for iterative unfolding
+
+  @author Benjamin M Wynne bwynne@cern.ch
+  @date 06-01-2011
+ */
+
 #ifndef MONTE_CARLO_SUMMARY_PLOTMAKER_H
 #define MONTE_CARLO_SUMMARY_PLOTMAKER_H
 

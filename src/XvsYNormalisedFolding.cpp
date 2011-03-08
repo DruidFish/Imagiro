@@ -1,3 +1,14 @@
+/**
+  @class XvsYNormalisedFolding
+
+  Folds a 2D distribution, and divides it by the folded 1D distribution of the X-axis variable (giving value-of-Y-per-event).
+  Includes error checking on the discretisation of the Y variable
+
+  @author Benjamin M Wynne bwynne@cern.ch
+  @date 06-01-2011
+ */
+
+
 #include "XvsYNormalisedFolding.h"
 #include <iostream>
 #include <cstdlib>
@@ -38,6 +49,14 @@ XvsYNormalisedFolding::XvsYNormalisedFolding( string XVariableName, string YVari
 
 	//Set up the indices for the distributions
 	DistributionIndices = new DataIndices( binNumbers, minima, maxima );
+
+	//Set up the cross-check for data loss in delinearisation
+	char idString[20];
+	sprintf( idString, "%d", rand() );
+	string xvsyReconstructionName = xName + yName + priorName + "ReconstructionCheck" + idString;
+	string xReconstructionName = xName + priorName + "ReconstructionCheck" + idString;
+	xvsyReconstructionCheck = new TH1F( xvsyReconstructionName.c_str(), xvsyReconstructionName.c_str(), XBinNumber, XMinimum, XMaximum );
+	xReconstructionCheck = new TH1F( xReconstructionName.c_str(), xReconstructionName.c_str(), XBinNumber, XMinimum, XMaximum );
 }
 
 //Destructor
@@ -94,6 +113,13 @@ void XvsYNormalisedFolding::StoreMatch( InputNtuple * TruthInput, InputNtuple * 
 		truthValues.push_back( yTruthValue );
 		reconstructedValues.push_back( yReconstructedValue );
 		XvsYFolder->StoreTruthRecoPair( truthValues, reconstructedValues, truthWeight, reconstructedWeight, useInPrior );
+
+		if ( useInPrior )
+		{
+			//Store values for checking the delinearisation
+			xReconstructionCheck->Fill( xReconstructedValue, reconstructedWeight );
+			xvsyReconstructionCheck->Fill( xReconstructedValue, yReconstructedValue * reconstructedWeight );
+		}
 	}
 }
 void XvsYNormalisedFolding::StoreMiss( InputNtuple * TruthInput )
@@ -150,6 +176,13 @@ void XvsYNormalisedFolding::StoreFake( InputNtuple * ReconstructedInput )
 		//Store the y value
 		reconstructedValues.push_back( yReconstructedValue );
 		XvsYFolder->StoreReconstructedFake( reconstructedValues, reconstructedWeight, useInPrior );
+
+		if ( useInPrior )
+		{
+			//Store values for checking the delinearisation
+			xReconstructionCheck->Fill( xReconstructedValue, reconstructedWeight );
+			xvsyReconstructionCheck->Fill( xReconstructedValue, yReconstructedValue * reconstructedWeight );
+		}
 	}
 }
 void XvsYNormalisedFolding::StoreData( InputNtuple * DataInput )
@@ -218,7 +251,6 @@ void XvsYNormalisedFolding::Unfold( int MostIterations, double ChiSquaredThresho
 		TH1F * XTruth = XFolder->GetReconstructedHistogram( XFullName + "Reconstructed", XFullTitle + " Reconstructed Distribution" );
 		TH1F * XvsYTruth = XvsYFolder->GetReconstructedHistogram( XvsYName + "Reconstructed", XvsYTitle + " Reconstructed Distribution" );
 
-		//TH2F * XSmearing = XFolder->GetSmearingMatrix( XFullName + "Smearing", XFullTitle + " Smearing Matrix" );
 		TH2F * XvsYSmearing = XvsYFolder->GetSmearingMatrix( XvsYName + "Smearing", XvsYTitle + " Smearing Matrix" );
 
 		//De-linearise the x vs y distributions
@@ -252,6 +284,47 @@ void XvsYNormalisedFolding::Unfold( int MostIterations, double ChiSquaredThresho
 		DelinearisedXvsYSmeared->Divide( DelinearisedXvsYSmeared, XSmeared, scaleFactor, 1.0 );
 		DelinearisedXvsYNotSmeared->Divide( DelinearisedXvsYNotSmeared, XNotSmeared, scaleFactor, 1.0 );
 		DelinearisedXvsYTruth->Divide( DelinearisedXvsYTruth, XTruth, scaleFactor, 1.0 );
+
+		//Check for data loss in the delinearisation
+		xvsyReconstructionCheck->Divide( xvsyReconstructionCheck, xReconstructionCheck, scaleFactor, 1.0 );
+		bool dataLost = false;
+		double averagePercentError = 0.0;
+		for ( int binIndex = 0; binIndex < xReconstructionCheck->GetNbinsX() + 2; binIndex++ )
+		{
+			//Compare the delinearised value with one calculated without going through delinearisation
+			double correctValue = xvsyReconstructionCheck->GetBinContent( binIndex );
+			double delinearisedValue = DelinearisedXvsYTruth->GetBinContent( binIndex );
+			double errorFraction = fabs( delinearisedValue - correctValue ) / correctValue;
+			double percentError = errorFraction * 100.0;
+
+			//Check for stupid values
+			if ( isnan( percentError ) )
+			{
+				percentError = 0.0;
+			}
+
+			//Add this error to the overall error calculation
+			correctedInputErrors[ binIndex ] *= ( 1.0 + errorFraction );
+
+			//Increment average error
+			averagePercentError += percentError;
+
+			//If there's a > 1%  discrepancy between the delinearised truth value and the correct value, warn that data is being lost in binning
+			if ( fabs( percentError ) > 1.0 )
+			{
+				cerr << "Bin " << binIndex << " has value " << delinearisedValue << " which has a " << percentError << "\% error vs the reference value (" << correctValue << ")" << endl;
+				dataLost = true;
+			}
+		}
+		averagePercentError /= (double)( xReconstructionCheck->GetNbinsX() + 2 );
+		cout << "Average bin error from delinearisation: " << averagePercentError << "\%" << endl;
+		if ( dataLost || averagePercentError > 0.5 )
+		{
+			cerr << "Delinearisation has caused significant changes in distribution bins compared to their reference values" << endl;
+			cerr << "Improve the binning of " << yName << " in the " << xName << " vs " << yName << " plot" << endl;
+			cerr << "Try using a finer binning, and avoid large numbers of events in under or overflow bins" << endl;
+			//exit(1);
+		}
 
 		//Free some memory
 		delete XSmeared;

@@ -1,3 +1,13 @@
+/**
+  @class XvsYNormalisedPlotMaker
+
+  Unfolds a 2D distribution, and divides it by the unfolded 1D distribution of the X-axis variable (giving value-of-Y-per-event).
+  Includes error checking on the discretisation of the Y variable
+
+  @author Benjamin M Wynne bwynne@cern.ch
+  @date 06-01-2011
+ */
+
 #include "XvsYNormalisedPlotMaker.h"
 #include <iostream>
 #include <cstdlib>
@@ -289,17 +299,17 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 			double errorFraction = fabs( delinearisedValue - correctValue ) / correctValue;
 			double percentError = errorFraction * 100.0;
 
-			//Add this error to the overall error calculation
-			correctedDataErrors[ binIndex ] *= ( 1.0 + errorFraction );
-
 			//Check for stupid values
 			if ( isnan( percentError ) )
 			{
 				percentError = 0.0;
 			}
 
+			//Add this error to the overall error calculation
+			correctedDataErrors[ binIndex ] *= ( 1.0 + errorFraction );
+
 			//Increment average error
-			averagePercentError += fabs( percentError );
+			averagePercentError += percentError;
 
 			//If there's a > 1%  discrepancy between the delinearised truth value and the correct value, warn that data is being lost in binning
 			if ( fabs( percentError ) > 1.0 )
@@ -368,7 +378,6 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 int XvsYNormalisedPlotMaker::MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing )
 {
 	return XvsYUnfolder->MonteCarloCrossCheck( ReferenceDistribution, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
-	//return XUnfolder->MonteCarloCrossCheck( ReferencePlot, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
 }
 
 //Return some plots
@@ -405,7 +414,7 @@ TH1F * XvsYNormalisedPlotMaker::MCTruthHistogram()
 	else
 	{
 		cerr << "Trying to retrieve MC truth plot from unfinalised XvsYNormalisedPlotMaker" << endl;
-                exit(1);
+		exit(1);
 	}
 }
 

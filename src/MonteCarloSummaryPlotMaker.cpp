@@ -1,3 +1,14 @@
+/**
+  @class MonteCarloSummaryPlotMaker
+
+  Creates instances of a given "template" plot for each Monte Carlo sample, and then combines the results
+  Systematic errors are given by the range of different resutls from using each Monte Carlo sample
+  Cross-checks between samples are used to calculate convergence criteria for iterative unfolding
+
+  @author Benjamin M Wynne bwynne@cern.ch
+  @date 06-01-2011
+ */
+
 #include "MonteCarloSummaryPlotMaker.h"
 #include "TLegend.h"
 #include "TFile.h"
@@ -32,7 +43,7 @@ MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker( IPlotMaker * TemplatePlo
 		{
 			allPlots.push_back( TemplatePlotMaker->Clone( mcDescription ) );
 		}
-		
+
 		//Make plots for testing the unfolding with MC
 		crossCheckPlots.push_back( TemplatePlotMaker->Clone( mcDescription ) );
 	}
@@ -328,7 +339,7 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 		combinedCorrectedHistogramWithStatistics->Draw( "SAME" );
 
 		//Make the legend
-		TLegend * lineColourKey = new TLegend( 0.25, 0.05, 0.50, 0.23 );
+		TLegend * lineColourKey = new TLegend( 0.65, 0.7, 0.95, 0.95 );
 		lineColourKey->SetTextSize(0.04);
 		lineColourKey->SetFillColor(kWhite);
 		lineColourKey->SetBorderSize(0);

@@ -1,7 +1,7 @@
 /**
   @class IterativeUnfolding
 
-  The class that performs unfolding on a data distribution in the simple case when all events are available
+  The class that manages unfolding a distribution, and tests the quality of the unfolding
 
   @author Benjamin M Wynne bwynne@cern.ch
   @date 17-06-2010

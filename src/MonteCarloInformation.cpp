@@ -1,3 +1,13 @@
+/**
+  @class MonteCarloInformation
+
+  A simple class that holds lists of file locations and formatting instructions for input Monte Carlo samples
+
+  @author Benjamin M Wynne bwynne@cern.ch
+  @date 06-01-2011
+ */
+
+
 #include "MonteCarloInformation.h"
 #include <cstdlib>
 #include <iostream>
@@ -5,7 +15,7 @@
 MonteCarloInformation::MonteCarloInformation()
 {
 	////////////////////////////////////////////////////////////
-        //                                                        //
+	//                                                        //
 	// Define the file locations of the MC events             //
 	// Also set how they appear on plots                      //
 	//                                                        //

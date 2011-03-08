@@ -1,3 +1,14 @@
+/**
+  @class XvsYNormalisedFolding
+
+  Folds a 2D distribution, and divides it by the folded 1D distribution of the X-axis variable (giving value-of-Y-per-event).
+  Includes error checking on the discretisation of the Y variable
+
+  @author Benjamin M Wynne bwynne@cern.ch
+  @date 06-01-2011
+ */
+
+
 #ifndef X_VS_Y_NORMALISED_FOLDING_H
 #define X_VS_Y_NORMALISED_FOLDING_H
 
@@ -27,10 +38,10 @@ class XvsYNormalisedFolding : public IPlotMaker
 		virtual void Unfold( int MostIterations = 10, double ChiSquaredThreshold = 1.0, double KolmogorovThreshold = 1.0, bool WithSmoothing = false );
 
 		//Make a cross-check with MC
-                virtual int MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing = false );
+		virtual int MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing = false );
 
 		//Return a distribution for use in the cross-checks
-                virtual Distribution * MonteCarloTruthForCrossCheck();
+		virtual Distribution * MonteCarloTruthForCrossCheck();
 
 		//Return some plots
 		virtual TH1F * CorrectedHistogram();
@@ -45,8 +56,8 @@ class XvsYNormalisedFolding : public IPlotMaker
 		virtual string Description( bool WithSpaces );
 		virtual string PriorName();
 
-                //Error info for corrected distribution
-                virtual vector<double> CorrectedErrors();
+		//Error info for corrected distribution
+		virtual vector<double> CorrectedErrors();
 
 	private:
 		//WARNING: this method deletes the argument object
@@ -60,7 +71,7 @@ class XvsYNormalisedFolding : public IPlotMaker
 		bool finalised;
 		double scaleFactor;
 		vector<double> correctedInputErrors;
-		TH1F *foldedDistribution, *inputDistribution, *reconstructedDistribution;
+		TH1F *foldedDistribution, *inputDistribution, *reconstructedDistribution, *xvsyReconstructionCheck, *xReconstructionCheck;
 		TH2F *smearingMatrix;
 };
 

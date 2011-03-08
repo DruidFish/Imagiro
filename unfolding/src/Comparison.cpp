@@ -1,3 +1,13 @@
+/**
+  @class Comparison
+
+  An extremely simple class to return the Chi2 and Kolmogorov-Smirnoff comparison values betweeen two histograms
+  The histogram naming scheme prevents the tedious complaints from Root about making multiple objects with the same name
+
+  @author Benjamin M Wynne bwynne@cern.ch
+  @date 08-03-2011
+  */
+
 #include <sstream>
 #include "Comparison.h"
 #include "TH1F.h"
