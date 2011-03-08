@@ -210,7 +210,7 @@ void IterativeUnfolding::Unfold( int MostIterations, double ChiSquaredThreshold,
 			priorDistribution->Smooth();
 		}
 
-		//Iterate
+		//Unfold
 		unfoldedDistribution = new Distribution( dataDistribution, inputSmearing, priorDistribution );
 
 		//Compare with previous distribution
@@ -262,26 +262,54 @@ void IterativeUnfolding::Unfold( int MostIterations, double ChiSquaredThreshold,
 //Perform a closure test
 //Unfold the MC reco distribution with the corresponding truth information as a prior
 //It should give the truth information back exactly...
-void IterativeUnfolding::ClosureTest()
+void IterativeUnfolding::ClosureTest( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing )
 {
+	//Use the truth distribution as the prior
+	Distribution * priorDistribution = truthDistribution;
+
 	//Finalise the smearing matrix
 	inputSmearing->Finalise();
 
-	//Unfold once only
-	Distribution * unfoldedReconstructedDistribution = new Distribution( reconstructedDistribution, inputSmearing, truthDistribution );
+	//Make a pointer for the iteration result
+	Distribution * unfoldedReconstructedDistribution;
+
+	//Iterate
+	for ( int iteration = 0; iteration < MostIterations; iteration++ )
+	{
+		//Unfold
+		unfoldedReconstructedDistribution = new Distribution( reconstructedDistribution, inputSmearing, priorDistribution );
+
+		//Compare with previous distribution
+		double chi2, kolmogorov;
+		distributionComparison->CompareDistributions( unfoldedReconstructedDistribution, priorDistribution, chi2, kolmogorov, false );
+
+		//Reset for next iteration
+		if ( iteration != 0 )
+		{
+			//Don't delete the MC truth
+			delete priorDistribution;
+		}
+		priorDistribution = unfoldedReconstructedDistribution;
+
+		//Check for termination conditions
+		if ( chi2 < ChiSquaredThreshold || kolmogorov > KolmogorovThreshold || iteration == MostIterations - 1 )
+		{
+			break;
+		}
+	}
 
 	//Compare with truth distribution
-	double chi2, kolmogorov;
-	distributionComparison->CompareDistributions( truthDistribution, unfoldedReconstructedDistribution, chi2, kolmogorov, false );
+	double chi2Reference, kolmogorovReference;
+	distributionComparison->CompareDistributions( truthDistribution, unfoldedReconstructedDistribution, chi2Reference, kolmogorovReference, false );
 
 	//Output result
-	if ( chi2 < 1.0 && kolmogorov > 0.9 )
+	if ( chi2Reference < 10.0 && kolmogorovReference > 0.1 )
 	{
-		cout << "Closure test passed: chi squared = " << chi2 << " and K-S probability = " << kolmogorov << endl;
+		cout << "Closure test passed: chi squared = " << chi2Reference << " and K-S probability = " << kolmogorovReference << endl;
 	}
 	else
 	{
-		cout << "Closure test failed: chi squared = " << chi2 << " and K-S probability = " << kolmogorov << endl;
+		cout << "Closure test failed: chi squared = " << chi2Reference << " and K-S probability = " << kolmogorovReference << endl;
 	}
 }
 
@@ -294,7 +322,7 @@ int IterativeUnfolding::MonteCarloCrossCheck( Distribution * ReferenceDistributi
 	//Extrapolate the number of missed events in the data
 	dataDistribution->SetBadBin( totalMissed / ( totalPaired + totalFake ) );
 
-        //Use the truth distribution as the prior
+	//Use the truth distribution as the prior
 	Distribution * priorDistribution = truthDistribution;
 
 	//Finalise the smearing matrix
@@ -306,7 +334,7 @@ int IterativeUnfolding::MonteCarloCrossCheck( Distribution * ReferenceDistributi
 	double chiSquaredResult = lastChiSquared;
 	double kolmogorovResult = lastKolmogorov;
 	cout << "-------------Cross-Check-------------" << endl;
-	cout << lastChiSquared << ", " << lastKolmogorov << ", 0" << endl;
+	cout << lastChiSquared << ", " << lastKolmogorov << ", 0";
 
 	//Iterate, making new distribution from data, old distribution and smearing matrix
 	Distribution * adjustedDistribution;
@@ -324,7 +352,7 @@ int IterativeUnfolding::MonteCarloCrossCheck( Distribution * ReferenceDistributi
 		//Compare with reference distribution
 		double referenceChi2, referenceKolmogorov;
 		distributionComparison->CompareDistributions( adjustedDistribution, ReferenceDistribution, referenceChi2, referenceKolmogorov, true );
-		cout << referenceChi2 << ", " << referenceKolmogorov << ", " << iteration + 1 << endl;
+
 
 		//Compare with last iteration
 		double chi2, kolmogorov;
@@ -344,6 +372,7 @@ int IterativeUnfolding::MonteCarloCrossCheck( Distribution * ReferenceDistributi
 			//Return the criteria
 			ChiSquaredThreshold = chiSquaredResult;
 			KolmogorovThreshold = kolmogorovResult;
+			cout << " <--" << endl << referenceChi2 << ", " << referenceKolmogorov << ", " << iteration + 1 << endl;
 			cout << "-------------------------------------" << endl;
 			return iteration;
 		}
@@ -354,6 +383,7 @@ int IterativeUnfolding::MonteCarloCrossCheck( Distribution * ReferenceDistributi
 			lastKolmogorov = referenceKolmogorov;
 			chiSquaredResult = chi2;
 			kolmogorovResult = kolmogorov;
+			cout << endl << referenceChi2 << ", " << referenceKolmogorov << ", " << iteration + 1;
 		}
 	}
 }

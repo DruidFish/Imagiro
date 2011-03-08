@@ -88,7 +88,7 @@ class IterativeUnfolding
 		//Perform a closure test
 		//Unfold the MC reco distribution with the corresponding truth information as a prior
 		//It should give the truth information back exactly...
-		void ClosureTest();
+		void ClosureTest( int MostIterations = 20, double ChiSquaredThreshold = 10.0, double KolmogorovThreshold = 0.1, bool WithSmoothing = false );
 
 		//Perform an unfolding cross-check
 		//Use MC truth A as a prior to unfold MC reco B

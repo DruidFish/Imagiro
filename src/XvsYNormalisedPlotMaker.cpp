@@ -216,8 +216,8 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 	else
 	{
 		//Closure tests
-		XUnfolder->ClosureTest();
-		XvsYUnfolder->ClosureTest();
+		XUnfolder->ClosureTest( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
+		XvsYUnfolder->ClosureTest( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
 
 		//Unfold the distributions
 		XUnfolder->Unfold( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
@@ -281,12 +281,16 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 		xvsyTruthCheck->Divide( xvsyTruthCheck, xTruthCheck, scaleFactor, 1.0 );
 		bool dataLost = false;
 		double averagePercentError = 0.0;
-		for ( int binIndex = 0; binIndex <= xTruthCheck->GetNbinsX() + 1; binIndex++ )
+		for ( int binIndex = 0; binIndex < xTruthCheck->GetNbinsX() + 2; binIndex++ )
 		{
 			//Compare the delinearised value with one calculated without going through delinearisation
 			double correctValue = xvsyTruthCheck->GetBinContent( binIndex );
 			double delinearisedValue = DelinearisedXvsYTruth->GetBinContent( binIndex );
-			double percentError = ( delinearisedValue - correctValue ) * 100.0 / correctValue;
+			double errorFraction = fabs( delinearisedValue - correctValue ) / correctValue;
+			double percentError = errorFraction * 100.0;
+
+			//Add this error to the overall error calculation
+			correctedDataErrors[ binIndex ] *= ( 1.0 + errorFraction );
 
 			//Check for stupid values
 			if ( isnan( percentError ) )
