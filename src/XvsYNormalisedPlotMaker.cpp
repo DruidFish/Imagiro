@@ -56,6 +56,9 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	string xTruthName = xName + priorName + "TruthCheck" + idString;
 	xvsyTruthCheck = new TH1F( xvsyTruthName.c_str(), xvsyTruthName.c_str(), XBinNumber, XMinimum, XMaximum );
 	xTruthCheck = new TH1F( xTruthName.c_str(), xTruthName.c_str(), XBinNumber, XMinimum, XMaximum );
+
+	//Make a summary for the y data values
+	yValueSummary = new StatisticsSummary();
 }
 
 //Destructor
@@ -209,6 +212,7 @@ void XvsYNormalisedPlotMaker::StoreData( InputNtuple * DataInput )
 		//Store the y value
 		dataValues.push_back( yDataValue );
 		XvsYUnfolder->StoreDataValue( dataValues, dataWeight );
+		yValueSummary->StoreEvent( yDataValue, dataWeight );
 
 		//Store values for performing the delinearisation
 		DistributionIndices->StoreDataValue( dataValues, dataWeight );
@@ -325,6 +329,7 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 			cerr << "Delinearisation has caused significant changes in distribution bins compared to their reference values" << endl;
 			cerr << "Improve the binning of " << yName << " in the " << xName << " vs " << yName << " plot" << endl;
 			cerr << "Try using a finer binning, and avoid large numbers of events in under or overflow bins" << endl;
+			cerr << "Suggested bin width: " << yValueSummary->OptimumBinWidth() << endl;
 			//exit(1);
 		}
 
@@ -332,6 +337,7 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 		delete XCorrected;
 		delete XUncorrected;
 		delete XTruth;
+		delete yValueSummary;
 
 		//Get the y range to plot
 		double yMinimum = DistributionIndices->GetMinima()[1] * scaleFactor;

@@ -1,32 +1,28 @@
 /**
-  @class XvsYNormalisedFolding
+  @class XPlotMaker
 
-  Folds a 2D distribution, and divides it by the folded 1D distribution of the X-axis variable (giving value-of-Y-per-event).
-  Includes error checking on the discretisation of the Y variable
+  Unfolds a 1D distribution
 
   @author Benjamin M Wynne bwynne@cern.ch
   @date 06-01-2011
  */
 
-
-#ifndef X_VS_Y_NORMALISED_FOLDING_H
-#define X_VS_Y_NORMALISED_FOLDING_H
+#ifndef X_PLOTMAKER_H
+#define X_PLOTMAKER_H
 
 #include "IPlotMaker.h"
-#include "StatisticsSummary.h"
-#include "Folding.h"
-#include "DataIndices.h"
+#include "IterativeUnfolding.h"
+#include "Indices.h"
 #include <string>
 
 using namespace std;
 
-class XvsYNormalisedFolding : public IPlotMaker
+class XPlotMaker : public IPlotMaker
 {
 	public:
-		XvsYNormalisedFolding();
-		XvsYNormalisedFolding( string XVariableName, string YVariableName, string PriorName, int XBinNumber, double XMinimum, double XMaximum,
-				int YBinNumber, double YMinimum, double YMaximum, double ScaleFactor = 1.0, int UniqueID = 0 );
-		~XvsYNormalisedFolding();
+		XPlotMaker();
+		XPlotMaker( string XVariableName, string PriorName, int XBinNumber, double XMinimum, double XMaximum, double ScaleFactor = 1.0, int UniqueID = 0 );
+		~XPlotMaker();
 
 		//Take input values from ntuples
 		//To reduce file access, the appropriate row must already be in memory, the method does not change row
@@ -61,19 +57,14 @@ class XvsYNormalisedFolding : public IPlotMaker
 		virtual vector<double> CorrectedErrors();
 
 	private:
-		//WARNING: this method deletes the argument object
-		TH1F * Delinearise( TH1F * LinearisedDistribution );
-		vector<double> DelineariseErrors( vector<double> InputSumWeightSquares );
-
 		int uniqueID;		
-		Folding *XvsYFolder, *XFolder;
-		DataIndices *DistributionIndices;
-		string xName, yName, priorName;
+		IterativeUnfolding * XUnfolder;
+		Indices * DistributionIndices;
+		string xName, priorName;
 		bool finalised;
 		double scaleFactor;
-		vector<double> correctedInputErrors;
-		StatisticsSummary * yValueSummary;
-		TH1F *foldedDistribution, *inputDistribution, *reconstructedDistribution, *xvsyReconstructionCheck, *xReconstructionCheck;
+		vector<double> correctedDataErrors;
+		TH1F *correctedDistribution, *uncorrectedDistribution, *mcTruthDistribution;
 		TH2F *smearingMatrix;
 };
 

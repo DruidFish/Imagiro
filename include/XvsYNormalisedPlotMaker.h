@@ -13,6 +13,7 @@
 #define X_VS_Y_NORMALISED_PLOTMAKER_H
 
 #include "IPlotMaker.h"
+#include "StatisticsSummary.h"
 #include "IterativeUnfolding.h"
 #include "DataIndices.h"
 #include <string>
@@ -71,6 +72,7 @@ class XvsYNormalisedPlotMaker : public IPlotMaker
 		bool finalised;
 		double scaleFactor;
 		vector<double> correctedDataErrors;
+		StatisticsSummary * yValueSummary;
 		TH1F *correctedDistribution, *uncorrectedDistribution, *mcTruthDistribution, *xvsyTruthCheck, *xTruthCheck;
 		TH2F *smearingMatrix;
 };
