@@ -27,7 +27,8 @@ MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker()
 
 //Constructor with the names to use for the variables
 MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker( IPlotMaker * TemplatePlotMaker, MonteCarloInformation * PlotInformation,
-		double YMinimum, double YMaximum, bool CombineMCMode ) : finalised( false ), combineMode(CombineMCMode), mcInfo(PlotInformation), yRangeMinimum( YMinimum ), yRangeMaximum( YMaximum )
+		double YMinimum, double YMaximum, bool CombineMCMode ) : finalised( false ), combineMode(CombineMCMode), mcInfo(PlotInformation),
+	yRangeMinimum( YMinimum ), yRangeMaximum( YMaximum ), dataDescription("")
 {
 	//Make a separate plot for each MC source
 	for ( int mcIndex = 0; mcIndex < mcInfo->NumberOfSources(); mcIndex++ )
@@ -169,6 +170,12 @@ void MonteCarloSummaryPlotMaker::StoreData( InputNtuple * DataInput )
 		for ( int mcIndex = 0; mcIndex < allPlots.size(); mcIndex++ )
 		{
 			allPlots[mcIndex]->StoreData( DataInput );
+		}
+
+		//Save the description of the data to use in setting the plot title
+		if ( dataDescription.size() == 0 )
+		{
+			dataDescription = *( DataInput->Description() );
 		}
 	}
 }
@@ -339,11 +346,11 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 		combinedCorrectedHistogramWithStatistics->Draw( "SAME" );
 
 		//Make the legend
-		TLegend * lineColourKey = new TLegend( 0.65, 0.7, 0.95, 0.95 );
+		TLegend * lineColourKey = new TLegend( 0.55, 0.65, 0.95, 0.95 );
 		lineColourKey->SetTextSize(0.04);
 		lineColourKey->SetFillColor(kWhite);
 		lineColourKey->SetBorderSize(0);
-		lineColourKey->AddEntry( combinedCorrectedHistogramWithSystematics, "Data 2010", "lpf" );
+		lineColourKey->AddEntry( combinedCorrectedHistogramWithSystematics, dataDescription.c_str(), "lpf" );
 
 		//Draw the MC truth histograms
 		for ( int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )

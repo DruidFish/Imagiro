@@ -51,6 +51,7 @@ class MonteCarloSummaryPlotMaker
 		vector< IPlotMaker* > allPlots;
 		vector< IPlotMaker* > crossCheckPlots;
 		double yRangeMinimum, yRangeMaximum;
+		string dataDescription;
 };
 
 #endif
