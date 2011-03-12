@@ -9,10 +9,11 @@
 
 
 #include "XFolding.h"
+#include "TFile.h"
 #include <iostream>
 #include <cstdlib>
 #include <cmath>
-#include "TFile.h"
+#include <sstream>
 
 using namespace std;
 
@@ -24,10 +25,15 @@ XFolding::XFolding()
 //Constructor with the names to use for the variables
 XFolding::XFolding( string XVariableName, string PriorName,
 		int XBinNumber, double XMinimum, double XMaximum,
-		double ScaleFactor, int UniqueID ) : xName( XVariableName ), priorName( PriorName ), finalised( false ), uniqueID(UniqueID), scaleFactor(ScaleFactor)
+		double ScaleFactor ) : xName( XVariableName ), priorName( PriorName ), finalised( false ), scaleFactor(ScaleFactor)
 {
 	vector<double> minima, maxima;
 	vector<int> binNumbers;
+
+	//Set up a variable to keep track of the number of plots - used to prevent Root from complaining about making objects with the same names
+	static int uniqueID = 0;
+	uniqueID++;
+	thisPlotID = uniqueID;
 
 	//Store the x range
 	minima.push_back( XMinimum );
@@ -35,7 +41,7 @@ XFolding::XFolding( string XVariableName, string PriorName,
 	binNumbers.push_back( XBinNumber );
 
 	//Make the x unfolder
-	XFolder = new Folding( binNumbers, minima, maxima, xName + priorName, uniqueID );
+	XFolder = new Folding( binNumbers, minima, maxima, xName + priorName, thisPlotID );
 
 	//Set up the indices for the distributions
 	DistributionIndices = new Indices( binNumbers, minima, maxima );
@@ -57,7 +63,7 @@ IPlotMaker * XFolding::Clone( string NewPriorName )
 {
 	return new XFolding( xName, NewPriorName,
 			DistributionIndices->GetBinNumber(0) - 2, DistributionIndices->GetMinima()[0], DistributionIndices->GetMaxima()[0],
-			scaleFactor, uniqueID );
+			scaleFactor );
 }
 
 //Take input values from ntuples
@@ -172,9 +178,9 @@ void XFolding::Unfold( int MostIterations, double ChiSquaredThreshold, double Ko
 		XFolder->Fold();
 
 		//Make some plot titles
-		char uniqueIDString[10];
-		sprintf( uniqueIDString, "%d", uniqueID );
-		string XFullName = xName + priorName + uniqueIDString;
+		stringstream uniqueIDString;
+		uniqueIDString << thisPlotID;
+		string XFullName = xName + priorName + uniqueIDString.str();
 		string XFullTitle = xName + " using " + priorName;
 
 		//Retrieve the results

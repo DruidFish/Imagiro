@@ -21,7 +21,7 @@ class XPlotMaker : public IPlotMaker
 {
 	public:
 		XPlotMaker();
-		XPlotMaker( string XVariableName, string PriorName, int XBinNumber, double XMinimum, double XMaximum, double ScaleFactor = 1.0, int UniqueID = 0 );
+		XPlotMaker( string XVariableName, string PriorName, int XBinNumber, double XMinimum, double XMaximum, double ScaleFactor = 1.0 );
 		~XPlotMaker();
 
 		//Take input values from ntuples
@@ -57,7 +57,7 @@ class XPlotMaker : public IPlotMaker
 		virtual vector<double> CorrectedErrors();
 
 	private:
-		int uniqueID;		
+		int thisPlotID;
 		IterativeUnfolding * XUnfolder;
 		Indices * DistributionIndices;
 		string xName, priorName;

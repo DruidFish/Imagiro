@@ -4,8 +4,6 @@ Imagiro is an attempt to make Bayesian Iterative unfolding easier
 	- Results straight onto plots, with statistical and systematic errors
 	- Designed to work with many different MC samples at once
 
-	HOWEVER, IMAGIRO IS STILL AT A VERY EARLY STAGE AND YOU WILL HAVE TO TREAD CAREFULLY
-
 ________________________________
 Installation
 
@@ -23,25 +21,27 @@ InputNtuple * dataNtuple = new InputNtuple( "data/user.bwynne.LeadingJetModified
 
 	- The first argument is the path to the input file
 	- The second argument is the location of the nTuple within the file
-	- The third argument should describe the input (for use in plotting)
+	- The third argument should describe the input (for setting titles on plots, and debug messages)
 
-Also in src/main.cpp you must specify the plots you with to make. The code will look like this (sorry):
+Also in src/main.cpp you must specify the plots you with to make. The code will look like this:
 
-XvsYNormalisedPlotMaker * pTvsNChargedTowardPlot = new XvsYNormalisedPlotMaker( "MaxJetPt", "NChargeToward", "Pythia6", jetPtBins, jetPtMin, jetPtMax, nChargeBins, nChargeMin, nChargeMax, scaleFactor, allPlotMakers.size() );
+XvsYNormalisedPlotMaker * pTvsNChargedTowardPlot = new XvsYNormalisedPlotMaker( "MaxJetPt", "NChargeToward", "Pythia6", jetPtBins, jetPtMin, jetPtMax, nChargeBins, nChargeMin, nChargeMax, scaleFactor );
 
 	- The first two arguments are the names of the variables to unfold
 	- The third argument describes the MC model - essentially just a dummy (see below)
 	- The fourth-ninth arguments describe the binning of each variable
 	- The tenth argument can be a number to scale the y-variable by (eg the detector acceptance)
-	- The eleventh argument must just be a unique integer to stop Root from whinging about plots with the same names
 
 Having set up a plot for one MC model, feed this to a MonteCarloSummaryPlotMaker and it will repeat the process for all the other MC samples:
 
-allPlotMakers.push_back( new MonteCarloSummaryPlotMaker( pTvsNChargedTowardPlot, mcInfo, 0.0, 3.0 ) );
+allPlotMakers.push_back( new MonteCarloSummaryPlotMaker( pTvsNChargedTowardPlot, mcInfo, 0.0, 3.0, true ) );
 
 	- The first argument is the plot you specified above
 	- The second argument is the object that holds all the locations of all the MC inputs
 	- The third and fourth arguments are optional, setting the range of the y-axis
+	- The fifth argument sets whether all MC information should be combined into one smearing matrix, or if a separate matrix should be used for each sample ("true" to combine the MC is recommended).
+
+The available plot types are XPlotmaker, XvsYNormalisedPlotMaker, XFolding and XvsYNormalisedFolding. These are for unfolding or folding (i.e. applying a smearing matrix to) 1D or 2D distributions.
 
 Make all these changes, compile, and run. With any luck, you will eventually get a file called "UnfoldedFinal.root" containing the plots you wanted.
 
@@ -51,15 +51,13 @@ Tests
 	Binning the variable on the y-axis of a plot can potentially introduce errors. The 2D unfolded distributions compare the MC truth distributions (which are not affected by unfolding) with the corresponding
 truth distribution without the y-axis binning. The error arising will be quoted like this:
 
-Average bin error from delinearisation: 0%.
+Average bin error from delinearisation: 0%
 
 	Unfolding a reconstructed MC sample should exactly reproduce the corresponding truth distribution. This is checked for each unfolding, and the results are quoted like this:
 
-Closure test - comparing unfolded MC reco with MC truth: 
-Chi squared = 0.00866658 and K-S probability = 1
+Closure test passed: chi squared = 0.818614 and K-S probability = 0.998914
 
 	The unfolding iterations cease when the results of two iterations are sufficiently similar, or if the maximum allowed number of iterations is reached. Results are quoted like this,
 although it is not necessarily a problem if it does not converge:
 
-Converged
-No convergence after 10 iterations
+Converged: KS 0.98612 > 0.902129

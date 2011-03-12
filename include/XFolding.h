@@ -21,7 +21,7 @@ class XFolding : public IPlotMaker
 {
 	public:
 		XFolding();
-		XFolding( string XVariableName, string PriorName, int XBinNumber, double XMinimum, double XMaximum, double ScaleFactor = 1.0, int UniqueID = 0 );
+		XFolding( string XVariableName, string PriorName, int XBinNumber, double XMinimum, double XMaximum, double ScaleFactor = 1.0 );
 		~XFolding();
 
 		//Take input values from ntuples
@@ -57,7 +57,7 @@ class XFolding : public IPlotMaker
 		virtual vector<double> CorrectedErrors();
 
 	private:
-		int uniqueID;		
+		int thisPlotID;
 		Folding * XFolder;
 		Indices * DistributionIndices;
 		string xName, priorName;

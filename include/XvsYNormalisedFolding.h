@@ -25,7 +25,7 @@ class XvsYNormalisedFolding : public IPlotMaker
 	public:
 		XvsYNormalisedFolding();
 		XvsYNormalisedFolding( string XVariableName, string YVariableName, string PriorName, int XBinNumber, double XMinimum, double XMaximum,
-				int YBinNumber, double YMinimum, double YMaximum, double ScaleFactor = 1.0, int UniqueID = 0 );
+				int YBinNumber, double YMinimum, double YMaximum, double ScaleFactor = 1.0 );
 		~XvsYNormalisedFolding();
 
 		//Take input values from ntuples
@@ -65,7 +65,7 @@ class XvsYNormalisedFolding : public IPlotMaker
 		TH1F * Delinearise( TH1F * LinearisedDistribution );
 		vector<double> DelineariseErrors( vector<double> InputSumWeightSquares );
 
-		int uniqueID;		
+		int thisPlotID;
 		Folding *XvsYFolder, *XFolder;
 		DataIndices *DistributionIndices;
 		string xName, yName, priorName;

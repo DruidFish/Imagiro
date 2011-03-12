@@ -10,10 +10,11 @@
 
 
 #include "XvsYNormalisedFolding.h"
+#include "TFile.h"
 #include <iostream>
 #include <cstdlib>
 #include <cmath>
-#include "TFile.h"
+#include <sstream>
 
 using namespace std;
 
@@ -26,10 +27,15 @@ XvsYNormalisedFolding::XvsYNormalisedFolding()
 XvsYNormalisedFolding::XvsYNormalisedFolding( string XVariableName, string YVariableName, string PriorName,
 		int XBinNumber, double XMinimum, double XMaximum,
 		int YBinNumber, double YMinimum, double YMaximum,
-		double ScaleFactor, int UniqueID ) : xName( XVariableName ), yName( YVariableName ), priorName( PriorName ), finalised( false ), uniqueID(UniqueID), scaleFactor(ScaleFactor)
+		double ScaleFactor ) : xName( XVariableName ), yName( YVariableName ), priorName( PriorName ), finalised( false ), scaleFactor(ScaleFactor)
 {
 	vector<double> minima, maxima;
 	vector<int> binNumbers;
+
+	//Set up a variable to keep track of the number of plots - used to prevent Root from complaining about making objects with the same names
+	static int uniqueID = 0;
+	uniqueID++;
+	thisPlotID = uniqueID;
 
 	//Store the x range
 	minima.push_back( XMinimum );
@@ -37,7 +43,7 @@ XvsYNormalisedFolding::XvsYNormalisedFolding( string XVariableName, string YVari
 	binNumbers.push_back( XBinNumber );
 
 	//Make the x unfolder
-	XFolder = new Folding( binNumbers, minima, maxima, xName + priorName, uniqueID );
+	XFolder = new Folding( binNumbers, minima, maxima, xName + priorName, thisPlotID );
 
 	//Store the y range
 	minima.push_back( YMinimum );
@@ -45,16 +51,16 @@ XvsYNormalisedFolding::XvsYNormalisedFolding( string XVariableName, string YVari
 	binNumbers.push_back( YBinNumber );
 
 	//Make the x vs y unfolder
-	XvsYFolder = new Folding( binNumbers, minima, maxima, xName + "vs" + yName + priorName, uniqueID );
+	XvsYFolder = new Folding( binNumbers, minima, maxima, xName + "vs" + yName + priorName, thisPlotID );
 
 	//Set up the indices for the distributions
 	DistributionIndices = new DataIndices( binNumbers, minima, maxima );
 
 	//Set up the cross-check for data loss in delinearisation
-	char idString[20];
-	sprintf( idString, "%d", rand() );
-	string xvsyReconstructionName = xName + yName + priorName + "ReconstructionCheck" + idString;
-	string xReconstructionName = xName + priorName + "ReconstructionCheck" + idString;
+	stringstream idString;
+	idString << thisPlotID;
+	string xvsyReconstructionName = xName + yName + priorName + "ReconstructionCheck" + idString.str();
+	string xReconstructionName = xName + priorName + "ReconstructionCheck" + idString.str();
 	xvsyReconstructionCheck = new TH1F( xvsyReconstructionName.c_str(), xvsyReconstructionName.c_str(), XBinNumber, XMinimum, XMaximum );
 	xReconstructionCheck = new TH1F( xReconstructionName.c_str(), xReconstructionName.c_str(), XBinNumber, XMinimum, XMaximum );
 
@@ -80,7 +86,7 @@ IPlotMaker * XvsYNormalisedFolding::Clone( string NewPriorName )
 	return new XvsYNormalisedFolding( xName, yName, NewPriorName,
 			DistributionIndices->GetBinNumber(0) - 2, DistributionIndices->GetMinima()[0], DistributionIndices->GetMaxima()[0],
 			DistributionIndices->GetBinNumber(1) - 2, DistributionIndices->GetMinima()[1], DistributionIndices->GetMaxima()[1],
-			scaleFactor, uniqueID );
+			scaleFactor );
 }
 
 //Take input values from ntuples
@@ -237,11 +243,11 @@ void XvsYNormalisedFolding::Unfold( int MostIterations, double ChiSquaredThresho
 		XvsYFolder->Fold();
 
 		//Make some plot titles
-		char uniqueIDString[10];
-		sprintf( uniqueIDString, "%d", uniqueID );
-		string XFullName = xName + priorName + uniqueIDString;
+		stringstream uniqueIDString;
+		uniqueIDString << thisPlotID;
+		string XFullName = xName + priorName + uniqueIDString.str();
 		string XFullTitle = xName + " using " + priorName;
-		string XvsYName = xName + "vs" + yName + priorName + uniqueIDString;
+		string XvsYName = xName + "vs" + yName + priorName + uniqueIDString.str();
 		string XvsYTitle = xName + " vs " + yName + " using " + priorName;
 
 		//Retrieve the results
