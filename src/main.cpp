@@ -5,7 +5,7 @@
 
   @author Benjamin M Wynne
   @date 08-03-2011
-  */
+ */
 
 
 #include "InputNtuple.h"
@@ -48,7 +48,7 @@ bool COMBINE_MC = true;
 // Set the output file name                               //
 //                                                        //
 ////////////////////////////////////////////////////////////
-const string OUTPUT_FILE_NAME = "UnfoldedFinal.Data.root";
+const string OUTPUT_FILE_NAME = "UnfoldedFinal.Pythia8.root";
 
 int main ( int argc, char * argv[] )
 {
@@ -74,10 +74,10 @@ int main ( int argc, char * argv[] )
 	// Load the data - Again, set this up yourself            //
 	//                                                        //
 	////////////////////////////////////////////////////////////
-	InputNtuple * dataNtuple = new InputNtuple( "data/user.bwynne.LeadingJetModifiedv3.Data.CaloJet/mergedFile.root", "benTuple", "Data 2010", mcInfo->NumberOfSources() );
-	//int sourceIndex = 3;
+	//InputNtuple * dataNtuple = new InputNtuple( "data/user.bwynne.LeadingJetModifiedv3.Data.CaloJet/mergedFile.root", "benTuple", "Data 2010", mcInfo->NumberOfSources() );
+	int sourceIndex = 4;
 	//InputNtuple * dataNtuple = new InputNtuple( mcInfo->TruthFilePath(sourceIndex), "benTuple", mcInfo->Description( sourceIndex ), sourceIndex );
-	//InputNtuple * dataNtuple = new InputNtuple( mcInfo->ReconstructedFilePath(sourceIndex), "benTuple", mcInfo->Description( sourceIndex ), sourceIndex );
+	InputNtuple * dataNtuple = new InputNtuple( mcInfo->ReconstructedFilePath(sourceIndex), "benTuple", mcInfo->Description( sourceIndex ), sourceIndex );
 
 	////////////////////////////////////////////////////////////
 	//                                                        //
@@ -107,8 +107,18 @@ int main ( int argc, char * argv[] )
 			jetPtBins, jetPtMin, jetPtMax, nChargeBins, nChargeMin, nChargeMax, scaleFactor );
 	allPlotMakers.push_back( new MonteCarloSummaryPlotMaker( pTvsNChargedTransPlot, mcInfo, 0.0, 3.0, COMBINE_MC ) );
 
-	XPlotMaker * pTPlot = new XPlotMaker( "MaxJetPt", "Pythia6", jetPtBins, jetPtMin, jetPtMax, 1.0 );
-	allPlotMakers.push_back( new MonteCarloSummaryPlotMaker( pTPlot, mcInfo, 0.0, 6000.0, COMBINE_MC ) );
+	XPlotMaker * pTPlot = new XPlotMaker( "MaxJetPt", "Pythia6", jetPtBins, jetPtMin, jetPtMax, 1.0, true );
+	allPlotMakers.push_back( new MonteCarloSummaryPlotMaker( pTPlot, mcInfo, 0.0, 0.2, COMBINE_MC ) );
+
+	XPlotMaker * nChargedTowardPlot = new XPlotMaker( "NChargeToward", "Pythia6", nChargeBins, nChargeMin, nChargeMax, 1.0, true );
+	allPlotMakers.push_back( new MonteCarloSummaryPlotMaker( nChargedTowardPlot, mcInfo, 0.0, 0.1, COMBINE_MC ) );
+
+	XPlotMaker * nChargedAwayPlot = new XPlotMaker( "NChargeAway", "Pythia6", nChargeBins, nChargeMin, nChargeMax, 1.0, true );
+	allPlotMakers.push_back( new MonteCarloSummaryPlotMaker( nChargedAwayPlot, mcInfo, 0.0, 0.1, COMBINE_MC ) );
+
+	XPlotMaker * nChargedTransPlot = new XPlotMaker( "NChargeTrans", "Pythia6", nChargeBins, nChargeMin, nChargeMax, 1.0, true );
+	allPlotMakers.push_back( new MonteCarloSummaryPlotMaker( nChargedTransPlot, mcInfo, 0.0, 0.1, COMBINE_MC ) );
+
 
 	/*XvsYNormalisedFolding * pTvsNChargedTowardFold = new XvsYNormalisedFolding( "MaxJetPt", "NChargeToward", "Pythia6",
 			jetPtBins, jetPtMin, jetPtMax, nChargeBins, nChargeMin, nChargeMax, scaleFactor );
@@ -120,10 +130,19 @@ int main ( int argc, char * argv[] )
 
 	XvsYNormalisedFolding * pTvsNChargedTransFold = new XvsYNormalisedFolding( "MaxJetPt", "NChargeTrans", "Pythia6",
 			jetPtBins, jetPtMin, jetPtMax, nChargeBins, nChargeMin, nChargeMax, scaleFactor );
-	allPlotMakers.push_back( new MonteCarloSummaryPlotMaker( pTvsNChargedTransFold, mcInfo, 0.0, 3.0, COMBINE_MC ) );*/
+	allPlotMakers.push_back( new MonteCarloSummaryPlotMaker( pTvsNChargedTransFold, mcInfo, 0.0, 3.0, COMBINE_MC ) );
 
-	/*XFolding * pTFold = new XFolding( "MaxJetPt", "Pythia6", jetPtBins, jetPtMin, jetPtMax, 1.0 );
-	allPlotMakers.push_back( new MonteCarloSummaryPlotMaker( pTFold, mcInfo, 0.0, 10000.0, COMBINE_MC ) );*/
+	XFolding * pTFold = new XFolding( "MaxJetPt", "Pythia6", jetPtBins, jetPtMin, jetPtMax, 1.0, true );
+	allPlotMakers.push_back( new MonteCarloSummaryPlotMaker( pTFold, mcInfo, 0.0, 0.2, COMBINE_MC ) );
+
+	XFolding * nChargedTowardFold = new XFolding( "NChargeToward", "Pythia6", nChargeBins, nChargeMin, nChargeMax, 1.0, true );
+	allPlotMakers.push_back( new MonteCarloSummaryPlotMaker( nChargedTowardFold, mcInfo, 0.0, 0.1, COMBINE_MC ) );
+
+	XFolding * nChargedAwayFold = new XFolding( "NChargeAway", "Pythia6", nChargeBins, nChargeMin, nChargeMax, 1.0, true );
+	allPlotMakers.push_back( new MonteCarloSummaryPlotMaker( nChargedAwayFold, mcInfo, 0.0, 0.1, COMBINE_MC ) );
+
+	XFolding * nChargedTransFold = new XFolding( "NChargeTrans", "Pythia6", nChargeBins, nChargeMin, nChargeMax, 1.0, true );
+	allPlotMakers.push_back( new MonteCarloSummaryPlotMaker( nChargedTransFold, mcInfo, 0.0, 0.1, COMBINE_MC ) );*/
 
 
 	/////////////////////////////////////////////////////////////
@@ -131,7 +150,7 @@ int main ( int argc, char * argv[] )
 	// No further user edits required                          //
 	//                                                         //
 	/////////////////////////////////////////////////////////////
-	
+
 	//Populate the smearing matrices
 	for ( int mcIndex = 0; mcIndex < truthNtuples.size(); mcIndex++ )
 	{

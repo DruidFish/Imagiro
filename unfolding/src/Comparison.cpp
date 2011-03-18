@@ -41,11 +41,11 @@ void Comparison::CompareDistributions( Distribution * FirstInput, Distribution *
 
 	//Make a plot of the first distribution
 	string firstPlotName = "FirstPlot" + internalName.str();
-	TH1F * firstPlot = FirstInput->MakeRootHistogram( firstPlotName, firstPlotName, false, Normalised );
+	TH1F * firstPlot = FirstInput->MakeRootHistogram( firstPlotName, firstPlotName, Normalised );
 
 	//Make a plot of the second distribution
 	string secondPlotName = "SecondPlot" + internalName.str();
-	TH1F * secondPlot = SecondInput->MakeRootHistogram( secondPlotName, secondPlotName, false, Normalised );
+	TH1F * secondPlot = SecondInput->MakeRootHistogram( secondPlotName, secondPlotName, Normalised );
 
 	if (IsClosureTest)
 	{

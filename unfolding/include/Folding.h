@@ -77,26 +77,23 @@ class Folding
 
 		//Perform a closure test
                 //Fold the MC truth information - should give the MC reco exactly
-                void ClosureTest();
+		//Return true if test passed
+                bool ClosureTest();
 
 		//Retrieve a TH1F* containing the unfolded data
 		//distribution, with or without errors
 		//NB: the error calculation is only performed
 		//when you run the method with errors for the first time
-		TH1F * GetFoldedHistogram( string Name = "unfolded", string Title = "Unfolded distribution", bool WithErrors = false );
+		TH1F * GetFoldedHistogram( string Name, string Title, bool Normalise = false );
 
 		//Retrieve the smearing matrix used
 		TH2F * GetSmearingMatrix( string Name, string Title );
 
 		//Retrieve the reconstructed distribution
-		TH1F * GetReconstructedHistogram( string Name, string Title );
-
-		//Retrieve the truth distribution
-		TH1F * GetTruthHistogram( string Name, string Title );
-		Distribution * GetTruthDistribution();
+		TH1F * GetReconstructedHistogram( string Name, string Title, bool Normalise = false );
 
                 //Retrieve the input distribution to fold
-                TH1F * GetInputHistogram( string Name, string Title );
+                TH1F * GetInputHistogram( string Name, string Title, bool Normalise = false );
 
                 //Handy for error calculation
                 vector<double> SumOfInputWeightSquares();

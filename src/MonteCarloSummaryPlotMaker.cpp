@@ -194,39 +194,73 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 		int mostIterations = 0;
 		double chiSquaredThreshold = 0.0;
 		double kolmogorovThreshold = 0.0;
+		bool isUnfolding = true;
 		for ( int mcIndex = 0; mcIndex < crossCheckPlots.size(); mcIndex++ )
 		{
-			int nextIndex = ( mcIndex + MC_CHECK_OFFSET ) % crossCheckPlots.size();
-			cout << "Cross check - MC " << nextIndex << " reco with MC " << mcIndex << " prior" << endl;
-
 			//Get the distribution that should be produced by the unfolding from MC truth
+			int nextIndex = ( mcIndex + MC_CHECK_OFFSET ) % crossCheckPlots.size();
 			Distribution * referenceDistribution = crossCheckPlots[ nextIndex ]->MonteCarloTruthForCrossCheck();
 
-			//Unfold MC reco
-			double convergenceChi2, convergenceKolmogorov;
-			mostIterations += crossCheckPlots[ mcIndex ]->MonteCarloCrossCheck( referenceDistribution, convergenceChi2, convergenceKolmogorov );
-			chiSquaredThreshold += convergenceChi2;
-			kolmogorovThreshold += convergenceKolmogorov;
+			if ( referenceDistribution )
+			{
+				//Unfold MC reco
+				cout << endl << "Cross check - MC " << nextIndex << " reco with MC " << mcIndex << " prior" << endl;
+				double convergenceChi2, convergenceKolmogorov;
+				mostIterations += crossCheckPlots[ mcIndex ]->MonteCarloCrossCheck( referenceDistribution, convergenceChi2, convergenceKolmogorov );
+				chiSquaredThreshold += convergenceChi2;
+				kolmogorovThreshold += convergenceKolmogorov;
+			}
+			else
+			{
+				isUnfolding = false;
+				break;
+			}
 		}
-
-		//Find the average values for the convergence criteria
-		mostIterations = ceil( (double)mostIterations / (double)crossCheckPlots.size() );
-		chiSquaredThreshold /= (double)crossCheckPlots.size();
-		kolmogorovThreshold /= (double)crossCheckPlots.size();
-
-		//Check that the iteration process is useful
-		if ( mostIterations < 2 )
+		if ( isUnfolding )
 		{
-			//Must apply the unfolding at least once, regardless
-			mostIterations = 1;
+			//Find the average values for the convergence criteria
+			mostIterations = ceil( (double)mostIterations / (double)crossCheckPlots.size() );
+			chiSquaredThreshold /= (double)crossCheckPlots.size();
+			kolmogorovThreshold /= (double)crossCheckPlots.size();
 
-			//Warn about potential problems
-			cout << "Unfolding will only be applied once - no iteration. This suggests there is a problem: perhaps the smearing matrix is underpopulated?" << endl;
+			//Check that the iteration process is useful
+			if ( mostIterations < 2 )
+			{
+				//Must apply the unfolding at least once, regardless
+				mostIterations = 1;
+
+				//Warn about potential problems
+				cout << "Unfolding will only be applied once - no iteration. This suggests there is a problem: perhaps the smearing matrix is underpopulated?" << endl;
+			}
+			cout << "Chosen convergence criteria: max " << mostIterations << " iterations; chi2 below " << chiSquaredThreshold << "; KS above " << kolmogorovThreshold << endl;
 		}
-		cout << "Chosen convergence criteria: max " << mostIterations << " iterations; chi2 below " << chiSquaredThreshold << "; KS above " << kolmogorovThreshold << endl;
 
 		//Tidy up
 		crossCheckPlots.clear();
+
+		//Perform closure tests
+		int numberRemoved = 0;
+		vector< bool > usePrior( allPlots.size(), true );
+		for ( int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
+		{
+			cout << endl << "Closure test for " << mcInfo->Description( plotIndex ) << endl;
+			bool closureWorked = allPlots[plotIndex]->ClosureTest( mostIterations, chiSquaredThreshold, kolmogorovThreshold, WithSmoothing );
+
+			if ( isUnfolding && !closureWorked )
+			{
+				//Remove priors that did not pass the closure test
+				cout << "Removing " << mcInfo->Description( plotIndex ) << " from available priors" << endl;
+				usePrior[ plotIndex ] = false;
+				numberRemoved++;
+			}
+		}
+
+		//Quit if too many prior distributions fail
+		if ( numberRemoved > (double)allPlots.size() / 2.0 )
+		{
+			cerr << "The majority of priors failed their closure tests. Suggest you choose better binning / provide more MC stats" << endl;
+			exit(1);
+		}
 
 		//Make a canvas to display the plots
 		string plotName = allPlots[0]->Description(false) + "CorrectedDistribution";
@@ -237,63 +271,70 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 		//Unfold each plot and retrieve the information
 		vector<double> combinedCorrectedData, minimumCorrectedData, maximumCorrectedData, combinedStatisticErrors;
 		TH1F *combinedCorrectedHistogramWithSystematics, *combinedCorrectedHistogramWithStatistics;
+		bool firstPlot = true;
+		allTruthPlots = vector< TH1F* >( allPlots.size(), NULL );
 		for ( int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
 		{
-			//Unfold
-			cout << endl << "Unfolding " << allPlots[ plotIndex ]->Description(true) << " with " << allPlots[ plotIndex ]->PriorName() << endl;
-			allPlots[plotIndex]->Unfold( mostIterations, chiSquaredThreshold, kolmogorovThreshold, WithSmoothing );
-
-			//Get the error vector
-			vector<double> plotErrors = allPlots[ plotIndex ]->CorrectedErrors();
-
-			//Make a local copy of the truth plot
-			string truthPlotName = "localCopy" + allPlots[ plotIndex ]->PriorName() + "Truth";
-			TH1F * newTruthHistogram = ( TH1F* )allPlots[ plotIndex ]->MCTruthHistogram()->Clone( truthPlotName.c_str() );
-			allTruthPlots.push_back( newTruthHistogram );
-
-			//Load the corrected data into the combined distribution
-			TH1F * correctedHistogram = allPlots[ plotIndex ]->CorrectedHistogram();
-			for ( int binIndex = 0; binIndex < correctedHistogram->GetNbinsX() + 2; binIndex++ )
+			if ( usePrior[ plotIndex ] )
 			{
-				double binContent = correctedHistogram->GetBinContent( binIndex );
+				//Unfold
+				cout << endl << "Unfolding " << allPlots[ plotIndex ]->Description(true) << " with " << allPlots[ plotIndex ]->PriorName() << endl;
+				allPlots[plotIndex]->Unfold( mostIterations, chiSquaredThreshold, kolmogorovThreshold, WithSmoothing );
 
-				if ( plotIndex == 0 )
+				//Get the error vector
+				vector<double> plotErrors = allPlots[ plotIndex ]->CorrectedErrors();
+
+				//Make a local copy of the truth plot
+				string truthPlotName = "localCopy" + allPlots[ plotIndex ]->PriorName() + "Truth";
+				TH1F * newTruthHistogram = ( TH1F* )allPlots[ plotIndex ]->MCTruthHistogram()->Clone( truthPlotName.c_str() );
+				allTruthPlots[ plotIndex ] = newTruthHistogram;
+
+				//Load the corrected data into the combined distribution
+				TH1F * correctedHistogram = allPlots[ plotIndex ]->CorrectedHistogram();
+				for ( int binIndex = 0; binIndex < correctedHistogram->GetNbinsX() + 2; binIndex++ )
 				{
-					//Initialise the distribution
-					combinedCorrectedData.push_back( binContent );
-					minimumCorrectedData.push_back( binContent );
-					maximumCorrectedData.push_back( binContent );
-					combinedStatisticErrors.push_back( plotErrors[binIndex] );
+					double binContent = correctedHistogram->GetBinContent( binIndex );
+
+					if ( firstPlot )
+					{
+						//Initialise the distribution
+						combinedCorrectedData.push_back( binContent );
+						minimumCorrectedData.push_back( binContent );
+						maximumCorrectedData.push_back( binContent );
+						combinedStatisticErrors.push_back( plotErrors[binIndex] );
+					}
+					else
+					{
+						//Populate the distribution
+						combinedCorrectedData[binIndex] += binContent;
+						combinedStatisticErrors[binIndex] += plotErrors[binIndex];
+						if ( binContent < minimumCorrectedData[binIndex] )
+						{
+							minimumCorrectedData[binIndex] = binContent;
+						}
+						if ( binContent > maximumCorrectedData[binIndex] )
+						{
+							maximumCorrectedData[binIndex] = binContent;
+						}
+					}
 				}
-				else
+
+				//Some things only need to do once
+				if ( firstPlot )
 				{
-					//Populate the distribution
-					combinedCorrectedData[binIndex] += binContent;
-					combinedStatisticErrors[binIndex] += plotErrors[binIndex];
-					if ( binContent < minimumCorrectedData[binIndex] )
-					{
-						minimumCorrectedData[binIndex] = binContent;
-					}
-					if ( binContent > maximumCorrectedData[binIndex] )
-					{
-						maximumCorrectedData[binIndex] = binContent;
-					}
+					//Copy the format of the data histograms
+					combinedCorrectedHistogramWithSystematics = new TH1F( *correctedHistogram );
+					combinedCorrectedHistogramWithStatistics = new TH1F( *correctedHistogram );
+
+					//Copy a smearing matrix
+					string smearingName = allPlots[plotIndex]->Description(false) + "SmearingMatrix";
+					string smearingTitle = allPlots[plotIndex]->Description(true) + " Smearing Matrix";
+					smearingMatrix = ( TH2F* )allPlots[plotIndex]->SmearingMatrix()->Clone( smearingName.c_str() );
+					smearingMatrix->SetTitle( smearingTitle.c_str() );
+					smearingMatrix->SetStats(false);
 				}
-			}
 
-			//Some things only need to do once
-			if ( plotIndex == 0 )
-			{
-				//Copy the format of the data histograms
-				combinedCorrectedHistogramWithSystematics = new TH1F( *correctedHistogram );
-				combinedCorrectedHistogramWithStatistics = new TH1F( *correctedHistogram );
-
-				//Copy a smearing matrix
-				string smearingName = allPlots[plotIndex]->Description(false) + "SmearingMatrix";
-				string smearingTitle = allPlots[plotIndex]->Description(true) + " Smearing Matrix";
-				smearingMatrix = ( TH2F* )allPlots[plotIndex]->SmearingMatrix()->Clone( smearingName.c_str() );
-				smearingMatrix->SetTitle( smearingTitle.c_str() );
-				smearingMatrix->SetStats(false);
+				firstPlot = false;
 			}
 
 			//Free some memory
@@ -304,12 +345,12 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 		for ( int binIndex = 0; binIndex < combinedCorrectedData.size(); binIndex++ )
 		{
 			//Take the mean of the central values
-			combinedCorrectedData[binIndex] /= allPlots.size();
+			combinedCorrectedData[binIndex] /= (double)( allPlots.size() - numberRemoved );
 
 			//The systematic error is just the range of the corrected data
 			combinedCorrectedHistogramWithSystematics->SetBinContent( binIndex, combinedCorrectedData[binIndex] );
 			double systematic = ( maximumCorrectedData[binIndex] - minimumCorrectedData[binIndex] ) / 2.0;
-			double statistic = combinedStatisticErrors[binIndex] / (double)allPlots.size();
+			double statistic = combinedStatisticErrors[binIndex] / (double)( allPlots.size() - numberRemoved );
 			double systematicAndStatisticError = sqrt( ( systematic * systematic ) + ( statistic * statistic ) );
 			combinedCorrectedHistogramWithSystematics->SetBinError( binIndex, systematicAndStatisticError );
 
@@ -355,17 +396,20 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 		//Draw the MC truth histograms
 		for ( int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
 		{
-			TH1F * truthPlot = allTruthPlots[ plotIndex ];
-			truthPlot->SetLineColor( mcInfo->LineColour(plotIndex) );
-			truthPlot->SetMarkerColor( mcInfo->LineColour(plotIndex) );
-			truthPlot->SetLineStyle( mcInfo->LineStyle(plotIndex) );
-			truthPlot->SetLineWidth(2.5);
-			truthPlot->SetTitle( plotTitle.c_str() );
-			truthPlot->SetStats(false);
-			truthPlot->Draw( "SAME" );
+			if ( usePrior[ plotIndex ] )
+			{
+				TH1F * truthPlot = allTruthPlots[ plotIndex ];
+				truthPlot->SetLineColor( mcInfo->LineColour(plotIndex) );
+				truthPlot->SetMarkerColor( mcInfo->LineColour(plotIndex) );
+				truthPlot->SetLineStyle( mcInfo->LineStyle(plotIndex) );
+				truthPlot->SetLineWidth(2.5);
+				truthPlot->SetTitle( plotTitle.c_str() );
+				truthPlot->SetStats(false);
+				truthPlot->Draw( "SAME" );
 
-			//Add to legend
-			lineColourKey->AddEntry( truthPlot, mcInfo->Description(plotIndex).c_str(), "l" );
+				//Add to legend
+				lineColourKey->AddEntry( truthPlot, mcInfo->Description(plotIndex).c_str(), "l" );
+			}
 		}
 		lineColourKey->Draw();
 

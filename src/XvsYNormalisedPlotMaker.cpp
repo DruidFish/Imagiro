@@ -235,10 +235,6 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 	}       
 	else
 	{
-		//Closure tests
-		XUnfolder->ClosureTest( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
-		XvsYUnfolder->ClosureTest( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
-
 		//Unfold the distributions
 		XUnfolder->Unfold( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
 		XvsYUnfolder->Unfold( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
@@ -336,7 +332,7 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 			cerr << "Improve the binning of " << yName << " in the " << xName << " vs " << yName << " plot" << endl;
 			cerr << "Try using a finer binning, and avoid large numbers of events in under or overflow bins" << endl;
 			cerr << "Suggested bin width: " << yValueSummary->OptimumBinWidth() << endl;
-			//exit(1);
+			exit(1);
 		}
 
 		//Free some memory
@@ -378,12 +374,31 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 		for ( int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
 		{
 			double errorScaleFactor = correctedDistribution->GetBinContent(binIndex) / uncorrectedDistribution->GetBinContent(binIndex);
+
+			//Check for div0 errors
+			if ( isinf( errorScaleFactor ) )
+			{
+				errorScaleFactor = 1.0;
+			}
+			if ( isnan( errorScaleFactor ) )
+			{
+				errorScaleFactor = 0.0;
+			}
+
 			correctedDataErrors[binIndex] *= errorScaleFactor;
 		}
 
 		//Mark as done
 		finalised = true;
 	}
+}
+
+//Do a closure test
+bool XvsYNormalisedPlotMaker::ClosureTest( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing )
+{
+	bool result = XvsYUnfolder->ClosureTest( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
+	result &= XUnfolder->ClosureTest( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
+	return result;
 }
 
 //Make a cross-check with MC

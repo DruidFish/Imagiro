@@ -88,7 +88,8 @@ class IterativeUnfolding
 		//Perform a closure test
 		//Unfold the MC reco distribution with the corresponding truth information as a prior
 		//It should give the truth information back exactly...
-		void ClosureTest( int MostIterations = 20, double ChiSquaredThreshold = 10.0, double KolmogorovThreshold = 0.1, bool WithSmoothing = false );
+		//Return true if test passed
+		bool ClosureTest( int MostIterations = 20, double ChiSquaredThreshold = 10.0, double KolmogorovThreshold = 0.1, bool WithSmoothing = false );
 
 		//Perform an unfolding cross-check
 		//Use MC truth A as a prior to unfold MC reco B
@@ -100,17 +101,17 @@ class IterativeUnfolding
 		//distribution, with or without errors
 		//NB: the error calculation is only performed
 		//when you run the method with errors for the first time
-		TH1F * GetUnfoldedHistogram( string Name = "unfolded", string Title = "Unfolded distribution", bool WithErrors = false );
+		TH1F * GetUnfoldedHistogram( string Name, string Title, bool Normalise = false );
 
 		//Retrieve the smearing matrix used
 		TH2F * GetSmearingMatrix( string Name, string Title );
 
 		//Retrieve the truth distribution
-		TH1F * GetTruthHistogram( string Name, string Title );
+		TH1F * GetTruthHistogram( string Name, string Title, bool Normalise = false );
 		Distribution * GetTruthDistribution();
 
 		//Retrieve the uncorrected data distribution
-		TH1F * GetUncorrectedDataHistogram( string Name, string Title );
+		TH1F * GetUncorrectedDataHistogram( string Name, string Title, bool Normalise = false );
 
 		//Handy for error calculation
 		vector<double> SumOfDataWeightSquares();

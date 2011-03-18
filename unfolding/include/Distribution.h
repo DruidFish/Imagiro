@@ -38,7 +38,7 @@ class Distribution
 		double GetBinNumber( int BinIndex );
 		double GetBinProbability( int BinIndex );
 
-		TH1F * MakeRootHistogram( string Name, string Title, bool WithErrors = false, bool MakeNormalised = false, bool WithBadBin = false );
+		TH1F * MakeRootHistogram( string Name, string Title, bool MakeNormalised = false, bool WithBadBin = false );
 
 		//Try and account for statistical fluctuations with a moving-average smearing
 		void Smooth( int SideBinNumber = 1 );

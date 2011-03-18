@@ -24,7 +24,7 @@ XPlotMaker::XPlotMaker()
 //Constructor with the names to use for the variables
 XPlotMaker::XPlotMaker( string XVariableName, string PriorName,
 		int XBinNumber, double XMinimum, double XMaximum,
-		double ScaleFactor ) : xName( XVariableName ), priorName( PriorName ), finalised( false ), scaleFactor(ScaleFactor)
+		double ScaleFactor, bool Normalise ) : xName( XVariableName ), priorName( PriorName ), finalised( false ), scaleFactor(ScaleFactor), normalise(Normalise)
 {
 	vector<double> minima, maxima;
 	vector<int> binNumbers;
@@ -62,7 +62,7 @@ IPlotMaker * XPlotMaker::Clone( string NewPriorName )
 {
 	return new XPlotMaker( xName, NewPriorName,
 			DistributionIndices->GetBinNumber(0) - 2, DistributionIndices->GetMinima()[0], DistributionIndices->GetMaxima()[0],
-			scaleFactor );
+			scaleFactor, normalise );
 }
 
 //Take input values from ntuples
@@ -170,9 +170,6 @@ void XPlotMaker::Unfold( int MostIterations, double ChiSquaredThreshold, double 
 	}       
 	else
 	{
-		//Closure test
-		XUnfolder->ClosureTest( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
-
 		//Unfold the distribution
 		XUnfolder->Unfold( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
 
@@ -183,11 +180,11 @@ void XPlotMaker::Unfold( int MostIterations, double ChiSquaredThreshold, double 
 		string XFullTitle = xName + " using " + priorName;
 
 		//Retrieve the results
-		TH1F * XCorrected = XUnfolder->GetUnfoldedHistogram( XFullName + "Corrected", XFullTitle + " Corrected Distribution" );
+		TH1F * XCorrected = XUnfolder->GetUnfoldedHistogram( XFullName + "Corrected", XFullTitle + " Corrected Distribution", normalise );
 
 		//Retrieve some other bits for debug
-		TH1F * XUncorrected = XUnfolder->GetUncorrectedDataHistogram( XFullName + "Uncorrected", XFullTitle + " Uncorrected Distribution" );
-		TH1F * XTruth = XUnfolder->GetTruthHistogram( XFullName + "Truth", XFullTitle + " Truth Distribution" );
+		TH1F * XUncorrected = XUnfolder->GetUncorrectedDataHistogram( XFullName + "Uncorrected", XFullTitle + " Uncorrected Distribution", normalise );
+		TH1F * XTruth = XUnfolder->GetTruthHistogram( XFullName + "Truth", XFullTitle + " Truth Distribution", normalise );
 		TH2F * XSmearing = XUnfolder->GetSmearingMatrix( XFullName + "Smearing", XFullTitle + " Smearing Matrix" );
 
 		//Scale the histograms
@@ -199,9 +196,34 @@ void XPlotMaker::Unfold( int MostIterations, double ChiSquaredThreshold, double 
 		vector<double> XErrors = XUnfolder->SumOfDataWeightSquares();
 
 		//Calculate errors
+		TH1F * XCorrectedNotNormalised;
+		if ( normalise )
+		{
+			XCorrectedNotNormalised = XUnfolder->GetUnfoldedHistogram( XFullName + "CorrectedNotNormalised", XFullTitle + " Corrected Distribution Not Normalised", false );
+			XCorrectedNotNormalised->Scale( scaleFactor );
+		}
 		for ( int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
 		{
 			double combinedError = sqrt( XErrors[ binIndex ] ) * scaleFactor;
+
+			//Scale the errors if the plots are normalised
+			if ( normalise )
+			{
+				double normalisationFactor = XCorrected->GetBinContent( binIndex ) / XCorrectedNotNormalised->GetBinContent( binIndex );
+
+				//Check for div0 errors
+				if ( isinf( normalisationFactor ) )
+				{
+					normalisationFactor = 1.0;
+				}
+				if ( isnan( normalisationFactor ) )
+				{
+					normalisationFactor = 0.0;
+				}
+
+				combinedError *= normalisationFactor;
+			}
+
 			correctedDataErrors.push_back( combinedError );
 		}
 
@@ -231,12 +253,29 @@ void XPlotMaker::Unfold( int MostIterations, double ChiSquaredThreshold, double 
 		for ( int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
 		{
 			double errorScaleFactor = correctedDistribution->GetBinContent(binIndex) / uncorrectedDistribution->GetBinContent(binIndex);
+
+			//Check for div0 errors
+			if ( isinf( errorScaleFactor ) )
+			{
+				errorScaleFactor = 1.0;
+			}
+			if ( isnan( errorScaleFactor ) )
+			{
+				errorScaleFactor = 0.0;
+			}
+
 			correctedDataErrors[binIndex] *= errorScaleFactor;
 		}
 
 		//Mark as done
 		finalised = true;
 	}
+}
+
+//Do a closure test
+bool XPlotMaker::ClosureTest( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing )
+{
+	return XUnfolder->ClosureTest( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
 }
 
 //Make a cross-check with MC

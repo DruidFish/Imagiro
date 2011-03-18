@@ -29,7 +29,10 @@ class IPlotMaker
 		virtual void StoreData( InputNtuple * DataInput ) = 0;
 
 		//Do the unfolding
-		virtual void Unfold( int MostIterations = 10, double ChiSquaredThreshold = 1.0, double KolmogorovThreshold = 1.0, bool WithSmoothing = false ) = 0;
+		virtual void Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing = false ) = 0;
+
+		//Do a closure test
+	        virtual bool ClosureTest( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing = false ) = 0;
 
 		//Make a cross-check with MC
 		virtual int MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing = false ) = 0;

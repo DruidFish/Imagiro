@@ -174,7 +174,7 @@ double Distribution::GetBinProbability( int InputIndex )
 }
 
 //Make a root histogram from the distribution
-TH1F * Distribution::MakeRootHistogram( string Name, string Title, bool WithErrors, bool MakeNormalised, bool WithBadBin )
+TH1F * Distribution::MakeRootHistogram( string Name, string Title, bool MakeNormalised, bool WithBadBin )
 {
 	//Get the correct number of bins
 	int binNumber = indexCalculator->GetBinNumber();

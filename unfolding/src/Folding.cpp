@@ -173,7 +173,7 @@ void Folding::Fold()
 
 //Perform a closure test
 //Fold the MC truth information - should give the MC reco exactly
-void Folding::ClosureTest()
+bool Folding::ClosureTest()
 {
 	//Finalise the smearing matrix
 	inputSmearing->Finalise();
@@ -186,20 +186,28 @@ void Folding::ClosureTest()
 	distributionComparison->CompareDistributions( reconstructedDistribution, smearedTruthDistribution, chi2, kolmogorov, false );
 
 	//Output result
-	if ( chi2 < 1.0 && kolmogorov > 0.9 )
+	cout << "Number of bins: " << indexCalculator->GetBinNumber() << endl;
+	if ( chi2 == 0.0 && kolmogorov == 1.0 )
+	{
+		cout << "Perfect closure test: chi squared = " << chi2 << " and K-S probability = " << kolmogorov << ". Nice one!" << endl;
+		return true;
+	}
+	else if ( chi2 < 10.0 && kolmogorov > 0.1 )
 	{
 		cout << "Closure test passed: chi squared = " << chi2 << " and K-S probability = " << kolmogorov << endl;
-	}       
+		return true;
+	}
 	else
 	{
 		cout << "Closure test failed: chi squared = " << chi2 << " and K-S probability = " << kolmogorov << endl;
+		return false;
 	}
 }
 
 //Retrieve the folded distribution
-TH1F * Folding::GetFoldedHistogram( string Name, string Title, bool WithErrors )
+TH1F * Folding::GetFoldedHistogram( string Name, string Title, bool Normalise )
 {
-	return smearedDistribution->MakeRootHistogram( Name, Title );
+	return smearedDistribution->MakeRootHistogram( Name, Title, Normalise );
 }
 
 //Retrieve the smearing matrix used
@@ -208,26 +216,16 @@ TH2F * Folding::GetSmearingMatrix( string Name, string Title )
 	return inputSmearing->MakeRootHistogram( Name, Title );
 }
 
-//Retrieve the truth distribution
-TH1F * Folding::GetReconstructedHistogram( string Name, string Title )
+//Retrieve the reconstructed distribution
+TH1F * Folding::GetReconstructedHistogram( string Name, string Title, bool Normalise )
 {
-	return reconstructedDistribution->MakeRootHistogram( Name, Title );
-}
-
-//Retrieve the truth distribution
-TH1F * Folding::GetTruthHistogram( string Name, string Title )
-{
-	return truthDistribution->MakeRootHistogram( Name, Title );
-}
-Distribution * Folding::GetTruthDistribution()
-{
-	return truthDistribution;
+	return reconstructedDistribution->MakeRootHistogram( Name, Title, Normalise );
 }
 
 //Retrieve the uncorrected data distribution
-TH1F * Folding::GetInputHistogram( string Name, string Title )
+TH1F * Folding::GetInputHistogram( string Name, string Title, bool Normalise )
 {
-	return inputDistribution->MakeRootHistogram( Name, Title );
+	return inputDistribution->MakeRootHistogram( Name, Title, Normalise );
 }
 
 //Handy for error calculation

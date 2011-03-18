@@ -36,7 +36,10 @@ class XvsYNormalisedPlotMaker : public IPlotMaker
 		virtual void StoreData( InputNtuple * DataInput );
 
 		//Do the unfolding
-		virtual void Unfold( int MostIterations = 10, double ChiSquaredThreshold = 1.0, double KolmogorovThreshold = 1.0, bool WithSmoothing = false );
+		virtual void Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing = false );
+
+		//Do a closure test
+                virtual bool ClosureTest( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing = false );
 
 		//Make a cross-check with MC
 		virtual int MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing = false );

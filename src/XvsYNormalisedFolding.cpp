@@ -234,10 +234,6 @@ void XvsYNormalisedFolding::Unfold( int MostIterations, double ChiSquaredThresho
 	}       
 	else
 	{
-		//Closure tests
-		XFolder->ClosureTest();
-		XvsYFolder->ClosureTest();
-
 		//Unfold the distributions
 		XFolder->Fold();
 		XvsYFolder->Fold();
@@ -334,7 +330,7 @@ void XvsYNormalisedFolding::Unfold( int MostIterations, double ChiSquaredThresho
 			cerr << "Improve the binning of " << yName << " in the " << xName << " vs " << yName << " plot" << endl;
 			cerr << "Try using a finer binning, and avoid large numbers of events in under or overflow bins" << endl;
 			cerr << "Suggested bin width: " << yValueSummary->OptimumBinWidth() << endl;
-			//exit(1);
+			exit(1);
 		}
 
 		//Free some memory
@@ -376,12 +372,31 @@ void XvsYNormalisedFolding::Unfold( int MostIterations, double ChiSquaredThresho
 		for ( int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
 		{
 			double errorScaleFactor = foldedDistribution->GetBinContent(binIndex) / inputDistribution->GetBinContent(binIndex);
+
+			//Check for div0 errors
+			if ( isinf( errorScaleFactor ) )
+			{
+				errorScaleFactor = 1.0;
+			}
+			if ( isnan( errorScaleFactor ) )
+			{
+				errorScaleFactor = 0.0;
+			}
+
 			correctedInputErrors[binIndex] *= errorScaleFactor;
 		}
 
 		//Mark as done
 		finalised = true;
 	}
+}
+
+//Do a closure test
+bool XvsYNormalisedFolding::ClosureTest( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing )
+{
+	bool result = XvsYFolder->ClosureTest();
+        result &= XFolder->ClosureTest();
+	return result;
 }
 
 //Make a cross-check with MC
@@ -432,11 +447,10 @@ TH1F * XvsYNormalisedFolding::MCTruthHistogram()
 	}
 }
 
-//Return a distribution for use in the cross-checks
+//Return a distribution for use in the cross-checks - NULL, since cross-checks make no sense for folding
 Distribution * XvsYNormalisedFolding::MonteCarloTruthForCrossCheck() 
 {
-	//This doesn't really make sense to use
-	return XvsYFolder->GetTruthDistribution();
+	return NULL;
 }
 
 

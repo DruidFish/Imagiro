@@ -25,7 +25,7 @@ XFolding::XFolding()
 //Constructor with the names to use for the variables
 XFolding::XFolding( string XVariableName, string PriorName,
 		int XBinNumber, double XMinimum, double XMaximum,
-		double ScaleFactor ) : xName( XVariableName ), priorName( PriorName ), finalised( false ), scaleFactor(ScaleFactor)
+		double ScaleFactor, bool Normalise ) : xName( XVariableName ), priorName( PriorName ), finalised( false ), scaleFactor(ScaleFactor), normalise(Normalise)
 {
 	vector<double> minima, maxima;
 	vector<int> binNumbers;
@@ -63,7 +63,7 @@ IPlotMaker * XFolding::Clone( string NewPriorName )
 {
 	return new XFolding( xName, NewPriorName,
 			DistributionIndices->GetBinNumber(0) - 2, DistributionIndices->GetMinima()[0], DistributionIndices->GetMaxima()[0],
-			scaleFactor );
+			scaleFactor, normalise );
 }
 
 //Take input values from ntuples
@@ -171,9 +171,6 @@ void XFolding::Unfold( int MostIterations, double ChiSquaredThreshold, double Ko
 	}       
 	else
 	{
-		//Closure tests
-		XFolder->ClosureTest();
-
 		//Unfold the distributions
 		XFolder->Fold();
 
@@ -184,11 +181,11 @@ void XFolding::Unfold( int MostIterations, double ChiSquaredThreshold, double Ko
 		string XFullTitle = xName + " using " + priorName;
 
 		//Retrieve the results
-		TH1F * XSmeared = XFolder->GetFoldedHistogram( XFullName + "Smeared", XFullTitle + " Smeared Distribution" );
+		TH1F * XSmeared = XFolder->GetFoldedHistogram( XFullName + "Smeared", XFullTitle + " Smeared Distribution", normalise );
 
 		//Retrieve some other bits for debug
-		TH1F * XNotSmeared = XFolder->GetInputHistogram( XFullName + "Input", XFullTitle + " Input Distribution" );
-		TH1F * XTruth = XFolder->GetReconstructedHistogram( XFullName + "Reconstructed", XFullTitle + " Reconstructed Distribution" );
+		TH1F * XNotSmeared = XFolder->GetInputHistogram( XFullName + "Input", XFullTitle + " Input Distribution", normalise );
+		TH1F * XTruth = XFolder->GetReconstructedHistogram( XFullName + "Reconstructed", XFullTitle + " Reconstructed Distribution", normalise );
 		TH2F * XSmearing = XFolder->GetSmearingMatrix( XFullName + "Smearing", XFullTitle + " Smearing Matrix" );
 
 		//Scale the histograms
@@ -199,10 +196,35 @@ void XFolding::Unfold( int MostIterations, double ChiSquaredThreshold, double Ko
 		//Get the error vector
 		vector<double> XErrors = XFolder->SumOfInputWeightSquares();
 
-		//Combine errors
+		//Calculate errors
+		TH1F * XSmearedNotNormalised;
+		if ( normalise )
+		{
+			XSmearedNotNormalised = XFolder->GetFoldedHistogram( XFullName + "SmearedNotNormalised", XFullTitle + " Smeared Distribution Not Normalised", false );
+			XSmearedNotNormalised->Scale( scaleFactor );
+		}
 		for ( int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
 		{
 			double combinedError = sqrt( XErrors[ binIndex ] ) * scaleFactor;
+
+			//Scale the errors if the plots are normalised
+			if ( normalise )
+			{
+				double normalisationFactor = XSmeared->GetBinContent( binIndex ) / XSmearedNotNormalised->GetBinContent( binIndex );
+
+				//Check for div0 errors
+				if ( isinf( normalisationFactor ) )
+				{
+					normalisationFactor = 1.0;
+				}
+				if ( isnan( normalisationFactor ) )
+				{
+					normalisationFactor = 0.0;
+				}
+
+				combinedError *= normalisationFactor;
+			}
+
 			correctedInputErrors.push_back( combinedError );
 		}
 
@@ -232,12 +254,29 @@ void XFolding::Unfold( int MostIterations, double ChiSquaredThreshold, double Ko
 		for ( int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
 		{
 			double errorScaleFactor = foldedDistribution->GetBinContent(binIndex) / inputDistribution->GetBinContent(binIndex);
+
+			//Check for div0 errors
+			if ( isinf( errorScaleFactor ) )
+			{
+				errorScaleFactor = 1.0;
+			}
+			if ( isnan( errorScaleFactor ) )
+			{
+				errorScaleFactor = 0.0;
+			}
+
 			correctedInputErrors[binIndex] *= errorScaleFactor;
 		}
 
 		//Mark as done
 		finalised = true;
 	}
+}
+
+//Do a closure test
+bool XFolding::ClosureTest( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing )
+{
+	return XFolder->ClosureTest();
 }
 
 //Make a cross-check with MC
@@ -288,11 +327,10 @@ TH1F * XFolding::MCTruthHistogram()
 	}
 }
 
-//Return a distribution for use in the cross-checks
+//Return a distribution for use in the cross-checks - NULL, since cross-checks make no sense for folding
 Distribution * XFolding::MonteCarloTruthForCrossCheck() 
 {
-	//This doesn't really make sense to use
-	return XFolder->GetTruthDistribution();
+	return NULL;
 }
 
 

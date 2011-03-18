@@ -262,7 +262,7 @@ void IterativeUnfolding::Unfold( int MostIterations, double ChiSquaredThreshold,
 //Perform a closure test
 //Unfold the MC reco distribution with the corresponding truth information as a prior
 //It should give the truth information back exactly...
-void IterativeUnfolding::ClosureTest( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing )
+bool IterativeUnfolding::ClosureTest( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing )
 {
 	//Use the truth distribution as the prior
 	Distribution * priorDistribution = truthDistribution;
@@ -303,13 +303,21 @@ void IterativeUnfolding::ClosureTest( int MostIterations, double ChiSquaredThres
 	distributionComparison->CompareDistributions( truthDistribution, unfoldedReconstructedDistribution, chi2Reference, kolmogorovReference, false );
 
 	//Output result
-	if ( chi2Reference < 10.0 && kolmogorovReference > 0.1 )
+	cout << "Number of bins: " << indexCalculator->GetBinNumber() << endl;
+	if ( chi2Reference == 0.0 && kolmogorovReference == 1.0 )
+	{
+		cout << "Perfect closure test: chi squared = " << chi2Reference << " and K-S probability = " << kolmogorovReference << ". Nice one!" << endl;
+		return true;
+	}
+	else if ( chi2Reference < 100.0 && kolmogorovReference > 0.001 )
 	{
 		cout << "Closure test passed: chi squared = " << chi2Reference << " and K-S probability = " << kolmogorovReference << endl;
+		return true;
 	}
 	else
 	{
 		cout << "Closure test failed: chi squared = " << chi2Reference << " and K-S probability = " << kolmogorovReference << endl;
+		return false;
 	}
 }
 
@@ -334,7 +342,7 @@ int IterativeUnfolding::MonteCarloCrossCheck( Distribution * ReferenceDistributi
 	double chiSquaredResult = lastChiSquared;
 	double kolmogorovResult = lastKolmogorov;
 	cout << "-------------Cross-Check-------------" << endl;
-	cout << lastChiSquared << ", " << lastKolmogorov << ", 0";
+	cout << "0: " << lastChiSquared << ", " << lastKolmogorov;
 
 	//Iterate, making new distribution from data, old distribution and smearing matrix
 	Distribution * adjustedDistribution;
@@ -367,12 +375,12 @@ int IterativeUnfolding::MonteCarloCrossCheck( Distribution * ReferenceDistributi
 		priorDistribution = adjustedDistribution;
 
 		//Check to see if things have got worse
-		if ( referenceChi2 > lastChiSquared || referenceKolmogorov < lastKolmogorov || iteration == MAX_ITERATIONS_FOR_CROSS_CHECK - 1 )
+		if ( referenceChi2 > lastChiSquared || referenceKolmogorov < lastKolmogorov || iteration == MAX_ITERATIONS_FOR_CROSS_CHECK - 1 || ( referenceChi2 == lastChiSquared && referenceKolmogorov == lastKolmogorov ) )
 		{
 			//Return the criteria
 			ChiSquaredThreshold = chiSquaredResult;
 			KolmogorovThreshold = kolmogorovResult;
-			cout << " <--" << endl << referenceChi2 << ", " << referenceKolmogorov << ", " << iteration + 1 << endl;
+			cout << " <--" << endl << iteration + 1 << ": " << referenceChi2 << ", " << referenceKolmogorov << endl;
 			cout << "-------------------------------------" << endl;
 			return iteration;
 		}
@@ -383,7 +391,7 @@ int IterativeUnfolding::MonteCarloCrossCheck( Distribution * ReferenceDistributi
 			lastKolmogorov = referenceKolmogorov;
 			chiSquaredResult = chi2;
 			kolmogorovResult = kolmogorov;
-			cout << endl << referenceChi2 << ", " << referenceKolmogorov << ", " << iteration + 1;
+			cout << endl << iteration + 1 << ": " << referenceChi2 << ", " << referenceKolmogorov;
 		}
 	}
 }
@@ -392,14 +400,9 @@ int IterativeUnfolding::MonteCarloCrossCheck( Distribution * ReferenceDistributi
 //distribution, with or without errors
 //NB: the error calculation is only performed
 //when you run the method with errors for the first time
-TH1F * IterativeUnfolding::GetUnfoldedHistogram( string Name, string Title, bool WithErrors )
+TH1F * IterativeUnfolding::GetUnfoldedHistogram( string Name, string Title, bool Normalise )
 {
-	if (WithErrors)
-	{
-		Title += " with errors";
-	}
-
-	return unfoldedDistribution->MakeRootHistogram( Name, Title, WithErrors );
+	return unfoldedDistribution->MakeRootHistogram( Name, Title, Normalise );
 }
 
 //Retrieve the smearing matrix used
@@ -409,9 +412,9 @@ TH2F * IterativeUnfolding::GetSmearingMatrix( string Name, string Title )
 }
 
 //Retrieve the truth distribution
-TH1F * IterativeUnfolding::GetTruthHistogram( string Name, string Title )
+TH1F * IterativeUnfolding::GetTruthHistogram( string Name, string Title, bool Normalise )
 {
-	return truthDistribution->MakeRootHistogram( Name, Title );
+	return truthDistribution->MakeRootHistogram( Name, Title, Normalise );
 }
 Distribution * IterativeUnfolding::GetTruthDistribution()
 {
@@ -419,9 +422,9 @@ Distribution * IterativeUnfolding::GetTruthDistribution()
 }
 
 //Retrieve the uncorrected data distribution
-TH1F * IterativeUnfolding::GetUncorrectedDataHistogram( string Name, string Title )
+TH1F * IterativeUnfolding::GetUncorrectedDataHistogram( string Name, string Title, bool Normalise )
 {
-	return dataDistribution->MakeRootHistogram( Name, Title );
+	return dataDistribution->MakeRootHistogram( Name, Title, Normalise );
 }
 
 //Handy for error calculation
