@@ -303,13 +303,13 @@ bool IterativeUnfolding::ClosureTest( int MostIterations, double ChiSquaredThres
 	distributionComparison->CompareDistributions( truthDistribution, unfoldedReconstructedDistribution, chi2Reference, kolmogorovReference, false );
 
 	//Output result
-	cout << "Number of bins: " << indexCalculator->GetBinNumber() << endl;
+	double binNumber = (double)indexCalculator->GetBinNumber();
 	if ( chi2Reference == 0.0 && kolmogorovReference == 1.0 )
 	{
 		cout << "Perfect closure test: chi squared = " << chi2Reference << " and K-S probability = " << kolmogorovReference << ". Nice one!" << endl;
 		return true;
 	}
-	else if ( chi2Reference < 100.0 && kolmogorovReference > 0.001 )
+	else if ( chi2Reference <  binNumber && kolmogorovReference > 1.0 / binNumber )
 	{
 		cout << "Closure test passed: chi squared = " << chi2Reference << " and K-S probability = " << kolmogorovReference << endl;
 		return true;

@@ -240,23 +240,29 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 
 		//Perform closure tests
 		int numberRemoved = 0;
+		int numberFailed = 0;
 		vector< bool > usePrior( allPlots.size(), true );
 		for ( int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
 		{
 			cout << endl << "Closure test for " << mcInfo->Description( plotIndex ) << endl;
 			bool closureWorked = allPlots[plotIndex]->ClosureTest( mostIterations, chiSquaredThreshold, kolmogorovThreshold, WithSmoothing );
 
-			if ( isUnfolding && !closureWorked )
+			if ( !closureWorked )
 			{
-				//Remove priors that did not pass the closure test
-				cout << "Removing " << mcInfo->Description( plotIndex ) << " from available priors" << endl;
-				usePrior[ plotIndex ] = false;
-				numberRemoved++;
+				numberFailed++;
+
+				if ( isUnfolding )
+				{
+					//Remove priors that did not pass the closure test
+					cout << "Removing " << mcInfo->Description( plotIndex ) << " from available priors" << endl;
+					usePrior[ plotIndex ] = false;
+					numberRemoved++;
+				}
 			}
 		}
 
 		//Quit if too many prior distributions fail
-		if ( numberRemoved > (double)allPlots.size() / 2.0 )
+		if ( numberFailed > (double)allPlots.size() / 2.0 )
 		{
 			cerr << "The majority of priors failed their closure tests. Suggest you choose better binning / provide more MC stats" << endl;
 			exit(1);
