@@ -341,7 +341,7 @@ int IterativeUnfolding::MonteCarloCrossCheck( Distribution * ReferenceDistributi
 	distributionComparison->CompareDistributions( truthDistribution, dataDistribution, lastChiSquared, lastKolmogorov, true );
 	double chiSquaredResult = lastChiSquared;
 	double kolmogorovResult = lastKolmogorov;
-	cout << "-------------Cross-Check-------------" << endl;
+	cout << "------------- Cross-Check -------------" << endl;
 	cout << "0: " << lastChiSquared << ", " << lastKolmogorov;
 
 	//Iterate, making new distribution from data, old distribution and smearing matrix

@@ -41,14 +41,14 @@ time_t timeNow;
 // or use separate matrices?                              //
 //                                                        //
 ////////////////////////////////////////////////////////////
-bool COMBINE_MC = true;
+bool COMBINE_MC = false;
 
 ////////////////////////////////////////////////////////////
 //                                                        //
 // Set the output file name                               //
 //                                                        //
 ////////////////////////////////////////////////////////////
-const string OUTPUT_FILE_NAME = "UnfoldedFinal.Pythia8.root";
+const string OUTPUT_FILE_NAME = "UnfoldedFinal.HerwigPP.root";
 
 int main ( int argc, char * argv[] )
 {
@@ -75,7 +75,7 @@ int main ( int argc, char * argv[] )
 	//                                                        //
 	////////////////////////////////////////////////////////////
 	//InputNtuple * dataNtuple = new InputNtuple( "data/user.bwynne.LeadingJetModifiedv3.Data.CaloJet/mergedFile.root", "benTuple", "Data 2010", mcInfo->NumberOfSources() );
-	int sourceIndex = 4;
+	int sourceIndex = 3;
 	//InputNtuple * dataNtuple = new InputNtuple( mcInfo->TruthFilePath(sourceIndex), "benTuple", mcInfo->Description( sourceIndex ), sourceIndex );
 	InputNtuple * dataNtuple = new InputNtuple( mcInfo->ReconstructedFilePath(sourceIndex), "benTuple", mcInfo->Description( sourceIndex ), sourceIndex );
 
