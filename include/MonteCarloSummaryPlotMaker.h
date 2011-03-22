@@ -15,6 +15,7 @@
 #include "MonteCarloInformation.h"
 #include "IPlotMaker.h"
 #include "TCanvas.h"
+#include "TStyle.h"
 #include <vector>
 #include <string>
 
@@ -40,6 +41,9 @@ class MonteCarloSummaryPlotMaker
 		//Return result
 		TCanvas * ResultPlot();
 		TH2F * SmearingMatrix();
+
+		//Create an ATLAS style object
+		TStyle * AtlasStyle( string Name );
 
 	private:
 		vector< Distribution* > allTruthDistributions;

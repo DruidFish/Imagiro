@@ -12,6 +12,10 @@
 #include "MonteCarloSummaryPlotMaker.h"
 #include "TLegend.h"
 #include "TFile.h"
+#include "TGraphAsymmErrors.h"
+#include "TGraphErrors.h"
+#include "TPad.h"
+#include "TROOT.h"
 #include <iostream>
 #include <cstdlib>
 #include <cmath>
@@ -286,11 +290,25 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 			//exit(1);
 		}
 
+		//Apply the ATLAS plot style
+		TStyle * atlasStyle = AtlasStyle( "ATLAS" );
+		gROOT->SetStyle( "ATLAS" );
+		gROOT->ForceStyle();
+
 		//Make a canvas to display the plots
 		string plotName = allPlots[0]->Description(false) + "CorrectedDistribution";
 		string plotTitle = allPlots[0]->Description(true) + " Corrected Distribution";
-		plotCanvas = new TCanvas( plotName.c_str(), plotTitle.c_str() );
-		plotCanvas->SetFillColor(kWhite);
+		plotCanvas = new TCanvas( plotName.c_str(), plotTitle.c_str(), 0, 0, 800, 600 );
+		plotCanvas->Range( 0, 0, 1, 1 );
+		plotCanvas->SetFillColor( kWhite );
+		TPad * mainPad = new TPad( "mainPad", "mainPad", 0.01, 0.33, 0.99, 0.99 );
+		mainPad->Draw();
+		mainPad->cd();
+		mainPad->SetTopMargin( 0.1 );
+		mainPad->SetBottomMargin( 0.01 );
+		mainPad->SetRightMargin( 0.1 );
+		mainPad->SetFillStyle( 0 );
+		mainPad->SetFillColor( kWhite );
 
 		//Unfold each plot and retrieve the information
 		vector<double> combinedCorrectedData, minimumCorrectedData, maximumCorrectedData, combinedStatisticErrors;
@@ -356,7 +374,7 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 					string smearingTitle = allPlots[plotIndex]->Description(true) + " Smearing Matrix";
 					smearingMatrix = ( TH2F* )allPlots[plotIndex]->SmearingMatrix()->Clone( smearingName.c_str() );
 					smearingMatrix->SetTitle( smearingTitle.c_str() );
-					smearingMatrix->SetStats(false);
+					//smearingMatrix->SetStats(false);
 
 					firstPlot = false;
 				}
@@ -366,57 +384,74 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 			delete allPlots[ plotIndex ];
 		}
 
-		//Make histograms of the combined corrected distributions
-		for ( int binIndex = 0; binIndex < combinedCorrectedData.size(); binIndex++ )
+		//Make a TGraph for the asymmetric errors
+		int graphSize = combinedCorrectedData.size();
+		Double_t xValues[ graphSize ];
+		Double_t yValues[ graphSize ];
+		Double_t xError[ graphSize ];
+		Double_t yStatError[ graphSize ];
+		Double_t yBothErrorLow[ graphSize ];
+		Double_t yBothErrorHigh[ graphSize ];
+		for ( int binIndex = 1; binIndex < graphSize - 1; binIndex++ )
 		{
-			//Take the mean of the central values
-			combinedCorrectedData[binIndex] /= (double)( allPlots.size() - numberRemoved );
+			//The x-axis values can just come straight from the histogram class
+			xValues[ binIndex ] = combinedCorrectedHistogramWithStatistics->GetBinCenter( binIndex );
+			xError[ binIndex ] = xValues[ binIndex ] - combinedCorrectedHistogramWithStatistics->GetBinLowEdge( binIndex );
 
-			//The systematic error is just the range of the corrected data
-			combinedCorrectedHistogramWithSystematics->SetBinContent( binIndex, combinedCorrectedData[binIndex] );
-			double systematic = ( maximumCorrectedData[binIndex] - minimumCorrectedData[binIndex] ) / 2.0;
-			double statistic = combinedStatisticErrors[binIndex] / (double)( allPlots.size() - numberRemoved );
-			double systematicAndStatisticError = sqrt( ( systematic * systematic ) + ( statistic * statistic ) );
-			combinedCorrectedHistogramWithSystematics->SetBinError( binIndex, systematicAndStatisticError );
+			//Get the y-values by taking the means of the corrected distributions
+			yValues[ binIndex ] = combinedCorrectedData[ binIndex ] / (double)( allPlots.size() - numberRemoved );
+			combinedCorrectedHistogramWithStatistics->SetBinContent( binIndex, yValues[ binIndex ] );
 
-			//Get the statistical error from one of the plotmakers
-			combinedCorrectedHistogramWithStatistics->SetBinContent( binIndex, combinedCorrectedData[binIndex] );
-			combinedCorrectedHistogramWithStatistics->SetBinError( binIndex, statistic );
+			//Get the mean statistical error
+			double statistic = combinedStatisticErrors[ binIndex ] / (double)( allPlots.size() - numberRemoved );
+			yStatError[ binIndex ] = statistic;
+
+			//The systematic errors come from the range of the corrected distributions
+			double systematicLow = yValues[ binIndex ] - minimumCorrectedData[ binIndex ];
+			double systematicHigh = maximumCorrectedData[ binIndex ] - yValues[ binIndex ];
+
+			//Combine the statistical and systematic errors in quadrature
+			yBothErrorLow[ binIndex ] = sqrt( ( systematicLow * systematicLow ) + ( statistic * statistic ) );
+			yBothErrorHigh[ binIndex ] = sqrt( ( systematicHigh * systematicHigh ) + ( statistic * statistic ) );
 		}
 
-		//Draw the data histogram with systematic errors
-		combinedCorrectedHistogramWithSystematics->SetTitle( plotTitle.c_str() );
-		combinedCorrectedHistogramWithSystematics->SetStats(false);
-		combinedCorrectedHistogramWithSystematics->SetMarkerStyle(7);
-		combinedCorrectedHistogramWithSystematics->SetMarkerSize(1);
-		combinedCorrectedHistogramWithSystematics->SetFillColor(30);
+		//Get rid of the overflow bins
+		double lowEdge = combinedCorrectedHistogramWithSystematics->GetBinLowEdge( 1 );
+		double highEdge = combinedCorrectedHistogramWithSystematics->GetBinLowEdge( graphSize - 1 );
+		double gap = highEdge - lowEdge;
+		xValues[ 0 ] = lowEdge - gap;
+		xValues[ graphSize - 1 ] = highEdge + gap;
+
+		//Draw the combined error graph - asymmetric errors
+		TGraphAsymmErrors * graphWithSystematics = new TGraphAsymmErrors( graphSize, xValues, yValues, xError, xError, yBothErrorLow, yBothErrorHigh );
+		graphWithSystematics->SetTitle( plotTitle.c_str() );
+		graphWithSystematics->SetFillColor(30);
 		if ( yRangeMinimum != yRangeMaximum )
 		{
 			//Manually set the y axis range
 			if ( yRangeMinimum < yRangeMaximum )
 			{
-				combinedCorrectedHistogramWithSystematics->GetYaxis()->SetRangeUser( yRangeMinimum, yRangeMaximum );
+				graphWithSystematics->GetYaxis()->SetRangeUser( yRangeMinimum, yRangeMaximum );
 			}
 			else
 			{
-				combinedCorrectedHistogramWithSystematics->GetYaxis()->SetRangeUser( yRangeMaximum, yRangeMinimum );
+				graphWithSystematics->GetYaxis()->SetRangeUser( yRangeMaximum, yRangeMinimum );
 			}
 		}
-		combinedCorrectedHistogramWithSystematics->Draw( "E2" );
+		graphWithSystematics->GetXaxis()->SetRangeUser( lowEdge, highEdge );
+		graphWithSystematics->Draw( "A2" );
 
-		//Draw the data histogram with statistical errors
-		combinedCorrectedHistogramWithStatistics->SetTitle( plotTitle.c_str() );
-		combinedCorrectedHistogramWithStatistics->SetStats(false);
-		combinedCorrectedHistogramWithStatistics->SetMarkerStyle(8);
-		combinedCorrectedHistogramWithStatistics->SetMarkerSize(0);
-		combinedCorrectedHistogramWithStatistics->Draw( "SAME" );
+		//Draw the stat error graph - symmetric errors
+		TGraphErrors * graphWithStatistics = new TGraphErrors( graphSize, xValues, yValues, xError, yStatError );
+		graphWithStatistics->SetTitle( plotTitle.c_str() );
+		graphWithStatistics->Draw( "pz" );
 
 		//Make the legend
 		TLegend * lineColourKey = new TLegend( 0.55, 0.65, 0.95, 0.95 );
 		lineColourKey->SetTextSize(0.04);
 		lineColourKey->SetFillColor(kWhite);
 		lineColourKey->SetBorderSize(0);
-		lineColourKey->AddEntry( combinedCorrectedHistogramWithSystematics, dataDescription.c_str(), "lpf" );
+		lineColourKey->AddEntry( graphWithSystematics, dataDescription.c_str(), "lpf" );
 
 		//Draw the MC truth histograms
 		for ( int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
@@ -427,7 +462,7 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 			truthPlot->SetLineStyle( mcInfo->LineStyle(plotIndex) );
 			truthPlot->SetLineWidth(2.5);
 			truthPlot->SetTitle( plotTitle.c_str() );
-			truthPlot->SetStats(false);
+			//truthPlot->SetStats(false);
 			truthPlot->Draw( "SAME" );
 
 			//Add to legend
@@ -443,6 +478,70 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 			lineColourKey->AddEntry( truthPlot, mcName.c_str(), "l" );
 		}
 		lineColourKey->Draw();
+
+		//Make the ratio plot
+		plotCanvas->cd();
+		TPad * ratioPad = new TPad( "ratioPad", "ratioPad", 0.01, 0.01, 0.99, 0.32 );
+		ratioPad->Draw();
+		ratioPad->cd();
+		ratioPad->SetTopMargin( 0.01 );
+		ratioPad->SetBottomMargin( 0.3 );
+		ratioPad->SetRightMargin( 0.1 );
+		ratioPad->SetFillStyle( 0 );
+		ratioPad->SetFillColor( kWhite );
+
+		//All that is needed for the data is the combined error bars
+		Double_t justOnes[ graphSize ];
+		Double_t justZeros[ graphSize ];
+		for ( int binIndex = 0; binIndex < graphSize; binIndex++ )
+		{
+			justOnes[ binIndex ] = 1.0;
+			justZeros[ binIndex ] = 0.0;
+			yBothErrorLow[ binIndex ] /= yValues[ binIndex ];
+			yBothErrorHigh[ binIndex ] /= yValues[ binIndex ];
+		}
+		TGraphAsymmErrors * justDataErrors = new TGraphAsymmErrors( graphSize, xValues, justOnes, xError, xError, yBothErrorLow, yBothErrorHigh );
+		justDataErrors->SetFillColor( 30 );
+		justDataErrors->GetXaxis()->SetRangeUser( lowEdge, highEdge );
+		justDataErrors->GetYaxis()->SetRangeUser( 0.75, 1.25 );
+		justDataErrors->SetTitle();
+		justDataErrors->GetYaxis()->SetTitleOffset( 0.5 );
+		justDataErrors->GetYaxis()->SetTitle( "MC/Data" );
+		justDataErrors->GetXaxis()->SetLabelSize( 0.11 );
+		justDataErrors->GetYaxis()->SetLabelSize( 0.08 );
+		justDataErrors->GetYaxis()->SetNdivisions( 408 );
+		justDataErrors->GetXaxis()->SetTitleSize( 0.1 );
+		justDataErrors->GetYaxis()->SetTitleSize( 0.1 );
+		justDataErrors->Draw( "A2" );
+
+		//Draw the stat error graph - symmetric errors
+		TGraphErrors * justDataStatistics = new TGraphErrors( graphSize, xValues, justOnes, xError, justZeros );
+		justDataStatistics->SetTitle( plotTitle.c_str() );
+		justDataStatistics->SetMarkerStyle(1);
+		justDataStatistics->Draw( "pz" );
+
+		//Divide each truth plot by the data values
+		for ( int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
+		{
+			//Make a copy of the existing plot
+			string truthRatioPlotName = mcInfo->Description( plotIndex ) + "Ratio";
+			TH1F * truthRatioPlot = ( TH1F* )allTruthPlots[ plotIndex ]->Clone( truthRatioPlotName.c_str() );
+
+			//Divide by the data
+			truthRatioPlot->Divide( combinedCorrectedHistogramWithStatistics );
+
+			//Format
+			truthRatioPlot->SetLineColor( mcInfo->LineColour( plotIndex ) );
+			truthRatioPlot->SetMarkerColor( mcInfo->LineColour( plotIndex ) );
+			truthRatioPlot->SetLineStyle( mcInfo->LineStyle( plotIndex ) );
+			truthRatioPlot->SetLineWidth( 2.5 );
+			truthRatioPlot->SetTitle( plotTitle.c_str() );
+			//truthRatioPlot->SetStats( false );
+			truthRatioPlot->Draw( "SAME" );
+			allTruthPlots.push_back( truthRatioPlot );
+		}
+
+		plotCanvas->SaveAs( "testPlot.eps" );
 
 		//Status message
 		cout << endl << "--------------- Finished unfolding " << plotDescription << " ---------------" << endl;
@@ -476,4 +575,77 @@ TH2F * MonteCarloSummaryPlotMaker::SmearingMatrix()
 		cerr << "Trying to retrieve smearing matrix from unfinalised MonteCarloSummaryPlotMaker" << endl;
 		exit(1);
 	}
+}
+
+//Create an ATLAS style object
+TStyle * MonteCarloSummaryPlotMaker::AtlasStyle( string Name )
+{
+	TStyle * atlasStyle = new TStyle( Name.c_str(), "Atlas style" );
+
+	// use plain black on white colors
+	Int_t icol=0; // WHITE
+	atlasStyle->SetFrameBorderMode(icol);
+	atlasStyle->SetFrameFillColor(icol);
+	atlasStyle->SetCanvasBorderMode(icol);
+	atlasStyle->SetCanvasColor(icol);
+	atlasStyle->SetPadBorderMode(icol);
+	atlasStyle->SetPadColor(icol);
+	atlasStyle->SetStatColor(icol);
+	//atlasStyle->SetFillColor(icol); // don't use: white fill color floa *all* objects
+
+	// set the paper & margin sizes
+	atlasStyle->SetPaperSize(20,26);
+
+	// set margin sizes
+	atlasStyle->SetPadTopMargin(0.05);
+	atlasStyle->SetPadRightMargin(0.05);
+	atlasStyle->SetPadBottomMargin(0.16);
+	atlasStyle->SetPadLeftMargin(0.16);
+
+	// set title offsets (for axis label)
+	atlasStyle->SetTitleXOffset(1.4);
+	atlasStyle->SetTitleYOffset(1.4);
+
+	// use large fonts
+	//Int_t font=72; // Helvetica italics
+	Int_t font=42; // Helvetica
+	Double_t tsize=0.05;
+	atlasStyle->SetTextFont(font);
+
+	atlasStyle->SetTextSize(tsize);
+	atlasStyle->SetLabelFont(font,"x");
+	atlasStyle->SetTitleFont(font,"x");
+	atlasStyle->SetLabelFont(font,"y");
+	atlasStyle->SetTitleFont(font,"y");
+	atlasStyle->SetLabelFont(font,"z");
+	atlasStyle->SetTitleFont(font,"z");
+
+	atlasStyle->SetLabelSize(tsize,"x");
+	atlasStyle->SetTitleSize(tsize,"x");
+	atlasStyle->SetLabelSize(tsize,"y");
+	atlasStyle->SetTitleSize(tsize,"y");
+	atlasStyle->SetLabelSize(tsize,"z");
+	atlasStyle->SetTitleSize(tsize,"z");
+
+	// use bold lines and markers
+	atlasStyle->SetMarkerStyle(20);
+	atlasStyle->SetMarkerSize(1.2);
+	atlasStyle->SetHistLineWidth(2);
+	atlasStyle->SetLineStyleString(2,"[12 12]"); // postscript dashes
+
+	// get rid of X error bars and y error bar caps
+	//atlasStyle->SetErrorX(0.001);
+
+	// do not display any of the standard histogram decorations
+	atlasStyle->SetOptTitle(0);
+	//atlasStyle->SetOptStat(1111);
+	atlasStyle->SetOptStat(0);
+	//atlasStyle->SetOptFit(1111);
+	atlasStyle->SetOptFit(0);
+
+	// put tick marks on top and RHS of plots
+	atlasStyle->SetPadTickX(1);
+	atlasStyle->SetPadTickY(1);
+
+	return atlasStyle;
 }

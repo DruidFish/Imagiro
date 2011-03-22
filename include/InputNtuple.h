@@ -15,7 +15,7 @@
 #include <map>
 #include <vector>
 #include "TFile.h"
-#include "TNtuple.h"
+#include "TTree.h"
 #include "TBranch.h"
 #include "MonteCarloInformation.h"
 
@@ -62,8 +62,8 @@ class InputNtuple
 		map< string, int >::iterator columnIterator;
 
 		//IO
-		TFile *inputFile;
-		TNtuple *wrappedNtuple;
+		TFile * inputFile;
+		TTree * wrappedNtuple;
 		string sourceDescription;
 		int sourceDescriptionIndex;
 };

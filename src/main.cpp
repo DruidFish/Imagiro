@@ -41,7 +41,7 @@ time_t timeNow;
 // or use separate matrices?                              //
 //                                                        //
 ////////////////////////////////////////////////////////////
-bool COMBINE_MC = false;
+bool COMBINE_MC = true;
 
 ////////////////////////////////////////////////////////////
 //                                                        //
@@ -99,7 +99,7 @@ int main ( int argc, char * argv[] )
 			jetPtBins, jetPtMin, jetPtMax, nChargeBins, nChargeMin, nChargeMax, scaleFactor );
 	allPlotMakers.push_back( new MonteCarloSummaryPlotMaker( pTvsNChargedTowardPlot, mcInfo, 0.0, 3.0, COMBINE_MC ) );
 
-	XvsYNormalisedPlotMaker * pTvsNChargedAwayPlot = new XvsYNormalisedPlotMaker( "MaxJetPt", "NChargeAway", "Pythia6",
+	/*XvsYNormalisedPlotMaker * pTvsNChargedAwayPlot = new XvsYNormalisedPlotMaker( "MaxJetPt", "NChargeAway", "Pythia6",
 			jetPtBins, jetPtMin, jetPtMax, nChargeBins, nChargeMin, nChargeMax, scaleFactor );
 	allPlotMakers.push_back( new MonteCarloSummaryPlotMaker( pTvsNChargedAwayPlot, mcInfo, 0.0, 3.0, COMBINE_MC ) );
 
@@ -117,7 +117,7 @@ int main ( int argc, char * argv[] )
 	allPlotMakers.push_back( new MonteCarloSummaryPlotMaker( nChargedAwayPlot, mcInfo, 0.0, 0.1, COMBINE_MC ) );
 
 	XPlotMaker * nChargedTransPlot = new XPlotMaker( "NChargeTrans", "Pythia6", nChargeBins, nChargeMin, nChargeMax, 1.0, true );
-	allPlotMakers.push_back( new MonteCarloSummaryPlotMaker( nChargedTransPlot, mcInfo, 0.0, 0.1, COMBINE_MC ) );
+	allPlotMakers.push_back( new MonteCarloSummaryPlotMaker( nChargedTransPlot, mcInfo, 0.0, 0.1, COMBINE_MC ) );*/
 
 
 	/*XvsYNormalisedFolding * pTvsNChargedTowardFold = new XvsYNormalisedFolding( "MaxJetPt", "NChargeToward", "Pythia6",

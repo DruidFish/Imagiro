@@ -26,7 +26,7 @@ InputNtuple::InputNtuple( string FilePath, string NtuplePath, string Description
 {
 	//Get the Ntuple from the file
 	inputFile = new TFile( FilePath.c_str(), "READ" );
-	wrappedNtuple = ( TNtuple* )inputFile->Get( NtuplePath.c_str() );
+	wrappedNtuple = ( TTree* )inputFile->Get( NtuplePath.c_str() );
 
 	//Find out the number of rows
 	numberOfRows = wrappedNtuple->GetEntries();
