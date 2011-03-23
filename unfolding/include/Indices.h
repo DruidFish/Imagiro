@@ -35,7 +35,7 @@ class Indices
 
 		//Definitions for the indices
 		int GetBinNumber();
-		int GetBinNumber( int DimensionIndex );
+		int GetBinNumber( unsigned int DimensionIndex );
 		vector<double> GetMinima();
 		vector<double> GetMaxima();
 

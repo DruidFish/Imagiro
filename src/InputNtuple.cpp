@@ -37,7 +37,7 @@ InputNtuple::InputNtuple( string FilePath, string NtuplePath, string Description
 	bool eventNumberFound = false;
 	bool eventWeightFound = false;
 	vector<string> otherColumnNames;
-	while ( nextLeaf = ( TLeaf* )branchIterator() )
+	while ( ( nextLeaf = ( TLeaf* )branchIterator() ) )
 	{
 		string leafName = nextLeaf->GetName();
 
@@ -74,7 +74,7 @@ InputNtuple::InputNtuple( string FilePath, string NtuplePath, string Description
 	//You mustn't edit the lengths of these two vectors once you start using SetBranchAddress with them
 	currentValues = vector< float >( otherColumnNames.size() );
 	branches = vector< TBranch* >( otherColumnNames.size() );
-	for ( int columnIndex = 0; columnIndex < otherColumnNames.size(); columnIndex++ )
+	for ( unsigned int columnIndex = 0; columnIndex < otherColumnNames.size(); columnIndex++ )
 	{
 		string leafName = otherColumnNames[columnIndex];
 

@@ -23,9 +23,6 @@ UnfoldingMatrix::UnfoldingMatrix( SmearingMatrix * InputSmearing, Distribution *
 	//Get the dimension of the matrix (include a bad bin)
 	int binNumber = InputIndices->GetBinNumber() + 1;
 
-	//Keep count of the number of events in the source distribution
-	double totalCauseProbability = 0.0;
-
 	//Calculate the probabilities of the effects
 	vector<double> effectProbabilities( binNumber, 0.0 );
 	for ( int causeIndex = 0; causeIndex < binNumber; causeIndex++ )

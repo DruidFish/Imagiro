@@ -274,7 +274,7 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 		vector<double> delinearisedXvsYErrors = DelineariseErrors( XvsYErrors );
 
 		//Combine errors
-		for ( int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
+		for ( unsigned int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
 		{
 			//Add the errors from the x vs y distribution and the divisor
 			//The formula is stright from ROOT::TH1::Divide, so I hope it's right
@@ -371,7 +371,7 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 		smearingMatrix->SetYTitle( smearingYTitle.c_str() );
 
 		//Bin-by-bin scaling of errors using the corrected data
-		for ( int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
+		for ( unsigned int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
 		{
 			double errorScaleFactor = correctedDistribution->GetBinContent(binIndex) / uncorrectedDistribution->GetBinContent(binIndex);
 

@@ -25,8 +25,13 @@ XFolding::XFolding()
 //Constructor with the names to use for the variables
 XFolding::XFolding( string XVariableName, string PriorName,
 		int XBinNumber, double XMinimum, double XMaximum,
-		double ScaleFactor, bool Normalise ) : xName( XVariableName ), priorName( PriorName ), finalised( false ), scaleFactor(ScaleFactor), normalise(Normalise)
+		double ScaleFactor, bool Normalise )
 {
+	xName = XVariableName;
+	priorName = PriorName;
+	finalised = false;
+	scaleFactor = ScaleFactor;
+	normalise = Normalise;
 	vector<double> minima, maxima;
 	vector<int> binNumbers;
 
@@ -203,7 +208,7 @@ void XFolding::Unfold( int MostIterations, double ChiSquaredThreshold, double Ko
 			XSmearedNotNormalised = XFolder->GetFoldedHistogram( XFullName + "SmearedNotNormalised", XFullTitle + " Smeared Distribution Not Normalised", false );
 			XSmearedNotNormalised->Scale( scaleFactor );
 		}
-		for ( int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
+		for ( unsigned int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
 		{
 			double combinedError = sqrt( XErrors[ binIndex ] ) * scaleFactor;
 
@@ -251,7 +256,7 @@ void XFolding::Unfold( int MostIterations, double ChiSquaredThreshold, double Ko
 		smearingMatrix->SetYTitle( smearingYTitle.c_str() );
 
 		//Bin-by-bin scaling of errors using the corrected data
-		for ( int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
+		for ( unsigned int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
 		{
 			double errorScaleFactor = foldedDistribution->GetBinContent(binIndex) / inputDistribution->GetBinContent(binIndex);
 

@@ -25,7 +25,7 @@ class MonteCarloSummaryPlotMaker
 {
 	public:
 		MonteCarloSummaryPlotMaker();
-		MonteCarloSummaryPlotMaker( IPlotMaker * TemplatePlotMaker, MonteCarloInformation * PlotInformation, double YMinimum = 0.0, double YMaximum = 0.0, bool CombineMCMode = true );
+		MonteCarloSummaryPlotMaker( IPlotMaker * TemplatePlotMaker, MonteCarloInformation * PlotInformation, bool CombineMCMode = true );
 		~MonteCarloSummaryPlotMaker();
 
 		//Take input values from ntuples
@@ -34,6 +34,11 @@ class MonteCarloSummaryPlotMaker
 		void StoreMiss( InputNtuple * TruthInput );
 		void StoreFake( InputNtuple * ReconstructedInput );
 		void StoreData( InputNtuple * DataInput );
+
+		//Some plot formatting
+		void SetYRange( double Minimum, double Maximum );
+		void SetAxisLabels( string XAxis, string YAxis );
+		void UseLogScale();
 
 		//Do the unfolding
 		void Unfold( bool WithSmoothing = false );
@@ -51,11 +56,11 @@ class MonteCarloSummaryPlotMaker
 		TH2F * smearingMatrix;
 		MonteCarloInformation * mcInfo;
 		TCanvas * plotCanvas;
-		bool finalised, combineMode;
+		bool finalised, combineMode, manualRange, manualLabels, logScale;
 		vector< IPlotMaker* > allPlots;
 		vector< IPlotMaker* > crossCheckPlots;
 		double yRangeMinimum, yRangeMaximum;
-		string dataDescription;
+		string dataDescription, xAxisLabel, yAxisLabel;
 };
 
 #endif

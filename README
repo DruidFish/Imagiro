@@ -23,25 +23,40 @@ InputNtuple * dataNtuple = new InputNtuple( "data/user.bwynne.LeadingJetModified
 	- The second argument is the location of the nTuple within the file
 	- The third argument should describe the input (for setting titles on plots, and debug messages)
 
-Also in src/main.cpp you must specify the plots you with to make. The code will look like this:
+Also in src/main.cpp you must specify the plots you wish to make. The code will look like this:
 
 XvsYNormalisedPlotMaker * pTvsNChargedTowardPlot = new XvsYNormalisedPlotMaker( "MaxJetPt", "NChargeToward", "Pythia6", jetPtBins, jetPtMin, jetPtMax, nChargeBins, nChargeMin, nChargeMax, scaleFactor );
 
 	- The first two arguments are the names of the variables to unfold
-	- The third argument describes the MC model - essentially just a dummy (see below)
+	- The third argument describes the MC model - essentially just a dummy as the MonteCarloSummaryPlotMaker will repeat for all MC samples
 	- The fourth-ninth arguments describe the binning of each variable
 	- The tenth argument can be a number to scale the y-variable by (eg the detector acceptance)
 
+The available plot types are XPlotmaker, XvsYNormalisedPlotMaker, XFolding and XvsYNormalisedFolding. These are for unfolding or folding (i.e. applying a smearing matrix to) 1D or 2D distributions.
+A 1D plot maker will have arguments like this:
+
+XPlotMaker * pTPlot = new XPlotMaker( "MaxJetPt", "Pythia6", jetPtBins, jetPtMin, jetPtMax, 1.0, true );
+
+Note the last argument is a bool specifying whether the plot should be normalised or not.
+
 Having set up a plot for one MC model, feed this to a MonteCarloSummaryPlotMaker and it will repeat the process for all the other MC samples:
 
-allPlotMakers.push_back( new MonteCarloSummaryPlotMaker( pTvsNChargedTowardPlot, mcInfo, 0.0, 3.0, true ) );
+MonteCarloSummaryPlotMaker * pTvsNChargedTowardSummary = new MonteCarloSummaryPlotMaker( pTvsNChargedTowardPlot, mcInfo, true );
 
 	- The first argument is the plot you specified above
 	- The second argument is the object that holds all the locations of all the MC inputs
-	- The third and fourth arguments are optional, setting the range of the y-axis
-	- The fifth argument sets whether all MC information should be combined into one smearing matrix, or if a separate matrix should be used for each sample ("true" to combine the MC is recommended).
+	- The third argument sets whether all MC information should be combined into one smearing matrix, or if a separate matrix should be used for each sample ("true" to combine the MC is recommended).
 
-The available plot types are XPlotmaker, XvsYNormalisedPlotMaker, XFolding and XvsYNormalisedFolding. These are for unfolding or folding (i.e. applying a smearing matrix to) 1D or 2D distributions.
+You can change the y-axis range, the axis labels, and whether to use a y-axis log scale in the output plot like this:
+
+
+pTvsNChargedTowardSummary->SetYRange( 0.1, 2.9 );
+pTvsNChargedTowardSummary->SetAxisLabels( "p_{T}^{lead} [GeV]", "<d^{2}N_{ch}/d#etad#phi>" );
+pTvsNchargedTowardSummary->UseLogScale();
+
+Once you've set up the plot the way you want it, you must add it to the "allPlotMakers" vector, or it won't be processed:
+
+allPlotMakers.push_back( pTvsNChargedTowardSummary );
 
 Make all these changes, compile, and run. With any luck, you will eventually get a file called "UnfoldedFinal.root" containing the plots you wanted.
 

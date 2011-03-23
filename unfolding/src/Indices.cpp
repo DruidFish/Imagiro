@@ -31,7 +31,7 @@ Indices::Indices( vector<int> InputBinNumber, vector<double> InputMinima, vector
 	}
 
 	//Loop over dimensions
-	for ( int dimensionIndex = 0; dimensionIndex < InputMinima.size(); dimensionIndex++ )
+	for ( unsigned int dimensionIndex = 0; dimensionIndex < InputMinima.size(); dimensionIndex++ )
 	{
 		//Check for sensible bin number
 		if ( numberOfBins[dimensionIndex] <= 0 )
@@ -75,7 +75,7 @@ int Indices::GetIndex( vector<double> InputValues )
 		//Loop over all dimensions
 		int totalIndex = 0;
 		int binMultiplier = 1;
-		for ( int dimensionIndex = 0; dimensionIndex < minima.size(); dimensionIndex++ )
+		for ( unsigned int dimensionIndex = 0; dimensionIndex < minima.size(); dimensionIndex++ )
 		{
 			int thisIndex;
 			if ( InputValues[dimensionIndex] < minima[dimensionIndex] )
@@ -113,7 +113,7 @@ vector<int> Indices::GetNDimensionalIndex( vector<double> InputValues )
 	{
 		//Loop over all dimensions
 		vector<int> overallIndex( minima.size(), 0 );
-		for ( int dimensionIndex = 0; dimensionIndex < minima.size(); dimensionIndex++ )
+		for ( unsigned int dimensionIndex = 0; dimensionIndex < minima.size(); dimensionIndex++ )
 		{
 			int thisIndex;
 			if ( InputValues[dimensionIndex] < minima[dimensionIndex] )
@@ -144,7 +144,7 @@ vector<int> Indices::GetNDimensionalIndex( int InputIndex )
 	//Loop over all dimensions
 	vector<int> overallIndex( minima.size(), 0 );
 	int remainingIndexBits = InputIndex;
-	for ( int dimensionIndex = 0; dimensionIndex < minima.size(); dimensionIndex++ )
+	for ( unsigned int dimensionIndex = 0; dimensionIndex < minima.size(); dimensionIndex++ )
 	{
 		int thisIndex = remainingIndexBits % ( numberOfBins[ dimensionIndex ] + 2 );
 		overallIndex[ dimensionIndex ] = thisIndex;
@@ -166,7 +166,7 @@ vector<double> Indices::GetCentralValues( vector<int> InputIndices )
 	else
 	{
 		vector<double> centralValues( minima.size(), 0.0 );
-		for ( int dimension = 0; dimension < minima.size(); dimension++ )
+		for ( unsigned int dimension = 0; dimension < minima.size(); dimension++ )
 		{
 			int inputIndex = InputIndices[ dimension ];
 
@@ -210,13 +210,13 @@ vector<double> Indices::GetMaxima()
 int Indices::GetBinNumber()
 {
 	int binNumber = 1;
-	for ( int dimensionIndex = 0; dimensionIndex < numberOfBins.size(); dimensionIndex++ )
+	for ( unsigned int dimensionIndex = 0; dimensionIndex < numberOfBins.size(); dimensionIndex++ )
 	{
 		binNumber *= ( numberOfBins[dimensionIndex] + 2 );
 	}
 	return binNumber;
 }
-int Indices::GetBinNumber( int DimensionIndex )
+int Indices::GetBinNumber( unsigned int DimensionIndex )
 {
 	if ( DimensionIndex < 0 || DimensionIndex >= numberOfBins.size() )
 	{

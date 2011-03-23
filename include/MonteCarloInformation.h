@@ -23,11 +23,11 @@ class MonteCarloInformation
 		~MonteCarloInformation();
 
 		int NumberOfSources();
-		string Description( int Index );
-		string TruthFilePath( int Index );
-		string ReconstructedFilePath( int Index );
-		Color_t LineColour( int Index );
-		Style_t LineStyle( int Index );
+		string Description( unsigned int Index );
+		string TruthFilePath( unsigned int Index );
+		string ReconstructedFilePath( unsigned int Index );
+		Color_t LineColour( unsigned int Index );
+		Style_t LineStyle( unsigned int Index );
 
 	private:
 		vector<string> descriptions, truthPaths, recoPaths;

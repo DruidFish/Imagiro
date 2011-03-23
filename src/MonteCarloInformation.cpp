@@ -66,7 +66,7 @@ int MonteCarloInformation::NumberOfSources()
 	return descriptions.size();
 }
 
-string MonteCarloInformation::Description( int Index )
+string MonteCarloInformation::Description( unsigned int Index )
 {
 	if ( Index < 0 || Index >= descriptions.size() )
 	{
@@ -79,7 +79,7 @@ string MonteCarloInformation::Description( int Index )
 	}
 }
 
-string MonteCarloInformation::TruthFilePath( int Index )
+string MonteCarloInformation::TruthFilePath( unsigned int Index )
 {
 	if ( Index < 0 || Index >= truthPaths.size() )
 	{
@@ -92,7 +92,7 @@ string MonteCarloInformation::TruthFilePath( int Index )
 	}
 }
 
-string MonteCarloInformation::ReconstructedFilePath( int Index )
+string MonteCarloInformation::ReconstructedFilePath( unsigned int Index )
 {
 	if ( Index < 0 || Index >= recoPaths.size() )
 	{
@@ -105,7 +105,7 @@ string MonteCarloInformation::ReconstructedFilePath( int Index )
 	}
 }
 
-Color_t MonteCarloInformation::LineColour( int Index )
+Color_t MonteCarloInformation::LineColour( unsigned int Index )
 {
 	if ( Index < 0 || Index >= colours.size() )
 	{
@@ -118,7 +118,7 @@ Color_t MonteCarloInformation::LineColour( int Index )
 	}
 }
 
-Style_t MonteCarloInformation::LineStyle( int Index )
+Style_t MonteCarloInformation::LineStyle( unsigned int Index )
 {
 	if ( Index < 0 || Index >= styles.size() )
 	{

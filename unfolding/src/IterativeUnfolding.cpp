@@ -24,9 +24,15 @@ IterativeUnfolding::IterativeUnfolding()
 //minimum and maximum of the output distribution as arguments
 //NB: the unfolding scales roughly with bin number ^ 2, the
 //error calculation scales roughly with bin number ^ 3.
-IterativeUnfolding::IterativeUnfolding( int BinNumber, double Minimum, double Maximum, string Name, int UniqueID, bool DebugMode ) : debug(DebugMode), name(Name), uniqueID(UniqueID),
-	totalPaired(0.0), totalFake(0.0), totalMissed(0.0)
+IterativeUnfolding::IterativeUnfolding( int BinNumber, double Minimum, double Maximum, string Name, int UniqueID, bool DebugMode )
 {
+	debug = DebugMode;
+	name = Name;
+	uniqueID = UniqueID;
+	totalPaired = 0.0;
+	totalFake = 0.0;
+	totalMissed = 0.0;
+
 	indexCalculator = new Indices( vector<int>( 1, BinNumber ), vector<double>( 1, Minimum ), vector<double>( 1, Maximum ) );
 
 	inputSmearing = new SmearingMatrix(indexCalculator);
@@ -42,9 +48,15 @@ IterativeUnfolding::IterativeUnfolding( int BinNumber, double Minimum, double Ma
 }
 
 //N-Dimensional version
-IterativeUnfolding::IterativeUnfolding( vector<int> BinNumbers, vector<double> Minima, vector<double> Maxima, string Name, int UniqueID, bool DebugMode ) : debug(DebugMode), name(Name), uniqueID(UniqueID),
-	totalPaired(0.0), totalFake(0.0), totalMissed(0.0)
+IterativeUnfolding::IterativeUnfolding( vector<int> BinNumbers, vector<double> Minima, vector<double> Maxima, string Name, int UniqueID, bool DebugMode )
 {
+	debug = DebugMode;
+	name = Name;
+	uniqueID = UniqueID;
+	totalPaired = 0.0;
+	totalFake = 0.0;
+	totalMissed = 0.0;
+
 	indexCalculator = new Indices( BinNumbers, Minima, Maxima );
 
 	inputSmearing = new SmearingMatrix(indexCalculator);
@@ -394,6 +406,9 @@ int IterativeUnfolding::MonteCarloCrossCheck( Distribution * ReferenceDistributi
 			cout << endl << iteration + 1 << ": " << referenceChi2 << ", " << referenceKolmogorov;
 		}
 	}
+
+	//It should be impossible to get this far, but to prevent -Wall from complaining
+	return MAX_ITERATIONS_FOR_CROSS_CHECK;
 }
 
 //Retrieve a TH1F* containing the unfolded data

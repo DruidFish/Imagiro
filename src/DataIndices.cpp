@@ -24,7 +24,7 @@ DataIndices::DataIndices()
 DataIndices::DataIndices( vector<int> InputBinNumbers, vector<double> InputMinima, vector<double> InputMaxima ) : Indices( InputBinNumbers, InputMinima, InputMaxima )
 {
 	//Make the vectors to hold the bin central values
-	for ( int dimensionIndex = 0; dimensionIndex < InputBinNumbers.size(); dimensionIndex++ )
+	for ( unsigned int dimensionIndex = 0; dimensionIndex < InputBinNumbers.size(); dimensionIndex++ )
 	{
 		vector<double> oneDimensionDistribution( GetBinNumber( dimensionIndex ), 0.0 );
 
@@ -44,7 +44,7 @@ vector<double> DataIndices::GetCentralValuesFromData( vector<int> InputIndices )
 	vector<double> centralValues( InputIndices.size(), 0.0 );
 
 	//Loop over dimensions
-	for ( int dimensionIndex = 0; dimensionIndex < InputIndices.size(); dimensionIndex++ )
+	for ( unsigned int dimensionIndex = 0; dimensionIndex < InputIndices.size(); dimensionIndex++ )
 	{
 		//Find out the index of the bin we're returning in this dimension
 		int binIndex = InputIndices[ dimensionIndex ];
@@ -53,7 +53,6 @@ vector<double> DataIndices::GetCentralValuesFromData( vector<int> InputIndices )
 		{
 			//Find out the total of the values of all the events in this bin
 			double binTotal = binValueSums[ dimensionIndex ][ binIndex ];
-			double binNormalisation = binValueNormalisations[ dimensionIndex ][ binIndex ];
 
 			//If the bin is empty, fall back to the old method
 			if ( binTotal == 0.0 )
@@ -101,7 +100,7 @@ void DataIndices::StoreDataValue( vector<double> Data, double Weight )
 	vector<int> binIndices = GetNDimensionalIndex( Data );
 
 	//Loop over dimensions
-	for ( int dimensionIndex = 0; dimensionIndex < binIndices.size(); dimensionIndex++ )
+	for ( unsigned int dimensionIndex = 0; dimensionIndex < binIndices.size(); dimensionIndex++ )
 	{
 		//Find out the index of the bin the event falls into in this dimension
 		int binIndex = binIndices[dimensionIndex];

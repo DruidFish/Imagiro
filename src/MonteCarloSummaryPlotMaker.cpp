@@ -30,10 +30,16 @@ MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker()
 }
 
 //Constructor with the names to use for the variables
-MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker( IPlotMaker * TemplatePlotMaker, MonteCarloInformation * PlotInformation,
-		double YMinimum, double YMaximum, bool CombineMCMode ) : finalised( false ), combineMode(CombineMCMode), mcInfo(PlotInformation),
-	yRangeMinimum( YMinimum ), yRangeMaximum( YMaximum ), dataDescription("")
+MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker( IPlotMaker * TemplatePlotMaker, MonteCarloInformation * PlotInformation, bool CombineMCMode )
 {
+	finalised = false;
+	manualRange = false;
+	manualLabels = false;
+	logScale = false;
+	combineMode = CombineMCMode;
+	mcInfo = PlotInformation;
+	dataDescription = "";
+
 	//Make a separate plot for each MC source
 	for ( int mcIndex = 0; mcIndex < mcInfo->NumberOfSources(); mcIndex++ )
 	{
@@ -59,7 +65,7 @@ MonteCarloSummaryPlotMaker::~MonteCarloSummaryPlotMaker()
 {
 	if ( finalised )
 	{
-		for ( int truthIndex = 0; truthIndex < allTruthPlots.size(); truthIndex++ )
+		for ( unsigned int truthIndex = 0; truthIndex < allTruthPlots.size(); truthIndex++ )
 		{
 			delete allTruthPlots[truthIndex];
 		}
@@ -67,7 +73,7 @@ MonteCarloSummaryPlotMaker::~MonteCarloSummaryPlotMaker()
 	}
 	else
 	{
-		for ( int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
+		for ( unsigned int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
 		{
 			delete crossCheckPlots[ plotIndex ];
 			delete allPlots[ plotIndex ];
@@ -91,7 +97,7 @@ void MonteCarloSummaryPlotMaker::StoreMatch( InputNtuple * TruthInput, InputNtup
 		//Add the event to the smearing matrix if it's the correct MC input, or if MC inputs are combined
 		if ( combineMode )
 		{
-			for ( int mcIndex = 0; mcIndex < allPlots.size(); mcIndex++ )
+			for ( unsigned int mcIndex = 0; mcIndex < allPlots.size(); mcIndex++ )
 			{
 				allPlots[ mcIndex ]->StoreMatch( TruthInput, ReconstructedInput );
 				crossCheckPlots[ mcIndex ]->StoreMatch( TruthInput, ReconstructedInput );
@@ -123,7 +129,7 @@ void MonteCarloSummaryPlotMaker::StoreMiss( InputNtuple * TruthInput )
 		//Add the event to the smearing matrix if it's the correct MC input, or if MC inputs are combined
 		if ( combineMode )
 		{
-			for ( int mcIndex = 0; mcIndex < allPlots.size(); mcIndex++ )
+			for ( unsigned int mcIndex = 0; mcIndex < allPlots.size(); mcIndex++ )
 			{
 				allPlots[ mcIndex ]->StoreMiss( TruthInput );
 				crossCheckPlots[ mcIndex ]->StoreMiss( TruthInput );
@@ -150,7 +156,7 @@ void MonteCarloSummaryPlotMaker::StoreFake( InputNtuple * ReconstructedInput )
 		//Add the event to the smearing matrix if it's the correct MC input, or if MC inputs are combined
 		if ( combineMode )
 		{
-			for ( int mcIndex = 0; mcIndex < allPlots.size(); mcIndex++ )
+			for ( unsigned int mcIndex = 0; mcIndex < allPlots.size(); mcIndex++ )
 			{
 				allPlots[ mcIndex ]->StoreFake( ReconstructedInput );
 				crossCheckPlots[ mcIndex ]->StoreFake( ReconstructedInput );
@@ -177,7 +183,7 @@ void MonteCarloSummaryPlotMaker::StoreData( InputNtuple * DataInput )
 	}       
 	else
 	{
-		for ( int mcIndex = 0; mcIndex < allPlots.size(); mcIndex++ )
+		for ( unsigned int mcIndex = 0; mcIndex < allPlots.size(); mcIndex++ )
 		{
 			allPlots[mcIndex]->StoreData( DataInput );
 		}
@@ -188,6 +194,49 @@ void MonteCarloSummaryPlotMaker::StoreData( InputNtuple * DataInput )
 			dataDescription = *( DataInput->Description() );
 		}
 	}
+}
+
+//Some plot formatting
+void MonteCarloSummaryPlotMaker::SetYRange( double Minimum, double Maximum )
+{
+	if ( finalised )
+	{
+		cerr << "Trying to change plot range of finalised MonteCarloSummaryPlotMaker" << endl;
+		exit(1);
+	}
+	else
+	{
+		if ( Minimum < Maximum )
+		{
+			yRangeMinimum = Minimum;
+			yRangeMaximum = Maximum;
+		}
+		else
+		{
+			yRangeMinimum = Maximum;
+			yRangeMaximum = Minimum;
+		}
+
+		manualRange = true;
+	}
+}
+void MonteCarloSummaryPlotMaker::SetAxisLabels( string XAxis, string YAxis )
+{
+	if ( finalised )
+	{
+		cerr << "Trying to change axis labels of finalised MonteCarloSummaryPlotMaker" << endl;
+		exit(1);
+	}
+	else
+	{
+		xAxisLabel = XAxis;
+		yAxisLabel = YAxis;
+		manualLabels = true;
+	}
+}
+void MonteCarloSummaryPlotMaker::UseLogScale()
+{
+	logScale = true;
 }
 
 //Do the unfolding
@@ -209,7 +258,7 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 		double chiSquaredThreshold = 0.0;
 		double kolmogorovThreshold = 0.0;
 		bool isUnfolding = true;
-		for ( int mcIndex = 0; mcIndex < crossCheckPlots.size(); mcIndex++ )
+		for ( unsigned int mcIndex = 0; mcIndex < crossCheckPlots.size(); mcIndex++ )
 		{
 			//Get the distribution that should be produced by the unfolding from MC truth
 			int nextIndex = ( mcIndex + MC_CHECK_OFFSET ) % crossCheckPlots.size();
@@ -250,16 +299,16 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 		}
 
 		//Tidy up
-		for ( int mcIndex = 0; mcIndex < crossCheckPlots.size(); mcIndex++ )
+		for ( unsigned int mcIndex = 0; mcIndex < crossCheckPlots.size(); mcIndex++ )
 		{
 			delete crossCheckPlots[ mcIndex ];
 		}
 
 		//Perform closure tests
 		int numberRemoved = 0;
-		int numberFailed = 0;
+		unsigned int numberFailed = 0;
 		vector< bool > usePrior( allPlots.size(), true );
-		for ( int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
+		for ( unsigned int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
 		{
 			cout << endl << "Closure test for " << mcInfo->Description( plotIndex ) << endl;
 			bool closureWorked = allPlots[plotIndex]->ClosureTest( mostIterations, chiSquaredThreshold, kolmogorovThreshold, WithSmoothing );
@@ -279,7 +328,7 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 		}
 
 		//Quit if too many prior distributions fail
-		if ( numberFailed == allPlots.size() )
+		if ( numberFailed == allPlots.size() && isUnfolding )
 		{
 			cerr << "All priors failed their closure tests: something is really wrong here. Suggest you choose better binning / provide more MC stats" << endl;
 			exit(1);
@@ -291,7 +340,7 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 		}
 
 		//Apply the ATLAS plot style
-		TStyle * atlasStyle = AtlasStyle( "ATLAS" );
+		AtlasStyle( "ATLAS" );
 		gROOT->SetStyle( "ATLAS" );
 		gROOT->ForceStyle();
 
@@ -301,6 +350,8 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 		plotCanvas = new TCanvas( plotName.c_str(), plotTitle.c_str(), 0, 0, 800, 600 );
 		plotCanvas->Range( 0, 0, 1, 1 );
 		plotCanvas->SetFillColor( kWhite );
+
+		//Make a pad on the canvas for the main plot
 		TPad * mainPad = new TPad( "mainPad", "mainPad", 0.01, 0.33, 0.99, 0.99 );
 		mainPad->Draw();
 		mainPad->cd();
@@ -309,13 +360,17 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 		mainPad->SetRightMargin( 0.1 );
 		mainPad->SetFillStyle( 0 );
 		mainPad->SetFillColor( kWhite );
+		if ( logScale )
+		{
+			mainPad->SetLogy();
+		}
 
 		//Unfold each plot and retrieve the information
 		vector<double> combinedCorrectedData, minimumCorrectedData, maximumCorrectedData, combinedStatisticErrors;
 		TH1F *combinedCorrectedHistogramWithSystematics, *combinedCorrectedHistogramWithStatistics;
 		allTruthPlots = vector< TH1F* >( allPlots.size(), NULL );
 		bool firstPlot = true;
-		for ( int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
+		for ( unsigned int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
 		{
 			//Unfold
 			cout << endl << "Unfolding " << allPlots[ plotIndex ]->Description(true) << " with " << allPlots[ plotIndex ]->PriorName() << endl;
@@ -374,7 +429,6 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 					string smearingTitle = allPlots[plotIndex]->Description(true) + " Smearing Matrix";
 					smearingMatrix = ( TH2F* )allPlots[plotIndex]->SmearingMatrix()->Clone( smearingName.c_str() );
 					smearingMatrix->SetTitle( smearingTitle.c_str() );
-					//smearingMatrix->SetStats(false);
 
 					firstPlot = false;
 				}
@@ -426,24 +480,27 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 		TGraphAsymmErrors * graphWithSystematics = new TGraphAsymmErrors( graphSize, xValues, yValues, xError, xError, yBothErrorLow, yBothErrorHigh );
 		graphWithSystematics->SetTitle( plotTitle.c_str() );
 		graphWithSystematics->SetFillColor(30);
-		if ( yRangeMinimum != yRangeMaximum )
+		graphWithSystematics->SetMarkerSize(1);
+		graphWithSystematics->SetMarkerStyle(7);
+		if ( manualRange )
 		{
 			//Manually set the y axis range
-			if ( yRangeMinimum < yRangeMaximum )
-			{
-				graphWithSystematics->GetYaxis()->SetRangeUser( yRangeMinimum, yRangeMaximum );
-			}
-			else
-			{
-				graphWithSystematics->GetYaxis()->SetRangeUser( yRangeMaximum, yRangeMinimum );
-			}
+			graphWithSystematics->GetYaxis()->SetRangeUser( yRangeMinimum, yRangeMaximum );
 		}
 		graphWithSystematics->GetXaxis()->SetRangeUser( lowEdge, highEdge );
+		graphWithSystematics->GetYaxis()->SetTitleOffset(0.95);
+		if ( manualLabels )
+		{
+			//Maunally label the y axis
+			graphWithSystematics->GetYaxis()->SetTitle( yAxisLabel.c_str() );
+		}
 		graphWithSystematics->Draw( "A2" );
 
 		//Draw the stat error graph - symmetric errors
 		TGraphErrors * graphWithStatistics = new TGraphErrors( graphSize, xValues, yValues, xError, yStatError );
 		graphWithStatistics->SetTitle( plotTitle.c_str() );
+		graphWithStatistics->SetMarkerSize(0);
+		graphWithStatistics->SetMarkerStyle(8);
 		graphWithStatistics->Draw( "pz" );
 
 		//Make the legend
@@ -454,7 +511,7 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 		lineColourKey->AddEntry( graphWithSystematics, dataDescription.c_str(), "lpf" );
 
 		//Draw the MC truth histograms
-		for ( int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
+		for ( unsigned int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
 		{
 			TH1F * truthPlot = allTruthPlots[ plotIndex ];
 			truthPlot->SetLineColor( mcInfo->LineColour(plotIndex) );
@@ -462,7 +519,6 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 			truthPlot->SetLineStyle( mcInfo->LineStyle(plotIndex) );
 			truthPlot->SetLineWidth(2.5);
 			truthPlot->SetTitle( plotTitle.c_str() );
-			//truthPlot->SetStats(false);
 			truthPlot->Draw( "SAME" );
 
 			//Add to legend
@@ -512,6 +568,11 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 		justDataErrors->GetYaxis()->SetNdivisions( 408 );
 		justDataErrors->GetXaxis()->SetTitleSize( 0.1 );
 		justDataErrors->GetYaxis()->SetTitleSize( 0.1 );
+		if ( manualLabels )
+		{
+			//Manually label the x axis
+			justDataErrors->GetXaxis()->SetTitle( xAxisLabel.c_str() );
+		}
 		justDataErrors->Draw( "A2" );
 
 		//Draw the stat error graph - symmetric errors
@@ -521,7 +582,7 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 		justDataStatistics->Draw( "pz" );
 
 		//Divide each truth plot by the data values
-		for ( int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
+		for ( unsigned int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
 		{
 			//Make a copy of the existing plot
 			string truthRatioPlotName = mcInfo->Description( plotIndex ) + "Ratio";
@@ -536,12 +597,10 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 			truthRatioPlot->SetLineStyle( mcInfo->LineStyle( plotIndex ) );
 			truthRatioPlot->SetLineWidth( 2.5 );
 			truthRatioPlot->SetTitle( plotTitle.c_str() );
-			//truthRatioPlot->SetStats( false );
 			truthRatioPlot->Draw( "SAME" );
+
 			allTruthPlots.push_back( truthRatioPlot );
 		}
-
-		plotCanvas->SaveAs( "testPlot.eps" );
 
 		//Status message
 		cout << endl << "--------------- Finished unfolding " << plotDescription << " ---------------" << endl;

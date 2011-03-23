@@ -14,12 +14,15 @@
 #include "TFile.h"
 #include <iostream>
 
-Comparison::Comparison() : internalID( 0 ), uniqueID( 0 ), name( "NoName" )
+Comparison::Comparison()
 {
 }
 
-Comparison::Comparison( string Name, int UniqueID ) : internalID( 0 ), uniqueID( uniqueID ), name( Name )
+Comparison::Comparison( string Name, int UniqueID )
 {
+	internalID = 0;
+	uniqueID = UniqueID;
+	name = Name;
 }
 
 Comparison::~Comparison()

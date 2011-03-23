@@ -21,9 +21,15 @@ Folding::Folding()
 //minimum and maximum of the output distribution as arguments
 //NB: the unfolding scales roughly with bin number ^ 2, the
 //error calculation scales roughly with bin number ^ 3.
-Folding::Folding( int BinNumber, double Minimum, double Maximum, string Name, int UniqueID ) : name(Name), uniqueID(UniqueID),
-	totalPaired(0.0), totalMissed(0.0), totalFake(0.0)
+Folding::Folding( int BinNumber, double Minimum, double Maximum, string Name, int UniqueID )
 {
+	//Initialisations
+	name = Name;
+	uniqueID = UniqueID;
+	totalPaired = 0.0;
+	totalMissed = 0.0;
+	totalFake = 0.0;
+
 	//Make new vectors just with the one entry
 	indexCalculator = new Indices( vector<int>( 1, BinNumber ), vector<double>( 1, Minimum ), vector<double>( 1, Maximum ) );
 	inputSmearing = new SmearingMatrix(indexCalculator);
@@ -35,9 +41,15 @@ Folding::Folding( int BinNumber, double Minimum, double Maximum, string Name, in
 }
 
 //N-Dimensional version
-Folding::Folding( vector<int> BinNumbers, vector<double> Minima, vector<double> Maxima, string Name, int UniqueID ) : name(Name), uniqueID(UniqueID),
-	totalPaired(0.0), totalMissed(0.0), totalFake(0.0)
+Folding::Folding( vector<int> BinNumbers, vector<double> Minima, vector<double> Maxima, string Name, int UniqueID )
 {
+	//Initialisations
+	name = Name;
+	uniqueID = UniqueID;
+	totalPaired = 0.0;
+	totalMissed = 0.0;
+	totalFake = 0.0;
+
 	indexCalculator = new Indices( BinNumbers, Minima, Maxima );
 	inputSmearing = new SmearingMatrix(indexCalculator);
 	truthDistribution = new Distribution(indexCalculator);

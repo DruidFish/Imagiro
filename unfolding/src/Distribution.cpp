@@ -19,21 +19,26 @@ Distribution::Distribution()
 }
 
 //Just initialise an empty distribution
-Distribution::Distribution( Indices * InputIndices ) : indexCalculator(InputIndices)
+Distribution::Distribution( Indices * InputIndices )
 {
+	indexCalculator = InputIndices;
+	integral = 0.0;
+
 	//Initialise the bins (include a bad bin)
 	binValues = vector<double>( InputIndices->GetBinNumber() + 1, 0.0 );
-	integral = 0.0;
 }
 
 //Initialise by summing a bunch of TH1Fs
-Distribution::Distribution( vector< TH1F* > InputDistributions, Indices * InputIndices ) : integral(0.0), indexCalculator(InputIndices)
+Distribution::Distribution( vector< TH1F* > InputDistributions, Indices * InputIndices )
 {
+	indexCalculator = InputIndices;
+	integral = 0.0;
+
 	//Get the number of bins in the distribution (include a bad bin)
 	int binNumber = InputIndices->GetBinNumber() + 1;
 
 	//Check all inputs have the right number of bins
-	for ( int inputIndex = 0; inputIndex < InputDistributions.size(); inputIndex++ )
+	for ( unsigned int inputIndex = 0; inputIndex < InputDistributions.size(); inputIndex++ )
 	{
 		int inputBinNumber = InputDistributions[inputIndex]->GetNbinsX();
 		if ( inputBinNumber != binNumber - 2 )
@@ -47,7 +52,7 @@ Distribution::Distribution( vector< TH1F* > InputDistributions, Indices * InputI
 	binValues = vector<double>( binNumber, 0.0 );
 	for ( int binIndex = 0; binIndex < binNumber; binIndex++ )
 	{
-		for ( int inputIndex = 0; inputIndex < InputDistributions.size(); inputIndex++ )
+		for ( unsigned int inputIndex = 0; inputIndex < InputDistributions.size(); inputIndex++ )
 		{
 			binValues[binIndex] += InputDistributions[inputIndex]->GetBinContent(binIndex);
 			integral += InputDistributions[inputIndex]->GetBinContent(binIndex);
@@ -56,9 +61,11 @@ Distribution::Distribution( vector< TH1F* > InputDistributions, Indices * InputI
 }
 
 //Calculate a corrected distribtion
-Distribution::Distribution( Distribution * DataDistribution, SmearingMatrix * Smearing, Distribution * PriorDistribution ) : integral(0.0),
-	indexCalculator( DataDistribution->indexCalculator )
+Distribution::Distribution( Distribution * DataDistribution, SmearingMatrix * Smearing, Distribution * PriorDistribution )
 {
+	indexCalculator = DataDistribution->indexCalculator;
+	integral = 0.0;
+
 	//Get the number of bins in the distribution (include a bad bin)
 	int binNumber = indexCalculator->GetBinNumber() + 1;
 
@@ -88,8 +95,11 @@ Distribution::Distribution( Distribution * DataDistribution, SmearingMatrix * Sm
 }
 
 //Make this distribution by smearing another
-Distribution::Distribution( Distribution * InputDistribution, SmearingMatrix * Smearing ) : integral(0.0), indexCalculator( InputDistribution->indexCalculator )
+Distribution::Distribution( Distribution * InputDistribution, SmearingMatrix * Smearing )
 {
+	indexCalculator = InputDistribution->indexCalculator;
+	integral = 0.0;
+
 	//Get the number of bins in the distribution (include a bad bin)
 	int binNumber = indexCalculator->GetBinNumber() + 1;
 
@@ -240,7 +250,7 @@ void Distribution::Smooth( int SideBinNumber )
 				}
 				else
 				{
-					for ( int dimensionIndex = 1; dimensionIndex < separateBinIndices.size(); dimensionIndex++ )
+					for ( unsigned int dimensionIndex = 1; dimensionIndex < separateBinIndices.size(); dimensionIndex++ )
 					{
 						if ( separateSumIndices[dimensionIndex] != separateBinIndices[dimensionIndex] )
 						{
