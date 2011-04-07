@@ -6,13 +6,16 @@
 
   @author Benjamin M Wynne bwynne@cern.ch
   @date 08-03-2011
-  */
+ */
 
 #include <sstream>
 #include "Comparison.h"
 #include "TH1F.h"
 #include "TFile.h"
 #include <iostream>
+#include <cmath>
+
+const bool CLOSURE_FILE_OUTPUT = false;
 
 Comparison::Comparison()
 {
@@ -36,7 +39,7 @@ void Comparison::CompareDistributions( Distribution * FirstInput, Distribution *
 	internalName << name << "." << uniqueID << "." << internalID;
 
 	TFile * debugFile;
-	if (IsClosureTest)
+	if ( IsClosureTest && CLOSURE_FILE_OUTPUT )
 	{
 		string fileName = internalName.str() + ".ClosureTest.root";
 		debugFile = new TFile( fileName.c_str(), "RECREATE" );
@@ -50,7 +53,7 @@ void Comparison::CompareDistributions( Distribution * FirstInput, Distribution *
 	string secondPlotName = "SecondPlot" + internalName.str();
 	TH1F * secondPlot = SecondInput->MakeRootHistogram( secondPlotName, secondPlotName, Normalised );
 
-	if (IsClosureTest)
+	if ( IsClosureTest && CLOSURE_FILE_OUTPUT )
 	{
 		firstPlot->Write();
 		secondPlot->Write();
@@ -60,8 +63,38 @@ void Comparison::CompareDistributions( Distribution * FirstInput, Distribution *
 	ChiSquared = firstPlot->Chi2Test( secondPlot, "UUCHI2" );
 	Kolmogorov = firstPlot->KolmogorovTest( secondPlot, "" );
 
+	//For closure tests, give some more detailed info
+	if ( IsClosureTest )
+	{
+		int maxDeviationIndex;
+		double sumErrors, maxDeviation, maxError;
+		for ( int binIndex = 1; binIndex <= firstPlot->GetNbinsX(); binIndex++ )
+		{
+			double error = secondPlot->GetBinContent( binIndex ) / firstPlot->GetBinContent( binIndex );
+			if ( isnan( error ) )
+			{
+				error = 1.0;
+			}
+			if ( isinf( error ) )
+			{
+				error = 0.0;
+			}
+			sumErrors += error;
+
+			double deviation = fabs( error - 1.0 );
+			if ( deviation > maxDeviation || binIndex == 0 )
+			{
+				maxDeviation = deviation;
+				maxError = error;
+				maxDeviationIndex = binIndex;
+			}
+		}
+		cout << "Average ratio ( unfolded bin ) / ( reference bin ) = " << sumErrors / (double)firstPlot->GetNbinsX() << endl;
+		cout << "Greatest discrepancy ( " << maxError << " ) is in bin " << maxDeviationIndex << " of " << firstPlot->GetNbinsX() << endl;
+	}
+
 	//Clean up
-	if (IsClosureTest)
+	if ( IsClosureTest && CLOSURE_FILE_OUTPUT )
 	{
 		debugFile->Close();
 		delete debugFile;

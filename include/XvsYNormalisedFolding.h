@@ -30,13 +30,13 @@ class XvsYNormalisedFolding : public IPlotMaker
 
 		//Take input values from ntuples
 		//To reduce file access, the appropriate row must already be in memory, the method does not change row
-		virtual void StoreMatch( InputNtuple * TruthInput, InputNtuple * ReconstructedInput );
-		virtual void StoreMiss( InputNtuple * TruthInput );
-		virtual void StoreFake( InputNtuple * ReconstructedInput );
-		virtual void StoreData( InputNtuple * DataInput );
+		virtual void StoreMatch( IFileInput * TruthInput, IFileInput * ReconstructedInput );
+		virtual void StoreMiss( IFileInput * TruthInput );
+		virtual void StoreFake( IFileInput * ReconstructedInput );
+		virtual void StoreData( IFileInput * DataInput );
 
 		//Do the unfolding
-		virtual void Unfold( int MostIterations = 10, double ChiSquaredThreshold = 1.0, double KolmogorovThreshold = 1.0, bool WithSmoothing = false );
+		virtual void Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding = false, bool WithSmoothing = false );
 
 		//Do a closure test
                 virtual bool ClosureTest( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing = false );

@@ -97,9 +97,10 @@ void IterativeUnfolding::StoreTruthRecoPair( double Truth, double Reco, double T
 	{
 		truthDistribution->StoreEvent( vector<double>( 1, Truth ), TruthWeight );
 		reconstructedDistribution->StoreEvent( vector<double>( 1, Reco ), RecoWeight );
-		totalPaired += TruthWeight;
+
 	}
 
+	totalPaired += TruthWeight;
 	inputSmearing->StoreTruthRecoPair( vector<double>( 1, Truth ), vector<double>( 1, Reco ), TruthWeight, RecoWeight );
 }
 
@@ -110,9 +111,10 @@ void IterativeUnfolding::StoreTruthRecoPair( vector<double> Truth, vector<double
 	{
 		truthDistribution->StoreEvent( Truth, TruthWeight );
 		reconstructedDistribution->StoreEvent( Reco, RecoWeight );
-		totalPaired += TruthWeight;
+
 	}
 
+	totalPaired += TruthWeight;
 	inputSmearing->StoreTruthRecoPair( Truth, Reco, TruthWeight, RecoWeight );
 }
 
@@ -124,9 +126,9 @@ void IterativeUnfolding::StoreUnreconstructedTruth( double Truth, double Weight,
 	{
 		truthDistribution->StoreEvent( vector<double>( 1, Truth ), Weight );
 		reconstructedDistribution->StoreBadEvent( Weight );
-		totalMissed += Weight;
 	}
 
+	totalMissed += Weight;
 	inputSmearing->StoreUnreconstructedTruth( vector<double>( 1, Truth ), Weight );
 }
 
@@ -137,9 +139,9 @@ void IterativeUnfolding::StoreUnreconstructedTruth( vector<double> Truth, double
 	{
 		truthDistribution->StoreEvent( Truth, Weight );
 		reconstructedDistribution->StoreBadEvent( Weight );
-		totalMissed += Weight;
 	}
 
+	totalMissed += Weight;
 	inputSmearing->StoreUnreconstructedTruth( Truth, Weight );
 }
 
@@ -151,9 +153,9 @@ void IterativeUnfolding::StoreReconstructedFake( double Reco, double Weight, boo
 	{
 		truthDistribution->StoreBadEvent( Weight );
 		reconstructedDistribution->StoreEvent( vector<double>( 1, Reco ), Weight );
-		totalFake += Weight;
 	}
 
+	totalFake += Weight;
 	inputSmearing->StoreReconstructedFake( vector<double>( 1, Reco ), Weight );
 }
 
@@ -164,9 +166,9 @@ void IterativeUnfolding::StoreReconstructedFake( vector<double> Reco, double Wei
 	{
 		truthDistribution->StoreBadEvent( Weight );
 		reconstructedDistribution->StoreEvent( Reco, Weight );
-		totalFake += Weight;
 	}
 
+	totalFake += Weight;
 	inputSmearing->StoreReconstructedFake( Reco, Weight );
 }
 
@@ -312,7 +314,7 @@ bool IterativeUnfolding::ClosureTest( int MostIterations, double ChiSquaredThres
 
 	//Compare with truth distribution
 	double chi2Reference, kolmogorovReference;
-	distributionComparison->CompareDistributions( truthDistribution, unfoldedReconstructedDistribution, chi2Reference, kolmogorovReference, false );
+	distributionComparison->CompareDistributions( truthDistribution, unfoldedReconstructedDistribution, chi2Reference, kolmogorovReference, false, true );
 
 	//Output result
 	double binNumber = (double)indexCalculator->GetBinNumber();

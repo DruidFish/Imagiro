@@ -13,6 +13,7 @@
 #define MONTE_CARLO_SUMMARY_PLOTMAKER_H
 
 #include "MonteCarloInformation.h"
+#include "IFileInput.h"
 #include "IPlotMaker.h"
 #include "TCanvas.h"
 #include "TStyle.h"
@@ -30,10 +31,10 @@ class MonteCarloSummaryPlotMaker
 
 		//Take input values from ntuples
 		//To reduce file access, the appropriate row must already be in memory, the method does not change row
-		void StoreMatch( InputNtuple * TruthInput, InputNtuple * ReconstructedInput );
-		void StoreMiss( InputNtuple * TruthInput );
-		void StoreFake( InputNtuple * ReconstructedInput );
-		void StoreData( InputNtuple * DataInput );
+		void StoreMatch( IFileInput * TruthInput, IFileInput * ReconstructedInput );
+		void StoreMiss( IFileInput * TruthInput );
+		void StoreFake( IFileInput * ReconstructedInput );
+		void StoreData( IFileInput * DataInput );
 
 		//Some plot formatting
 		void SetYRange( double Minimum, double Maximum );

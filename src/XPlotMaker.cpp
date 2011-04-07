@@ -72,7 +72,7 @@ IPlotMaker * XPlotMaker::Clone( string NewPriorName )
 
 //Take input values from ntuples
 //To reduce file access, the appropriate row must already be in memory, the method does not change row
-void XPlotMaker::StoreMatch( InputNtuple * TruthInput, InputNtuple * ReconstructedInput )
+void XPlotMaker::StoreMatch( IFileInput * TruthInput, IFileInput * ReconstructedInput )
 {
 	if ( finalised )
 	{
@@ -98,7 +98,7 @@ void XPlotMaker::StoreMatch( InputNtuple * TruthInput, InputNtuple * Reconstruct
 		XUnfolder->StoreTruthRecoPair( truthValues, reconstructedValues, truthWeight, reconstructedWeight, useInPrior );
 	}
 }
-void XPlotMaker::StoreMiss( InputNtuple * TruthInput )
+void XPlotMaker::StoreMiss( IFileInput * TruthInput )
 {
 	if ( finalised )
 	{
@@ -121,7 +121,7 @@ void XPlotMaker::StoreMiss( InputNtuple * TruthInput )
 		XUnfolder->StoreUnreconstructedTruth( truthValues, truthWeight, useInPrior );
 	}
 }
-void XPlotMaker::StoreFake( InputNtuple * ReconstructedInput )
+void XPlotMaker::StoreFake( IFileInput * ReconstructedInput )
 {
 	if ( finalised )
 	{
@@ -144,7 +144,7 @@ void XPlotMaker::StoreFake( InputNtuple * ReconstructedInput )
 		XUnfolder->StoreReconstructedFake( reconstructedValues, reconstructedWeight, useInPrior );
 	}
 }
-void XPlotMaker::StoreData( InputNtuple * DataInput )
+void XPlotMaker::StoreData( IFileInput * DataInput )
 {
 	if ( finalised )
 	{
@@ -166,7 +166,7 @@ void XPlotMaker::StoreData( InputNtuple * DataInput )
 }
 
 //Do the unfolding
-void XPlotMaker::Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing )
+void XPlotMaker::Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding, bool WithSmoothing )
 {
 	if ( finalised )
 	{
@@ -176,7 +176,10 @@ void XPlotMaker::Unfold( int MostIterations, double ChiSquaredThreshold, double 
 	else
 	{
 		//Unfold the distribution
-		XUnfolder->Unfold( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
+		if ( !SkipUnfolding )
+		{
+			XUnfolder->Unfold( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
+		}
 
 		//Make some plot titles
 		stringstream uniqueIDString;

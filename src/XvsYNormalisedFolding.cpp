@@ -91,7 +91,7 @@ IPlotMaker * XvsYNormalisedFolding::Clone( string NewPriorName )
 
 //Take input values from ntuples
 //To reduce file access, the appropriate row must already be in memory, the method does not change row
-void XvsYNormalisedFolding::StoreMatch( InputNtuple * TruthInput, InputNtuple * ReconstructedInput )
+void XvsYNormalisedFolding::StoreMatch( IFileInput * TruthInput, IFileInput * ReconstructedInput )
 {
 	if ( finalised )
 	{
@@ -131,7 +131,7 @@ void XvsYNormalisedFolding::StoreMatch( InputNtuple * TruthInput, InputNtuple * 
 		}
 	}
 }
-void XvsYNormalisedFolding::StoreMiss( InputNtuple * TruthInput )
+void XvsYNormalisedFolding::StoreMiss( IFileInput * TruthInput )
 {
 	if ( finalised )
 	{
@@ -159,7 +159,7 @@ void XvsYNormalisedFolding::StoreMiss( InputNtuple * TruthInput )
 		XvsYFolder->StoreUnreconstructedTruth( truthValues, truthWeight, useInPrior );
 	}
 }
-void XvsYNormalisedFolding::StoreFake( InputNtuple * ReconstructedInput )
+void XvsYNormalisedFolding::StoreFake( IFileInput * ReconstructedInput )
 {
 	if ( finalised )
 	{
@@ -194,7 +194,7 @@ void XvsYNormalisedFolding::StoreFake( InputNtuple * ReconstructedInput )
 		}
 	}
 }
-void XvsYNormalisedFolding::StoreData( InputNtuple * DataInput )
+void XvsYNormalisedFolding::StoreData( IFileInput * DataInput )
 {
 	if ( finalised )
 	{
@@ -225,7 +225,7 @@ void XvsYNormalisedFolding::StoreData( InputNtuple * DataInput )
 }
 
 //Do the unfolding
-void XvsYNormalisedFolding::Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing )
+void XvsYNormalisedFolding::Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding, bool WithSmoothing )
 {
 	if ( finalised )
 	{

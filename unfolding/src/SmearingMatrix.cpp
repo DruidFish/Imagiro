@@ -112,7 +112,8 @@ void SmearingMatrix::Finalise()
 				for ( int effectIndex = 0; effectIndex < binNumber; effectIndex++ )
 				{
 					//One over the number of bins
-					matrix[ causeIndex ][ effectIndex ] = 1.0 / (double)( binNumber - 1 );
+					//matrix[ causeIndex ][ effectIndex ] = 1.0 / (double)( binNumber - 1 );
+					matrix[ causeIndex ][ effectIndex ] = 1.0 / (double)( binNumber );
 
 					//Increment the efficiency
 					efficiencies[ causeIndex ] += matrix[ causeIndex ][ effectIndex ];

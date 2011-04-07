@@ -10,7 +10,7 @@
 #ifndef I_PLOTMAKER_H
 #define I_PLOTMAKER_H
 
-#include "InputNtuple.h"
+#include "IFileInput.h"
 #include "Distribution.h"
 #include "TH1F.h"
 #include "TH2F.h"
@@ -23,13 +23,13 @@ class IPlotMaker
 	public:
 		//Take input values from ntuples
 		//To reduce file access, the appropriate row must already be in memory, the method does not change row
-		virtual void StoreMatch( InputNtuple * TruthInput, InputNtuple * ReconstructedInput ) = 0;
-		virtual void StoreMiss( InputNtuple * TruthInput ) = 0;
-		virtual void StoreFake( InputNtuple * ReconstructedInput ) = 0;
-		virtual void StoreData( InputNtuple * DataInput ) = 0;
+		virtual void StoreMatch( IFileInput * TruthInput, IFileInput * ReconstructedInput ) = 0;
+		virtual void StoreMiss( IFileInput * TruthInput ) = 0;
+		virtual void StoreFake( IFileInput * ReconstructedInput ) = 0;
+		virtual void StoreData( IFileInput * DataInput ) = 0;
 
 		//Do the unfolding
-		virtual void Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing = false ) = 0;
+		virtual void Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding, bool WithSmoothing = false ) = 0;
 
 		//Do a closure test
 	        virtual bool ClosureTest( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing = false ) = 0;

@@ -1,31 +1,32 @@
 /**
-  @class InputNtuple
+  @class InputUETree
 
-  Loads data from a file containing a Root Ntuple, and uses hashtables to provide efficient access to that data
+  Accesses a slightly less general file format I use for the underlying event analysis
 
   @author Benjamin M Wynne bwynne@cern.ch
-  @date 06-01-2011
+  @date 06-04-2011
  */
 
 
-#ifndef INPUT_NTUPLE_H
-#define INPUT_NTUPLE_H
+#ifndef INPUT_UE_TREE_H
+#define INPUT_UE_TREE_H
 
+#include "IFileInput.h"
 #include <map>
 #include <vector>
 #include "TFile.h"
 #include "TTree.h"
 #include "TBranch.h"
-#include "IFileInput.h"
+#include "MonteCarloInformation.h"
 
 using namespace std;
 
-class InputNtuple : public IFileInput
+class InputUETree : public IFileInput
 {
 	public:
-		InputNtuple();
-		InputNtuple( string FilePath, string NtuplePath, string Description, int InputIndex );
-		~InputNtuple();
+		InputUETree();
+		InputUETree( string FilePath, string NtuplePath, string Description, int InputIndex );
+		~InputUETree();
 
 		//Change the Ntuple row being examined
 		virtual bool ReadRow( long RowIndex );
@@ -51,14 +52,15 @@ class InputNtuple : public IFileInput
 	private:
 		//Caching
 		long currentRowNumber, numberOfRows;
-		float currentEventNumber, currentEventWeight;
+		UInt_t currentEventNumber;
+		double currentEventWeight;
 		TBranch *eventNumberBranch, *eventWeightBranch;
 		vector< TBranch* > branches;
-		vector< float > currentValues;
+		vector< double > currentValues;
 
 		//Mapping
-		map< float, long > eventNumberToRow;
-		map< float, long >::iterator eventIterator;
+		map< UInt_t, long > eventNumberToRow;
+		map< UInt_t, long >::iterator eventIterator;
 		map< string, int > columnNameToIndex;
 		map< string, int >::iterator columnIterator;
 

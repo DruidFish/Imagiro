@@ -73,7 +73,7 @@ IPlotMaker * XFolding::Clone( string NewPriorName )
 
 //Take input values from ntuples
 //To reduce file access, the appropriate row must already be in memory, the method does not change row
-void XFolding::StoreMatch( InputNtuple * TruthInput, InputNtuple * ReconstructedInput )
+void XFolding::StoreMatch( IFileInput * TruthInput, IFileInput * ReconstructedInput )
 {
 	if ( finalised )
 	{
@@ -99,7 +99,7 @@ void XFolding::StoreMatch( InputNtuple * TruthInput, InputNtuple * Reconstructed
 		XFolder->StoreTruthRecoPair( truthValues, reconstructedValues, truthWeight, reconstructedWeight, useInPrior );
 	}
 }
-void XFolding::StoreMiss( InputNtuple * TruthInput )
+void XFolding::StoreMiss( IFileInput * TruthInput )
 {
 	if ( finalised )
 	{
@@ -122,7 +122,7 @@ void XFolding::StoreMiss( InputNtuple * TruthInput )
 		XFolder->StoreUnreconstructedTruth( truthValues, truthWeight, useInPrior );
 	}
 }
-void XFolding::StoreFake( InputNtuple * ReconstructedInput )
+void XFolding::StoreFake( IFileInput * ReconstructedInput )
 {
 	if ( finalised )
 	{
@@ -145,7 +145,7 @@ void XFolding::StoreFake( InputNtuple * ReconstructedInput )
 		XFolder->StoreReconstructedFake( reconstructedValues, reconstructedWeight, useInPrior );
 	}
 }
-void XFolding::StoreData( InputNtuple * DataInput )
+void XFolding::StoreData( IFileInput * DataInput )
 {
 	if ( finalised )
 	{
@@ -167,7 +167,7 @@ void XFolding::StoreData( InputNtuple * DataInput )
 }
 
 //Do the unfolding
-void XFolding::Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing )
+void XFolding::Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding, bool WithSmoothing )
 {
 	if ( finalised )
 	{

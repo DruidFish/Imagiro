@@ -82,9 +82,9 @@ void Folding::StoreTruthRecoPair( double Truth, double Reco, double TruthWeight,
 	{
 		truthDistribution->StoreEvent( vector<double>( 1, Truth ), TruthWeight );
 		reconstructedDistribution->StoreEvent( vector<double>( 1, Reco ), RecoWeight );
-		totalPaired += TruthWeight;
 	}
 
+	totalPaired += TruthWeight;
 	inputSmearing->StoreTruthRecoPair( vector<double>( 1, Truth ), vector<double>( 1, Reco ), TruthWeight, RecoWeight );
 }
 
@@ -95,9 +95,9 @@ void Folding::StoreTruthRecoPair( vector<double> Truth, vector<double> Reco, dou
 	{
 		truthDistribution->StoreEvent( Truth, TruthWeight );
 		reconstructedDistribution->StoreEvent( Reco, RecoWeight );
-		totalPaired += TruthWeight;
 	}
 
+	totalPaired += TruthWeight;
 	inputSmearing->StoreTruthRecoPair( Truth, Reco, TruthWeight, RecoWeight );
 }
 
@@ -109,9 +109,9 @@ void Folding::StoreUnreconstructedTruth( double Truth, double Weight, bool UseIn
 	{
 		truthDistribution->StoreEvent( vector<double>( 1, Truth ), Weight );
 		reconstructedDistribution->StoreBadEvent( Weight );
-		totalMissed += Weight;
 	}
 
+	totalMissed += Weight;
 	inputSmearing->StoreUnreconstructedTruth( vector<double>( 1, Truth ), Weight );
 }
 
@@ -122,9 +122,9 @@ void Folding::StoreUnreconstructedTruth( vector<double> Truth, double Weight, bo
 	{
 		truthDistribution->StoreEvent( Truth, Weight );
 		reconstructedDistribution->StoreBadEvent( Weight );
-		totalMissed += Weight;
 	}
 
+	totalMissed += Weight;
 	inputSmearing->StoreUnreconstructedTruth( Truth, Weight );
 }
 
@@ -136,9 +136,9 @@ void Folding::StoreReconstructedFake( double Reco, double Weight, bool UseInPrio
 	{
 		truthDistribution->StoreBadEvent( Weight );
 		reconstructedDistribution->StoreEvent( vector<double>( 1, Reco ), Weight );
-		totalFake += Weight;
 	}
 
+	totalFake += Weight;
 	inputSmearing->StoreReconstructedFake( vector<double>( 1, Reco ), Weight );
 }
 
@@ -149,9 +149,9 @@ void Folding::StoreReconstructedFake( vector<double> Reco, double Weight, bool U
 	{
 		truthDistribution->StoreBadEvent( Weight );
 		reconstructedDistribution->StoreEvent( Reco, Weight );
-		totalFake += Weight;
 	}
 
+	totalFake += Weight;
 	inputSmearing->StoreReconstructedFake( Reco, Weight );
 }
 
@@ -195,7 +195,7 @@ bool Folding::ClosureTest()
 
 	//Compare with reconstructed distribution
 	double chi2, kolmogorov;
-	distributionComparison->CompareDistributions( reconstructedDistribution, smearedTruthDistribution, chi2, kolmogorov, false );
+	distributionComparison->CompareDistributions( reconstructedDistribution, smearedTruthDistribution, chi2, kolmogorov, false, true );
 
 	//Output result
 	cout << "Number of bins: " << indexCalculator->GetBinNumber() << endl;

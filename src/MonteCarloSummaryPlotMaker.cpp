@@ -83,7 +83,7 @@ MonteCarloSummaryPlotMaker::~MonteCarloSummaryPlotMaker()
 
 //Take input values from ntuples
 //To reduce file access, the appropriate row must already be in memory, the method does not change row
-void MonteCarloSummaryPlotMaker::StoreMatch( InputNtuple * TruthInput, InputNtuple * ReconstructedInput )
+void MonteCarloSummaryPlotMaker::StoreMatch( IFileInput * TruthInput, IFileInput * ReconstructedInput )
 {
 	if ( finalised )
 	{
@@ -115,7 +115,7 @@ void MonteCarloSummaryPlotMaker::StoreMatch( InputNtuple * TruthInput, InputNtup
 		crossCheckPlots[ inputIndex ]->StoreData( ReconstructedInput );
 	}
 }
-void MonteCarloSummaryPlotMaker::StoreMiss( InputNtuple * TruthInput )
+void MonteCarloSummaryPlotMaker::StoreMiss( IFileInput * TruthInput )
 {
 	if ( finalised )
 	{
@@ -142,7 +142,7 @@ void MonteCarloSummaryPlotMaker::StoreMiss( InputNtuple * TruthInput )
 		}
 	}
 }
-void MonteCarloSummaryPlotMaker::StoreFake( InputNtuple * ReconstructedInput )
+void MonteCarloSummaryPlotMaker::StoreFake( IFileInput * ReconstructedInput )
 {
 	if ( finalised )
 	{
@@ -174,7 +174,7 @@ void MonteCarloSummaryPlotMaker::StoreFake( InputNtuple * ReconstructedInput )
 		crossCheckPlots[ inputIndex ]->StoreData( ReconstructedInput );
 	}
 }
-void MonteCarloSummaryPlotMaker::StoreData( InputNtuple * DataInput )
+void MonteCarloSummaryPlotMaker::StoreData( IFileInput * DataInput )
 {
 	if ( finalised )
 	{
@@ -373,8 +373,16 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 		for ( unsigned int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
 		{
 			//Unfold
-			cout << endl << "Unfolding " << allPlots[ plotIndex ]->Description(true) << " with " << allPlots[ plotIndex ]->PriorName() << endl;
-			allPlots[plotIndex]->Unfold( mostIterations, chiSquaredThreshold, kolmogorovThreshold, WithSmoothing );
+			if ( usePrior[ plotIndex ] )
+			{
+				cout << endl << "Unfolding " << allPlots[ plotIndex ]->Description(true) << " with " << allPlots[ plotIndex ]->PriorName() << endl;
+			}
+			else
+			{
+				cout << endl << "Skipping unfolding " << allPlots[ plotIndex ]->Description(true) << " with " << allPlots[ plotIndex ]->PriorName() << endl;
+			}
+			//Still need to run this to get the truth output
+			allPlots[plotIndex]->Unfold( mostIterations, chiSquaredThreshold, kolmogorovThreshold, !usePrior[ plotIndex ], WithSmoothing );
 
 			//Make a local copy of the truth plot
 			string truthPlotName = "localCopy" + allPlots[ plotIndex ]->PriorName() + "Truth";
@@ -478,6 +486,7 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 
 		//Draw the combined error graph - asymmetric errors
 		TGraphAsymmErrors * graphWithSystematics = new TGraphAsymmErrors( graphSize, xValues, yValues, xError, xError, yBothErrorLow, yBothErrorHigh );
+		graphWithSystematics->SetName( "combinedErrorGraph" );
 		graphWithSystematics->SetTitle( plotTitle.c_str() );
 		graphWithSystematics->SetFillColor(30);
 		graphWithSystematics->SetMarkerSize(1);
@@ -498,6 +507,7 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 
 		//Draw the stat error graph - symmetric errors
 		TGraphErrors * graphWithStatistics = new TGraphErrors( graphSize, xValues, yValues, xError, yStatError );
+		graphWithStatistics->SetName( "statErrorGraph" );
 		graphWithStatistics->SetTitle( plotTitle.c_str() );
 		graphWithStatistics->SetMarkerSize(0);
 		graphWithStatistics->SetMarkerStyle(8);
@@ -557,6 +567,7 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 			yBothErrorHigh[ binIndex ] /= yValues[ binIndex ];
 		}
 		TGraphAsymmErrors * justDataErrors = new TGraphAsymmErrors( graphSize, xValues, justOnes, xError, xError, yBothErrorLow, yBothErrorHigh );
+		justDataErrors->SetName( "ratioGraph" );
 		justDataErrors->SetFillColor( 30 );
 		justDataErrors->GetXaxis()->SetRangeUser( lowEdge, highEdge );
 		justDataErrors->GetYaxis()->SetRangeUser( 0.75, 1.25 );

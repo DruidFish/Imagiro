@@ -92,7 +92,7 @@ IPlotMaker * XvsYNormalisedPlotMaker::Clone( string NewPriorName )
 
 //Take input values from ntuples
 //To reduce file access, the appropriate row must already be in memory, the method does not change row
-void XvsYNormalisedPlotMaker::StoreMatch( InputNtuple * TruthInput, InputNtuple * ReconstructedInput )
+void XvsYNormalisedPlotMaker::StoreMatch( IFileInput * TruthInput, IFileInput * ReconstructedInput )
 {
 	if ( finalised )
 	{
@@ -132,7 +132,7 @@ void XvsYNormalisedPlotMaker::StoreMatch( InputNtuple * TruthInput, InputNtuple 
 		}
 	}
 }
-void XvsYNormalisedPlotMaker::StoreMiss( InputNtuple * TruthInput )
+void XvsYNormalisedPlotMaker::StoreMiss( IFileInput * TruthInput )
 {
 	if ( finalised )
 	{
@@ -167,7 +167,7 @@ void XvsYNormalisedPlotMaker::StoreMiss( InputNtuple * TruthInput )
 		}
 	}
 }
-void XvsYNormalisedPlotMaker::StoreFake( InputNtuple * ReconstructedInput )
+void XvsYNormalisedPlotMaker::StoreFake( IFileInput * ReconstructedInput )
 {
 	if ( finalised )
 	{
@@ -195,7 +195,7 @@ void XvsYNormalisedPlotMaker::StoreFake( InputNtuple * ReconstructedInput )
 		XvsYUnfolder->StoreReconstructedFake( reconstructedValues, reconstructedWeight, useInPrior );
 	}
 }
-void XvsYNormalisedPlotMaker::StoreData( InputNtuple * DataInput )
+void XvsYNormalisedPlotMaker::StoreData( IFileInput * DataInput )
 {
 	if ( finalised )
 	{
@@ -226,7 +226,7 @@ void XvsYNormalisedPlotMaker::StoreData( InputNtuple * DataInput )
 }
 
 //Do the unfolding
-void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing )
+void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding, bool WithSmoothing )
 {
 	if ( finalised )
 	{
@@ -236,8 +236,11 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 	else
 	{
 		//Unfold the distributions
-		XUnfolder->Unfold( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
-		XvsYUnfolder->Unfold( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
+		if ( !SkipUnfolding )
+		{
+			XUnfolder->Unfold( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
+			XvsYUnfolder->Unfold( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
+		}
 
 		//Make some plot titles
 		stringstream uniqueIDString;

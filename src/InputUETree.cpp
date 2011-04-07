@@ -1,15 +1,14 @@
 /**
-  @class InputNtuple
+  @class InputUETree
 
-  Loads data from a file containing a Root Ntuple, and uses hashtables to provide efficient access to that data
+  Accesses a slightly less general file format I use for the underlying event analysis
 
   @author Benjamin M Wynne bwynne@cern.ch
-  @date 06-01-2011
+  @date 06-04-2011
  */
 
-#include "InputNtuple.h"
+#include "InputUETree.h"
 #include "TLeaf.h"
-#include "MonteCarloInformation.h"
 #include <iostream>
 #include <cstdlib>
 
@@ -17,12 +16,12 @@ const string EVENT_NUMBER_COLUMN_NAME = "EventNumber";
 const string EVENT_WEIGHT_COLUMN_NAME = "EventWeight";
 
 //Default constructor - useless
-InputNtuple::InputNtuple()
+InputUETree::InputUETree()
 {
 }
 
 //Constructor taking arguments pointing to a particular Ntuple in a root file
-InputNtuple::InputNtuple( string FilePath, string NtuplePath, string Description, int DescriptionIndex )
+InputUETree::InputUETree( string FilePath, string NtuplePath, string Description, int DescriptionIndex )
 {
 	sourceDescription = Description;
 	sourceDescriptionIndex = DescriptionIndex;
@@ -78,7 +77,7 @@ InputNtuple::InputNtuple( string FilePath, string NtuplePath, string Description
 
 	//Set up access to the other columns
 	//You mustn't edit the lengths of these two vectors once you start using SetBranchAddress with them
-	currentValues = vector< float >( otherColumnNames.size() );
+	currentValues = vector< double >( otherColumnNames.size() );
 	branches = vector< TBranch* >( otherColumnNames.size() );
 	for ( unsigned int columnIndex = 0; columnIndex < otherColumnNames.size(); columnIndex++ )
 	{
@@ -104,7 +103,7 @@ InputNtuple::InputNtuple( string FilePath, string NtuplePath, string Description
 }
 
 //Destructor
-InputNtuple::~InputNtuple()
+InputUETree::~InputUETree()
 {
 	inputFile->Close();
 	delete inputFile;
@@ -112,7 +111,7 @@ InputNtuple::~InputNtuple()
 }
 
 //Change the Ntuple row being examined
-bool InputNtuple::ReadRow( long RowIndex )
+bool InputUETree::ReadRow( long RowIndex )
 {
 	//Check if we're already there
 	if ( currentRowNumber == RowIndex )
@@ -135,17 +134,17 @@ bool InputNtuple::ReadRow( long RowIndex )
 		}
 	}
 }
-bool InputNtuple::ReadEvent( UInt_t EventNumber )
+bool InputUETree::ReadEvent( UInt_t EventNumber )
 {
 	//Check if we're already there
-	if ( currentEventNumber == ( float )EventNumber )
+	if ( currentEventNumber == EventNumber )
 	{
 		return true;
 	}
 	else
 	{
 		//Look for an event with this number
-		eventIterator = eventNumberToRow.find( ( float )EventNumber );
+		eventIterator = eventNumberToRow.find( EventNumber );
 
 		//Check if the event exists
 		if ( eventIterator == eventNumberToRow.end() )
@@ -161,23 +160,23 @@ bool InputNtuple::ReadEvent( UInt_t EventNumber )
 		}
 	}
 }
-bool InputNtuple::ReadEvent( UInt_t EventNumber, int FileIndex )
+bool InputUETree::ReadEvent( UInt_t EventNumber, int FileIndex )
 {
-	return ReadEvent( EventNumber );
+        return ReadEvent( EventNumber );
 }
 
 //Get the standard event number and weight information
-UInt_t InputNtuple::EventNumber()
+UInt_t InputUETree::EventNumber()
 {
-	return ( UInt_t )currentEventNumber;
+	return currentEventNumber;
 }
-double InputNtuple::EventWeight()
+double InputUETree::EventWeight()
 {
-	return ( double )currentEventWeight;
+	return currentEventWeight;
 }
 
 //Get any other column value by name
-double InputNtuple::GetValue( string VariableName )
+double InputUETree::GetValue( string VariableName )
 {
 	//Look for the column
 	columnIterator = columnNameToIndex.find( VariableName );
@@ -192,32 +191,32 @@ double InputNtuple::GetValue( string VariableName )
 	else
 	{
 		//Found - return corresponding value
-		return ( double )currentValues[ columnIterator->second ];
+		return currentValues[ columnIterator->second ];
 	}
 }
 
 //Get the number of rows
-long InputNtuple::NumberOfRows()
+long InputUETree::NumberOfRows()
 {
 	return numberOfRows;
 }
-long InputNtuple::CurrentRow()
+long InputUETree::CurrentRow()
 {
 	return currentRowNumber;
 }
-long InputNtuple::CurrentFile()
+long InputUETree::CurrentFile()
 {
         return 0;
 }
 
 //Get the description of the source
-string * InputNtuple::Description()
+string * InputUETree::Description()
 {
 	return &sourceDescription;
 }
 
 //Get the index of the source
-int InputNtuple::DescriptionIndex()
+int InputUETree::DescriptionIndex()
 {
 	return sourceDescriptionIndex;
 }
