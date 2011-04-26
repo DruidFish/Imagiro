@@ -194,7 +194,7 @@ void IterativeUnfolding::StoreDataValue( vector<double> Data, double Weight )
 //Iteration ends if the chi squared comparison value of
 //the two results is lower than the threshold, or if
 //the Kolmogorov-Smirnof comparison value is higher
-void IterativeUnfolding::Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing )
+void IterativeUnfolding::Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, int ErrorMode, bool WithSmoothing )
 {
 	//Extrapolate the number of missed events in the data
 	dataDistribution->SetBadBin( totalMissed / ( totalPaired + totalFake ) );
@@ -216,6 +216,7 @@ void IterativeUnfolding::Unfold( int MostIterations, double ChiSquaredThreshold,
 	}
 
 	//Iterate, making new distribution from data, old distribution and smearing matrix
+	UnfoldingMatrix * lastUnfoldingMatrix;
 	for ( int iteration = 0; iteration < MostIterations; iteration++ )
 	{
 		//Smooth the prior distribution, if asked. Don't smooth the truth
@@ -224,8 +225,15 @@ void IterativeUnfolding::Unfold( int MostIterations, double ChiSquaredThreshold,
 			priorDistribution->Smooth();
 		}
 
+		//Make a new unfolding matrix
+		if ( iteration != 0 )
+		{
+			delete lastUnfoldingMatrix;
+		}
+		lastUnfoldingMatrix = new UnfoldingMatrix( inputSmearing, priorDistribution );
+
 		//Unfold
-		unfoldedDistribution = new Distribution( dataDistribution, inputSmearing, priorDistribution );
+		unfoldedDistribution = new Distribution( dataDistribution, lastUnfoldingMatrix );
 
 		//Compare with previous distribution
 		double chi2, kolmogorov;
@@ -266,6 +274,27 @@ void IterativeUnfolding::Unfold( int MostIterations, double ChiSquaredThreshold,
 		}
 	}
 
+	//Do the full error calculation if requested
+	if ( ErrorMode > 0 )
+	{
+		//Do the full error calculation, either just for the variances (ErrorMode == 1) or for all covariances (ErrorMode == 2)
+		bool justVariance = ( ErrorMode == 1 );
+		fullErrors = new CovarianceMatrix( lastUnfoldingMatrix, inputSmearing, dataDistribution, unfoldedDistribution->Integral(), justVariance );
+
+		//Read out the variance
+		dagostiniVariance = vector< double >( indexCalculator->GetBinNumber(), 0.0 );
+		for ( int binIndex = 0; binIndex < indexCalculator->GetBinNumber(); binIndex++ )
+		{
+			dagostiniVariance[ binIndex ] = fullErrors->GetElement( binIndex, binIndex );
+		}
+
+		if ( justVariance )
+		{
+			delete fullErrors;
+		}
+	}
+	delete lastUnfoldingMatrix;
+
 	//Close the debug file
 	if (debug)
 	{
@@ -288,10 +317,19 @@ bool IterativeUnfolding::ClosureTest( int MostIterations, double ChiSquaredThres
 	Distribution * unfoldedReconstructedDistribution;
 
 	//Iterate
+	UnfoldingMatrix * lastUnfoldingMatrix;
 	for ( int iteration = 0; iteration < MostIterations; iteration++ )
 	{
+		//Smooth the prior distribution, is asked. Don't smooth the truth
+		if ( WithSmoothing && iteration != 0 )
+		{
+			priorDistribution->Smooth();
+		}
+
 		//Unfold
-		unfoldedReconstructedDistribution = new Distribution( reconstructedDistribution, inputSmearing, priorDistribution );
+		lastUnfoldingMatrix = new UnfoldingMatrix( inputSmearing, priorDistribution );
+		unfoldedReconstructedDistribution = new Distribution( reconstructedDistribution, lastUnfoldingMatrix );
+		delete lastUnfoldingMatrix;
 
 		//Compare with previous distribution
 		double chi2, kolmogorov;
@@ -360,6 +398,7 @@ int IterativeUnfolding::MonteCarloCrossCheck( Distribution * ReferenceDistributi
 
 	//Iterate, making new distribution from data, old distribution and smearing matrix
 	Distribution * adjustedDistribution;
+	UnfoldingMatrix * lastUnfoldingMatrix;
 	for ( int iteration = 0; iteration < MAX_ITERATIONS_FOR_CROSS_CHECK; iteration++ )
 	{
 		//Smooth the prior distribution, is asked. Don't smooth the truth
@@ -369,7 +408,9 @@ int IterativeUnfolding::MonteCarloCrossCheck( Distribution * ReferenceDistributi
 		}
 
 		//Iterate
-		adjustedDistribution = new Distribution( dataDistribution, inputSmearing, priorDistribution );
+		lastUnfoldingMatrix = new UnfoldingMatrix( inputSmearing, priorDistribution );
+		adjustedDistribution = new Distribution( dataDistribution, lastUnfoldingMatrix );
+		delete lastUnfoldingMatrix;
 
 		//Compare with reference distribution
 		double referenceChi2, referenceKolmogorov;
@@ -448,4 +489,12 @@ TH1F * IterativeUnfolding::GetUncorrectedDataHistogram( string Name, string Titl
 vector<double> IterativeUnfolding::SumOfDataWeightSquares()
 {
 	return sumOfDataWeightSquares;
+}
+vector<double> IterativeUnfolding::DAgostiniVariance()
+{
+        return dagostiniVariance;
+}
+TH2F * IterativeUnfolding::DAgostiniCovariance( string Name, string Title )
+{
+	return fullErrors->MakeRootHistogram( Name, Title );
 }

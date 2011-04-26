@@ -10,6 +10,7 @@
 #ifndef ITERATIVE_UNFOLDING_H
 #define ITERATIVE_UNFOLDING_H
 
+#include "CovarianceMatrix.h"
 #include "Comparison.h"
 #include "SmearingMatrix.h"
 #include "Indices.h"
@@ -83,13 +84,13 @@ class IterativeUnfolding
 		//Set WithSmoothing = true to smooth the prior distribution
 		//before each iteration, as it might reduce statistical
 		//fluctuations when convergence is slow
-		void Unfold( int MostIterations = 20, double ChiSquaredThreshold = 10.0, double KolmogorovThreshold = 0.1, bool WithSmoothing = false );
+		void Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, int ErrorMode = 0, bool WithSmoothing = false );
 
 		//Perform a closure test
 		//Unfold the MC reco distribution with the corresponding truth information as a prior
 		//It should give the truth information back exactly...
 		//Return true if test passed
-		bool ClosureTest( int MostIterations = 20, double ChiSquaredThreshold = 10.0, double KolmogorovThreshold = 0.1, bool WithSmoothing = false );
+		bool ClosureTest( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing = false );
 
 		//Perform an unfolding cross-check
 		//Use MC truth A as a prior to unfold MC reco B
@@ -115,14 +116,17 @@ class IterativeUnfolding
 
 		//Handy for error calculation
 		vector<double> SumOfDataWeightSquares();
+		vector<double> DAgostiniVariance();
+		TH2F * DAgostiniCovariance( string Name, string Title );
 
 	private:
 		Comparison * distributionComparison;
 		int uniqueID;
 		string name;
-		vector< double > sumOfDataWeightSquares;
+		vector< double > sumOfDataWeightSquares, dagostiniVariance;
 		Indices * indexCalculator;
 		Distribution *dataDistribution, *unfoldedDistribution, *truthDistribution, *reconstructedDistribution;
+		CovarianceMatrix * fullErrors;
 		SmearingMatrix * inputSmearing;
 		double totalPaired, totalFake, totalMissed;
 		bool debug;

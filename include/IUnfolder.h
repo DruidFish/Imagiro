@@ -1,15 +1,16 @@
 /**
-  @interface IPlotMaker
+  @interface IUnfolder
 
-  Gives all of the individual folding/unfolding plot classes a common interface, so that they can all be used by MonteCarloSummaryPlotMaker
+  Gives all of the individual unfolding plot classes a common interface, so that they can all be used by MonteCarloSummaryPlotMaker
 
   @author Benjamin M Wynne
   @date 08-03-2011
   */
 
-#ifndef I_PLOTMAKER_H
-#define I_PLOTMAKER_H
+#ifndef I_UNFOLDER_H
+#define I_UNFOLDER_H
 
+#include "IPlotMaker.h"
 #include "IFileInput.h"
 #include "Distribution.h"
 #include "TH1F.h"
@@ -18,7 +19,7 @@
 
 using namespace std;
 
-class IPlotMaker
+class IUnfolder : public IPlotMaker
 {
 	public:
 		//Take input values from ntuples
@@ -29,16 +30,16 @@ class IPlotMaker
 		virtual void StoreData( IFileInput * DataInput ) = 0;
 
 		//Do the unfolding
-		//virtual void Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding = false, bool WithVariance = false, bool WithSmoothing = false ) = 0;
+		virtual void Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding = false, int ErrorMode = 0, bool WithSmoothing = false ) = 0;
 
 		//Do a closure test
-	        //virtual bool ClosureTest( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing = false ) = 0;
+	        virtual bool ClosureTest( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing = false ) = 0;
 
 		//Make a cross-check with MC
-		//virtual int MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing = false ) = 0;
+		virtual int MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing = false ) = 0;
 
 		//Return a distribution for use in the cross-checks
-		//virtual Distribution * MonteCarloTruthForCrossCheck() = 0;
+		virtual Distribution * MonteCarloTruthForCrossCheck() = 0;
 
 		//Return some plots
 		virtual TH1F * CorrectedHistogram() = 0;
@@ -47,7 +48,7 @@ class IPlotMaker
 		virtual TH2F * SmearingMatrix() = 0;
 
 		//Copy the object
-		//virtual IPlotMaker * Clone( string NewPriorName ) = 0;
+		virtual IUnfolder * Clone( string NewPriorName ) = 0;
 
 		//General info
 		virtual string Description( bool WithSpaces ) = 0;
@@ -55,6 +56,8 @@ class IPlotMaker
 
 		//Error info for corrected distribution
 		virtual vector<double> CorrectedErrors() = 0;
+		virtual vector<double> DAgostiniErrors() = 0;
+		virtual TH2F * DAgostiniCovariance() = 0;
 };
 
 #endif

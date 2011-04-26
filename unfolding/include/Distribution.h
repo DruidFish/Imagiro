@@ -18,8 +18,8 @@
 
 using namespace std;
 
-//Forward declaration of JustVariances, to avoid cyclic dependency
-class JustVariances;
+//Forward definition of the unfolding matrix
+class UnfoldingMatrix;
 
 class Distribution
 {
@@ -27,7 +27,7 @@ class Distribution
 		Distribution();
 		Distribution( Indices * InputIndices );
 		Distribution( vector< TH1F* > InputDistributions, Indices * InputIndices );
-		Distribution( Distribution * DataDistribution, SmearingMatrix * Smearing, Distribution * PriorDistribution );
+		Distribution( Distribution * DataDistribution, UnfoldingMatrix * BayesPosterior );
 		Distribution( Distribution * InputDistribution, SmearingMatrix * Smearing );
 		~Distribution();
 
@@ -37,6 +37,7 @@ class Distribution
 
 		double GetBinNumber( int BinIndex );
 		double GetBinProbability( int BinIndex );
+		double Integral();
 
 		TH1F * MakeRootHistogram( string Name, string Title, bool MakeNormalised = false, bool WithBadBin = false );
 
@@ -44,7 +45,6 @@ class Distribution
 		void Smooth( int SideBinNumber = 1 );
 
 	protected:
-		JustVariances * errorCalculator;
 		Indices * indexCalculator;
 		vector<double> binValues;
 		double integral;

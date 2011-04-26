@@ -30,8 +30,9 @@ MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker()
 }
 
 //Constructor with the names to use for the variables
-MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker( IPlotMaker * TemplatePlotMaker, MonteCarloInformation * PlotInformation, bool CombineMCMode )
+MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker( IUnfolder * TemplatePlotMaker, MonteCarloInformation * PlotInformation, bool CombineMCMode )
 {
+	isUnfolding = true;
 	finalised = false;
 	manualRange = false;
 	manualLabels = false;
@@ -48,15 +49,49 @@ MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker( IPlotMaker * TemplatePlo
 		//Don't make a redundant copy of the template
 		if ( TemplatePlotMaker->PriorName() == mcDescription )
 		{
+			unfoldingPlots.push_back( TemplatePlotMaker );
 			allPlots.push_back( TemplatePlotMaker );
 		}
 		else
 		{
-			allPlots.push_back( TemplatePlotMaker->Clone( mcDescription ) );
+			IUnfolder * clonePlot = TemplatePlotMaker->Clone( mcDescription );
+			unfoldingPlots.push_back( clonePlot );
+			allPlots.push_back( clonePlot );
 		}
 
 		//Make plots for testing the unfolding with MC
 		crossCheckPlots.push_back( TemplatePlotMaker->Clone( mcDescription ) );
+	}
+}
+
+MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker( IFolder * TemplatePlotMaker, MonteCarloInformation * PlotInformation, bool CombineMCMode )
+{
+	isUnfolding = false;
+	finalised = false;
+	manualRange = false;
+	manualLabels = false;
+	logScale = false;
+	combineMode = CombineMCMode;
+	mcInfo = PlotInformation;
+	dataDescription = "";
+
+	//Make a separate plot for each MC source
+	for ( int mcIndex = 0; mcIndex < mcInfo->NumberOfSources(); mcIndex++ )
+	{
+		string mcDescription = mcInfo->Description( mcIndex );
+
+		//Don't make a redundant copy of the template
+		if ( TemplatePlotMaker->PriorName() == mcDescription )
+		{
+			foldingPlots.push_back( TemplatePlotMaker );
+			allPlots.push_back( TemplatePlotMaker );
+		}
+		else
+		{
+			IFolder * clonePlot = TemplatePlotMaker->Clone( mcDescription );
+			foldingPlots.push_back( clonePlot );
+			allPlots.push_back( clonePlot );
+		}
 	}
 }
 
@@ -75,8 +110,11 @@ MonteCarloSummaryPlotMaker::~MonteCarloSummaryPlotMaker()
 	{
 		for ( unsigned int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
 		{
-			delete crossCheckPlots[ plotIndex ];
-			delete allPlots[ plotIndex ];
+			if ( isUnfolding )
+			{
+				delete crossCheckPlots[ plotIndex ];
+			}
+			delete foldingPlots[ plotIndex ];
 		}
 	}
 }
@@ -100,19 +138,32 @@ void MonteCarloSummaryPlotMaker::StoreMatch( IFileInput * TruthInput, IFileInput
 			for ( unsigned int mcIndex = 0; mcIndex < allPlots.size(); mcIndex++ )
 			{
 				allPlots[ mcIndex ]->StoreMatch( TruthInput, ReconstructedInput );
-				crossCheckPlots[ mcIndex ]->StoreMatch( TruthInput, ReconstructedInput );
 			}
 		}
 		else
 		{
 			allPlots[ inputIndex ]->StoreMatch( TruthInput, ReconstructedInput );
-			crossCheckPlots[ inputIndex ]->StoreMatch( TruthInput, ReconstructedInput );
 		}
 
 		//Also store the event for the cross-check unfolding
-		inputIndex += MC_CHECK_OFFSET;
-		inputIndex %= allPlots.size();
-		crossCheckPlots[ inputIndex ]->StoreData( ReconstructedInput );
+		if ( isUnfolding )
+		{
+			if ( combineMode )
+			{
+				for ( unsigned int mcIndex = 0; mcIndex < allPlots.size(); mcIndex++ )
+				{
+					crossCheckPlots[ mcIndex ]->StoreMatch( TruthInput, ReconstructedInput );
+				}
+			}
+			else
+			{
+				crossCheckPlots[ inputIndex ]->StoreMatch( TruthInput, ReconstructedInput );
+			}
+
+			inputIndex += MC_CHECK_OFFSET;
+			inputIndex %= allPlots.size();
+			crossCheckPlots[ inputIndex ]->StoreData( ReconstructedInput );
+		}
 	}
 }
 void MonteCarloSummaryPlotMaker::StoreMiss( IFileInput * TruthInput )
@@ -132,13 +183,27 @@ void MonteCarloSummaryPlotMaker::StoreMiss( IFileInput * TruthInput )
 			for ( unsigned int mcIndex = 0; mcIndex < allPlots.size(); mcIndex++ )
 			{
 				allPlots[ mcIndex ]->StoreMiss( TruthInput );
-				crossCheckPlots[ mcIndex ]->StoreMiss( TruthInput );
 			}
 		}       
 		else
 		{
 			allPlots[ inputIndex ]->StoreMiss( TruthInput );
-			crossCheckPlots[ inputIndex ]->StoreMiss( TruthInput );
+		}
+
+		//Also store the event for the cross-check unfolding
+		if ( isUnfolding )
+		{
+			if ( combineMode )
+			{
+				for ( unsigned int mcIndex = 0; mcIndex < allPlots.size(); mcIndex++ )
+				{
+					crossCheckPlots[ mcIndex ]->StoreMiss( TruthInput );
+				}
+			}
+			else
+			{
+				crossCheckPlots[ inputIndex ]->StoreMiss( TruthInput );
+			}
 		}
 	}
 }
@@ -159,19 +224,32 @@ void MonteCarloSummaryPlotMaker::StoreFake( IFileInput * ReconstructedInput )
 			for ( unsigned int mcIndex = 0; mcIndex < allPlots.size(); mcIndex++ )
 			{
 				allPlots[ mcIndex ]->StoreFake( ReconstructedInput );
-				crossCheckPlots[ mcIndex ]->StoreFake( ReconstructedInput );
 			}
 		}
 		else
 		{
 			allPlots[ inputIndex ]->StoreFake( ReconstructedInput );
-			crossCheckPlots[ inputIndex ]->StoreFake( ReconstructedInput );
 		}
 
 		//Also store the event for the cross-check unfolding
-		inputIndex += MC_CHECK_OFFSET;
-		inputIndex %= allPlots.size();
-		crossCheckPlots[ inputIndex ]->StoreData( ReconstructedInput );
+		if ( isUnfolding )
+		{
+			if ( combineMode )
+			{
+				for ( unsigned int mcIndex = 0; mcIndex < allPlots.size(); mcIndex++ )
+				{
+					crossCheckPlots[ mcIndex ]->StoreFake( ReconstructedInput );
+				}
+			}
+			else
+			{
+				crossCheckPlots[ inputIndex ]->StoreFake( ReconstructedInput );
+			}
+
+			inputIndex += MC_CHECK_OFFSET;
+			inputIndex %= allPlots.size();
+			crossCheckPlots[ inputIndex ]->StoreData( ReconstructedInput );
+		}
 	}
 }
 void MonteCarloSummaryPlotMaker::StoreData( IFileInput * DataInput )
@@ -239,8 +317,8 @@ void MonteCarloSummaryPlotMaker::UseLogScale()
 	logScale = true;
 }
 
-//Do the unfolding
-void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
+//Do the calculation
+void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 {
 	if ( finalised )
 	{
@@ -249,23 +327,22 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 	}       
 	else
 	{
-		//Status message
-		string plotDescription = allPlots[0]->Description( true );
-		cout << endl << "--------------- Started unfolding " << plotDescription << " ----------------" << endl;
-
-		//Do the unfolding cross-check to find out good conditions for convergence
 		int mostIterations = 0;
 		double chiSquaredThreshold = 0.0;
 		double kolmogorovThreshold = 0.0;
-		bool isUnfolding = true;
-		for ( unsigned int mcIndex = 0; mcIndex < crossCheckPlots.size(); mcIndex++ )
-		{
-			//Get the distribution that should be produced by the unfolding from MC truth
-			int nextIndex = ( mcIndex + MC_CHECK_OFFSET ) % crossCheckPlots.size();
-			Distribution * referenceDistribution = crossCheckPlots[ nextIndex ]->MonteCarloTruthForCrossCheck();
+		string plotDescription = allPlots[0]->Description( true );
 
-			if ( referenceDistribution )
+		//Do the unfolding cross-check to find out good conditions for convergence
+		if ( isUnfolding )
+		{
+			cout << endl << "--------------- Started unfolding " << plotDescription << " ----------------" << endl;
+
+			for ( unsigned int mcIndex = 0; mcIndex < crossCheckPlots.size(); mcIndex++ )
 			{
+				//Get the distribution that should be produced by the unfolding from MC truth
+				int nextIndex = ( mcIndex + MC_CHECK_OFFSET ) % crossCheckPlots.size();
+				Distribution * referenceDistribution = crossCheckPlots[ nextIndex ]->MonteCarloTruthForCrossCheck();
+
 				//Unfold MC reco
 				cout << endl << "Cross check - MC " << nextIndex << " reco with MC " << mcIndex << " prior" << endl;
 				double convergenceChi2, convergenceKolmogorov;
@@ -273,14 +350,7 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 				chiSquaredThreshold += convergenceChi2;
 				kolmogorovThreshold += convergenceKolmogorov;
 			}
-			else
-			{
-				isUnfolding = false;
-				break;
-			}
-		}
-		if ( isUnfolding )
-		{
+
 			//Find the average values for the convergence criteria
 			mostIterations = ceil( (double)mostIterations / (double)crossCheckPlots.size() );
 			chiSquaredThreshold /= (double)crossCheckPlots.size();
@@ -296,12 +366,16 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 				cout << "Unfolding will only be applied once - no iteration. This suggests there is a problem: perhaps the smearing matrix is underpopulated?" << endl;
 			}
 			cout << "Chosen convergence criteria: max " << mostIterations << " iterations; chi2 below " << chiSquaredThreshold << "; KS above " << kolmogorovThreshold << endl;
-		}
 
-		//Tidy up
-		for ( unsigned int mcIndex = 0; mcIndex < crossCheckPlots.size(); mcIndex++ )
+			//Tidy up
+			for ( unsigned int mcIndex = 0; mcIndex < crossCheckPlots.size(); mcIndex++ )
+			{
+				delete crossCheckPlots[ mcIndex ];
+			}
+		}
+		else
 		{
-			delete crossCheckPlots[ mcIndex ];
+			cout << endl << "--------------- Started folding " << plotDescription << " ----------------" << endl;
 		}
 
 		//Perform closure tests
@@ -311,19 +385,27 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 		for ( unsigned int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
 		{
 			cout << endl << "Closure test for " << mcInfo->Description( plotIndex ) << endl;
-			bool closureWorked = allPlots[plotIndex]->ClosureTest( mostIterations, chiSquaredThreshold, kolmogorovThreshold, WithSmoothing );
+			bool closureWorked;
+			if ( isUnfolding )
+			{
+				closureWorked = unfoldingPlots[plotIndex]->ClosureTest( mostIterations, chiSquaredThreshold, kolmogorovThreshold, WithSmoothing );
+			}
+			else
+			{
+				closureWorked = foldingPlots[plotIndex]->ClosureTest();
+			}
 
 			if ( !closureWorked )
 			{
 				numberFailed++;
 
-				if ( isUnfolding )
-				{
-					//Remove priors that did not pass the closure test
-					cout << "Removing " << mcInfo->Description( plotIndex ) << " from available priors" << endl;
-					usePrior[ plotIndex ] = false;
-					numberRemoved++;
-				}
+				//if ( isUnfolding )
+				//{
+				//	//Remove priors that did not pass the closure test
+				//	cout << "Removing " << mcInfo->Description( plotIndex ) << " from available priors" << endl;
+				//	usePrior[ plotIndex ] = false;
+				//	numberRemoved++;
+				//}
 			}
 		}
 
@@ -331,12 +413,11 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 		if ( numberFailed == allPlots.size() && isUnfolding )
 		{
 			cerr << "All priors failed their closure tests: something is really wrong here. Suggest you choose better binning / provide more MC stats" << endl;
-			exit(1);
+			//exit(1);
 		}
 		else if ( numberFailed > (double)allPlots.size() / 2.0 )
 		{
 			cerr << "The majority of priors failed their closure tests. Suggest you choose better binning / provide more MC stats" << endl;
-			//exit(1);
 		}
 
 		//Apply the ATLAS plot style
@@ -373,16 +454,24 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 		for ( unsigned int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
 		{
 			//Unfold
-			if ( usePrior[ plotIndex ] )
+			if ( isUnfolding )
 			{
-				cout << endl << "Unfolding " << allPlots[ plotIndex ]->Description(true) << " with " << allPlots[ plotIndex ]->PriorName() << endl;
+				if ( usePrior[ plotIndex ] )
+				{
+					cout << endl << "Unfolding " << allPlots[ plotIndex ]->Description(true) << " with " << allPlots[ plotIndex ]->PriorName() << endl;
+				}
+				else
+				{
+					cout << endl << "Skipping unfolding " << allPlots[ plotIndex ]->Description(true) << " with " << allPlots[ plotIndex ]->PriorName() << endl;
+				}
+
+				//Still need to run this to get the truth output
+				unfoldingPlots[plotIndex]->Unfold( mostIterations, chiSquaredThreshold, kolmogorovThreshold, !usePrior[ plotIndex ], ErrorMode, WithSmoothing );
 			}
 			else
 			{
-				cout << endl << "Skipping unfolding " << allPlots[ plotIndex ]->Description(true) << " with " << allPlots[ plotIndex ]->PriorName() << endl;
+				foldingPlots[ plotIndex ]->Fold();
 			}
-			//Still need to run this to get the truth output
-			allPlots[plotIndex]->Unfold( mostIterations, chiSquaredThreshold, kolmogorovThreshold, !usePrior[ plotIndex ], WithSmoothing );
 
 			//Make a local copy of the truth plot
 			string truthPlotName = "localCopy" + allPlots[ plotIndex ]->PriorName() + "Truth";
@@ -393,7 +482,22 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 			if ( usePrior[ plotIndex ] )
 			{
 				//Get the error vector
-				vector<double> plotErrors = allPlots[ plotIndex ]->CorrectedErrors();
+				vector< double > plotErrors;
+				if ( ErrorMode > 0 && isUnfolding )
+				{
+					plotErrors = unfoldingPlots[ plotIndex ]->DAgostiniErrors();
+
+					vector< double > simpleErrors = allPlots[ plotIndex ]->CorrectedErrors();
+
+					for ( unsigned int binIndex = 0; binIndex < plotErrors.size(); binIndex++ )
+					{
+						cout << plotErrors[ binIndex ] << ", " << simpleErrors[ binIndex ] << endl;
+					}
+				}
+				else
+				{
+					plotErrors = allPlots[ plotIndex ]->CorrectedErrors();
+				}
 
 				//Load the corrected data into the combined distribution
 				TH1F * correctedHistogram = allPlots[ plotIndex ]->CorrectedHistogram();
@@ -407,20 +511,20 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 						combinedCorrectedData.push_back( binContent );
 						minimumCorrectedData.push_back( binContent );
 						maximumCorrectedData.push_back( binContent );
-						combinedStatisticErrors.push_back( plotErrors[binIndex] );
+						combinedStatisticErrors.push_back( plotErrors[ binIndex ] );
 					}
 					else
 					{
 						//Populate the distribution
-						combinedCorrectedData[binIndex] += binContent;
-						combinedStatisticErrors[binIndex] += plotErrors[binIndex];
-						if ( binContent < minimumCorrectedData[binIndex] )
+						combinedCorrectedData[ binIndex ] += binContent;
+						combinedStatisticErrors[ binIndex ] += plotErrors[ binIndex ];
+						if ( binContent < minimumCorrectedData[ binIndex ] )
 						{
-							minimumCorrectedData[binIndex] = binContent;
+							minimumCorrectedData[ binIndex ] = binContent;
 						}
-						if ( binContent > maximumCorrectedData[binIndex] )
+						if ( binContent > maximumCorrectedData[ binIndex ] )
 						{
-							maximumCorrectedData[binIndex] = binContent;
+							maximumCorrectedData[ binIndex ] = binContent;
 						}
 					}
 				}
@@ -437,6 +541,15 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 					string smearingTitle = allPlots[plotIndex]->Description(true) + " Smearing Matrix";
 					smearingMatrix = ( TH2F* )allPlots[plotIndex]->SmearingMatrix()->Clone( smearingName.c_str() );
 					smearingMatrix->SetTitle( smearingTitle.c_str() );
+
+					//Copy a covariance matrix
+					if ( ErrorMode > 1 && isUnfolding )
+					{
+						string covarianceName = allPlots[plotIndex]->Description(false) + "CovarianceMatrix";
+						string covarianceTitle = allPlots[plotIndex]->Description(true) + " Covariance Matrix";
+						covarianceMatrix = ( TH2F* )unfoldingPlots[plotIndex]->DAgostiniCovariance()->Clone( covarianceName.c_str() );
+						covarianceMatrix->SetTitle( covarianceTitle.c_str() );
+					}
 
 					firstPlot = false;
 				}
@@ -621,32 +734,6 @@ void MonteCarloSummaryPlotMaker::Unfold( bool WithSmoothing )
 	}
 }
 
-//Return result
-TCanvas * MonteCarloSummaryPlotMaker::ResultPlot()
-{
-	if ( finalised )
-	{
-		return plotCanvas;
-	}
-	else
-	{
-		cerr << "Trying to retrieve smearing matrix from unfinalised MonteCarloSummaryPlotMaker" << endl;
-		exit(1);
-	}
-}
-TH2F * MonteCarloSummaryPlotMaker::SmearingMatrix()
-{
-	if ( finalised )
-	{
-		return smearingMatrix;
-	}       
-	else
-	{
-		cerr << "Trying to retrieve smearing matrix from unfinalised MonteCarloSummaryPlotMaker" << endl;
-		exit(1);
-	}
-}
-
 //Create an ATLAS style object
 TStyle * MonteCarloSummaryPlotMaker::AtlasStyle( string Name )
 {
@@ -718,4 +805,19 @@ TStyle * MonteCarloSummaryPlotMaker::AtlasStyle( string Name )
 	atlasStyle->SetPadTickY(1);
 
 	return atlasStyle;
+}
+
+void MonteCarloSummaryPlotMaker::SaveResult( TFile * OutputFile )
+{
+	//Save the output
+	OutputFile->cd();
+	plotCanvas->Write();
+	smearingMatrix->Write();
+
+	if ( covarianceMatrix )
+	{
+		covarianceMatrix->Write();
+	}
+
+	OutputFile->Flush();
 }

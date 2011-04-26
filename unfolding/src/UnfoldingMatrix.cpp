@@ -2,6 +2,7 @@
   @class UnfoldingMatrix
 
   The Bayesian "inverse" of the smearing matrix, used to unfold the data
+  Sparse version thereof
 
   @author Benjamin M Wynne bwynne@cern.ch
   @date 17-06-2010
@@ -18,62 +19,49 @@ UnfoldingMatrix::UnfoldingMatrix()
 }
 
 //Constructor with correct arguments
-UnfoldingMatrix::UnfoldingMatrix( SmearingMatrix * InputSmearing, Distribution * InputDistribution, Indices * InputIndices )
+UnfoldingMatrix::UnfoldingMatrix( SmearingMatrix * InputSmearing, Distribution * InputDistribution )
 {
-	//Get the dimension of the matrix (include a bad bin)
-	int binNumber = InputIndices->GetBinNumber() + 1;
+	//Get the dimension of the matrix
+	int binNumber = InputSmearing->GetBinNumber();
 
 	//Calculate the probabilities of the effects
 	vector<double> effectProbabilities( binNumber, 0.0 );
-	for ( int causeIndex = 0; causeIndex < binNumber; causeIndex++ )
+	int entryNumber = InputSmearing->GetEntryNumberAndResetIterator();
+	for ( int smearingIndex = 0; smearingIndex < entryNumber; smearingIndex++ )
 	{
-		//Find out the probability of a particular cause
-		double causeProbability = InputDistribution->GetBinProbability( causeIndex );
+		//Retrieve the smearing matrix entry
+		int causeIndex, effectIndex;
+		double smearingValue = InputSmearing->GetNextEntry( causeIndex, effectIndex );
 
-		for ( int effectIndex = 0; effectIndex < binNumber; effectIndex++ )
-		{
-			//Add to the effect probability
-			effectProbabilities[ effectIndex ] += ( InputSmearing->GetElement( causeIndex, effectIndex ) * causeProbability );
-		}
+		//Add to the effect probability
+		effectProbabilities[ effectIndex ] += smearingValue * InputDistribution->GetBinProbability( causeIndex );
 	}
 
 	//Calculate the matrix elements
-	matrix = vector< vector<double> >( binNumber, vector<double>( binNumber, 0.0 ) );
-	for ( int causeIndex = 0; causeIndex < binNumber; causeIndex++ )
+	entryNumber = InputSmearing->GetEntryNumberAndResetIterator();
+	for ( int smearingIndex = 0; smearingIndex < entryNumber; smearingIndex++ )
 	{
-		//Find out the probability of a particular cause
-		double causeProbability = InputDistribution->GetBinProbability( causeIndex );
+		//Retrieve the smearing matrix entry    
+		int causeIndex, effectIndex;            
+		double smearingValue = InputSmearing->GetNextEntry( causeIndex, effectIndex );
 
-		//Work out the corresponding matrix elements
-		for ( int effectIndex = 0; effectIndex < binNumber; effectIndex++ )
+		//Ignore zero entries
+		double causeProbability = InputDistribution->GetBinProbability( causeIndex );
+		if ( causeProbability != 0.0 )
 		{
-			double numerator = InputSmearing->GetElement( causeIndex, effectIndex ) * causeProbability;
+			//Work out the unfolding matrix entry
+			double numerator = smearingValue * causeProbability;
 			numerator /= ( effectProbabilities[ effectIndex ] * InputSmearing->GetEfficiency( causeIndex ) );
 
-			//Check for divide-by-zero issues
-			if ( isinf(numerator) )
-			{
-				cerr << "UNFOLDING: Divide by zero error (cause/effect)" << endl;
-				exit(1);
-			}
-			else if ( isnan(numerator) )
-			{
-				numerator = 0.0;
-			}
-
-			matrix[causeIndex][effectIndex] = numerator;
+			//Store the entry
+			AddToEntry( causeIndex, effectIndex, numerator );
 		}
 	}
+
+	VectorsFromMap( binNumber );
 }
 
 //Destructor
 UnfoldingMatrix::~UnfoldingMatrix()
 {
-	matrix.clear();
-}
-
-//Return the matrix element
-double UnfoldingMatrix::GetElement( int CauseIndex, int EffectIndex )
-{
-	return matrix[CauseIndex][EffectIndex];
 }

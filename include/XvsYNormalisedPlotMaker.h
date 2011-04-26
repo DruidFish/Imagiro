@@ -12,7 +12,7 @@
 #ifndef X_VS_Y_NORMALISED_PLOTMAKER_H
 #define X_VS_Y_NORMALISED_PLOTMAKER_H
 
-#include "IPlotMaker.h"
+#include "IUnfolder.h"
 #include "StatisticsSummary.h"
 #include "IterativeUnfolding.h"
 #include "DataIndices.h"
@@ -20,7 +20,7 @@
 
 using namespace std;
 
-class XvsYNormalisedPlotMaker : public IPlotMaker
+class XvsYNormalisedPlotMaker : public IUnfolder
 {
 	public:
 		XvsYNormalisedPlotMaker();
@@ -36,7 +36,7 @@ class XvsYNormalisedPlotMaker : public IPlotMaker
 		virtual void StoreData( IFileInput * DataInput );
 
 		//Do the unfolding
-		virtual void Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding = false, bool WithSmoothing = false );
+		virtual void Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding = false, int ErrorMode = 0, bool WithSmoothing = false );
 
 		//Do a closure test
                 virtual bool ClosureTest( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing = false );
@@ -54,7 +54,7 @@ class XvsYNormalisedPlotMaker : public IPlotMaker
 		virtual TH2F * SmearingMatrix();
 
 		//Copy the object
-		virtual IPlotMaker * Clone( string NewPriorName );
+		virtual IUnfolder * Clone( string NewPriorName );
 
 		//General info
 		virtual string Description( bool WithSpaces );
@@ -62,6 +62,8 @@ class XvsYNormalisedPlotMaker : public IPlotMaker
 
 		//Error info for corrected distribution
 		virtual vector<double> CorrectedErrors();
+		virtual vector<double> DAgostiniErrors();
+		virtual TH2F * DAgostiniCovariance();
 
 	private:
 		//WARNING: this method deletes the argument object
@@ -74,10 +76,10 @@ class XvsYNormalisedPlotMaker : public IPlotMaker
 		string xName, yName, priorName;
 		bool finalised;
 		double scaleFactor;
-		vector<double> correctedDataErrors;
+		vector<double> correctedDataErrors, dagostiniErrors;
 		StatisticsSummary * yValueSummary;
 		TH1F *correctedDistribution, *uncorrectedDistribution, *mcTruthDistribution, *xvsyTruthCheck, *xTruthCheck;
-		TH2F *smearingMatrix;
+		TH2F *smearingMatrix, *covarianceMatrix;
 };
 
 #endif

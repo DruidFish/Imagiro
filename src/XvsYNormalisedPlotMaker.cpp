@@ -82,7 +82,7 @@ XvsYNormalisedPlotMaker::~XvsYNormalisedPlotMaker()
 }
 
 //Copy the object
-IPlotMaker * XvsYNormalisedPlotMaker::Clone( string NewPriorName )
+IUnfolder * XvsYNormalisedPlotMaker::Clone( string NewPriorName )
 {
 	return new XvsYNormalisedPlotMaker( xName, yName, NewPriorName,
 			DistributionIndices->GetBinNumber(0) - 2, DistributionIndices->GetMinima()[0], DistributionIndices->GetMaxima()[0],
@@ -226,7 +226,7 @@ void XvsYNormalisedPlotMaker::StoreData( IFileInput * DataInput )
 }
 
 //Do the unfolding
-void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding, bool WithSmoothing )
+void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding, int ErrorMode, bool WithSmoothing )
 {
 	if ( finalised )
 	{
@@ -238,8 +238,8 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 		//Unfold the distributions
 		if ( !SkipUnfolding )
 		{
-			XUnfolder->Unfold( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
-			XvsYUnfolder->Unfold( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
+			XUnfolder->Unfold( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, ErrorMode, WithSmoothing );
+			XvsYUnfolder->Unfold( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, ErrorMode, WithSmoothing );
 		}
 
 		//Make some plot titles
@@ -263,6 +263,10 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 
 		//TH2F * XSmearing = XUnfolder->GetSmearingMatrix( XFullName + "Smearing", XFullTitle + " Smearing Matrix" );
 		TH2F * XvsYSmearing = XvsYUnfolder->GetSmearingMatrix( XvsYName + "Smearing", XvsYTitle + " Smearing Matrix" );
+		if ( ErrorMode > 1 )
+		{
+			covarianceMatrix = XvsYUnfolder->DAgostiniCovariance( XvsYName + "Covariance", XvsYTitle + " Covariance Matrix" );
+		}
 
 		//De-linearise the x vs y distributions
 		TH1F * DelinearisedXvsYCorrected = Delinearise(XvsYCorrected);
@@ -272,6 +276,8 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 		//Get the error vectors
 		vector<double> XErrors = XUnfolder->SumOfDataWeightSquares();
 		vector<double> XvsYErrors = XvsYUnfolder->SumOfDataWeightSquares();
+		vector<double> XVariance = XUnfolder->DAgostiniVariance();
+		vector<double> XvsYVariance = XvsYUnfolder->DAgostiniVariance();
 
 		//Delinearise the x vs y errors
 		vector<double> delinearisedXvsYErrors = DelineariseErrors( XvsYErrors );
@@ -289,6 +295,25 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 			double combinedError = ( sqrt( componentOne + componentTwo ) / componentThree );
 			combinedError *= scaleFactor;
 			correctedDataErrors.push_back( combinedError );
+		}
+
+		//Same for the D'Agostini variance
+		if ( ErrorMode > 0 )
+		{
+			vector<double> delinearisedXvsYVariance = DelineariseErrors( XvsYVariance );
+			for ( unsigned int binIndex = 0; binIndex < XVariance.size(); binIndex++ )
+			{
+				//Add the errors from the x vs y distribution and the divisor
+				//The formula is stright from ROOT::TH1::Divide, so I hope it's right
+				double XBinValue = XCorrected->GetBinContent(binIndex);
+				double XvsYBinValue = DelinearisedXvsYCorrected->GetBinContent(binIndex);
+				double componentOne = XVariance[binIndex] * XvsYBinValue * XvsYBinValue;
+				double componentTwo = delinearisedXvsYVariance[binIndex] * XBinValue * XBinValue;
+				double componentThree = XBinValue * XBinValue;
+				double combinedError = ( sqrt( componentOne + componentTwo ) / componentThree );
+				combinedError *= scaleFactor;
+				dagostiniErrors.push_back( combinedError );
+			}
 		}
 
 		//Normalise the x vs y distributions and scale appropriately
@@ -316,6 +341,10 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 
 			//Add this error to the overall error calculation
 			correctedDataErrors[ binIndex ] *= ( 1.0 + errorFraction );
+			if ( ErrorMode > 0 )
+			{
+				dagostiniErrors[ binIndex ] *= ( 1.0 + errorFraction );
+			}
 
 			//Increment average error
 			averagePercentError += percentError;
@@ -372,6 +401,13 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 		string smearingYTitle = xName + " vs " + yName + " Reconstructed";
 		smearingMatrix->SetXTitle( smearingXTitle.c_str() );
 		smearingMatrix->SetYTitle( smearingYTitle.c_str() );
+
+		if ( ErrorMode > 1 )
+		{
+			//Format the covariance matrix
+			covarianceMatrix->SetXTitle( "Bin Number" );
+			covarianceMatrix->SetYTitle( "Bin Number" );
+		}
 
 		//Bin-by-bin scaling of errors using the corrected data
 		for ( unsigned int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
@@ -557,4 +593,27 @@ vector<double> XvsYNormalisedPlotMaker::CorrectedErrors()
 		exit(1);
 	}
 }
-
+vector<double> XvsYNormalisedPlotMaker::DAgostiniErrors()
+{
+	if ( finalised )
+	{
+		return dagostiniErrors;
+	}
+	else
+	{
+		cerr << "Trying to retrieve corrected data errors from unfinalised XvsYNormalisedPlotMaker" << endl;
+		exit(1);
+	}
+}
+TH2F * XvsYNormalisedPlotMaker::DAgostiniCovariance()
+{
+	if ( finalised )
+	{
+		return covarianceMatrix;
+	}
+	else
+	{
+		cerr << "Trying to retrieve D'Agostini covariance matrix from unfinalised XvsYNormalisedPlotMaker" << endl;
+		exit(1);
+	}
+}

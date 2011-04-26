@@ -64,7 +64,7 @@ XFolding::~XFolding()
 }
 
 //Copy the object
-IPlotMaker * XFolding::Clone( string NewPriorName )
+IFolder * XFolding::Clone( string NewPriorName )
 {
 	return new XFolding( xName, NewPriorName,
 			DistributionIndices->GetBinNumber(0) - 2, DistributionIndices->GetMinima()[0], DistributionIndices->GetMaxima()[0],
@@ -167,7 +167,7 @@ void XFolding::StoreData( IFileInput * DataInput )
 }
 
 //Do the unfolding
-void XFolding::Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding, bool WithSmoothing )
+void XFolding::Fold()
 {
 	if ( finalised )
 	{
@@ -279,18 +279,9 @@ void XFolding::Unfold( int MostIterations, double ChiSquaredThreshold, double Ko
 }
 
 //Do a closure test
-bool XFolding::ClosureTest( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing )
+bool XFolding::ClosureTest()
 {
 	return XFolder->ClosureTest();
-}
-
-//Make a cross-check with MC
-int XFolding::MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing )
-{
-	//Meaningless values
-	ChiSquaredThreshold = 10.0;
-	KolmogorovThreshold = 0.1;
-	return 10;
 }
 
 //Return some plots
@@ -331,13 +322,6 @@ TH1F * XFolding::MCTruthHistogram()
 		exit(1);
 	}
 }
-
-//Return a distribution for use in the cross-checks - NULL, since cross-checks make no sense for folding
-Distribution * XFolding::MonteCarloTruthForCrossCheck() 
-{
-	return NULL;
-}
-
 
 TH2F * XFolding::SmearingMatrix()
 {

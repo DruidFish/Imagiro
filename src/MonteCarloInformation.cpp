@@ -28,42 +28,143 @@ MonteCarloInformation::MonteCarloInformation()
 	//                                                        //
 	////////////////////////////////////////////////////////////
 
-	//Pythia J3
-	combineFiles.push_back( false );
-	truthPaths.push_back( "data/L1_EM5/D3PDpythiaJ3/combinedTruth.root" );
-	recoPaths.push_back( "data/L1_EM5/D3PDpythiaJ3/combinedReconstructed.root" );
-	descriptions.push_back( "PYTHIA J3" );
+/*	//Pythia
+	combineFiles.push_back( true );
+
+	truthPaths.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.105009.J0_pythia_jetjet.merge.NTUP_JETMET.e574_s1101_s1100_r1941_p417.v1.110401173910/combinedPythiaJ0.truth.root" );
+	vector< string > pythiaExtraTruth;
+	pythiaExtraTruth.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.105010.J1_pythia_jetjet.merge.NTUP_JETMET.e574_s1101_s1100_r1941_p417.v1.110401174008/combinedPythiaJ1.truth.root" );
+	pythiaExtraTruth.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.105011.J2_pythia_jetjet.merge.NTUP_JETMET.e574_s1101_s1100_r1941_p417.v1.110401173858/combinedPythiaJ2.truth.root" );
+	//pythiaExtraTruth.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.105013.J4_pythia_jetjet.merge.NTUP_JETMET.e574_s1101_s1100_r1941_p417.v1.110401173840/combinedPythiaJ4.truth.root" );
+	//pythiaExtraTruth.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.105014.J5_pythia_jetjet.merge.NTUP_JETMET.e574_s1101_s1100_r1941_p417.v1.110401173925/combinedPythiaJ5.truth.root" );
+	//pythiaExtraTruth.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.105015.J6_pythia_jetjet.merge.NTUP_JETMET.e574_s1101_s1100_r1941_p417.v1.110401173939/combinedPythiaJ6.truth.root" );
+	//pythiaExtraTruth.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.105016.J7_pythia_jetjet.merge.NTUP_JETMET.e574_s1101_s1100_r1941_p417.v1.110401173954/combinedPythiaJ7.truth.root" );
+	//pythiaExtraTruth.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.105017.J8_pythia_jetjet.merge.NTUP_JETMET.e574_s1101_s1100_r1941_p417.v1.110401173822/combinedPythiaJ8.truth.root" );
+	extraTruthPaths.push_back( pythiaExtraTruth );
+
+	recoPaths.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.105009.J0_pythia_jetjet.merge.NTUP_JETMET.e574_s1101_s1100_r1941_p417.v1.110401173910/combinedPythiaJ0.reco.root" );
+	vector< string > pythiaExtraReco;
+	pythiaExtraReco.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.105010.J1_pythia_jetjet.merge.NTUP_JETMET.e574_s1101_s1100_r1941_p417.v1.110401174008/combinedPythiaJ1.reco.root" );
+	pythiaExtraReco.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.105011.J2_pythia_jetjet.merge.NTUP_JETMET.e574_s1101_s1100_r1941_p417.v1.110401173858/combinedPythiaJ2.reco.root" );
+	//pythiaExtraReco.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.105013.J4_pythia_jetjet.merge.NTUP_JETMET.e574_s1101_s1100_r1941_p417.v1.110401173840/combinedPythiaJ4.reco.root" );
+	//pythiaExtraReco.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.105014.J5_pythia_jetjet.merge.NTUP_JETMET.e574_s1101_s1100_r1941_p417.v1.110401173925/combinedPythiaJ5.reco.root" );
+	//pythiaExtraReco.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.105015.J6_pythia_jetjet.merge.NTUP_JETMET.e574_s1101_s1100_r1941_p417.v1.110401173939/combinedPythiaJ6.reco.root" );
+	//pythiaExtraReco.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.105016.J7_pythia_jetjet.merge.NTUP_JETMET.e574_s1101_s1100_r1941_p417.v1.110401173954/combinedPythiaJ7.reco.root" );
+	//pythiaExtraReco.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.105017.J8_pythia_jetjet.merge.NTUP_JETMET.e574_s1101_s1100_r1941_p417.v1.110401173822/combinedPythiaJ8.reco.root" );
+	extraRecoPaths.push_back( pythiaExtraReco );
+
+	vector< double > pythiaWeights;
+	pythiaWeights.push_back( 9.8608E+06 / 199973.0 );
+	pythiaWeights.push_back( 6.7818E+05 / 199968.0 );
+	pythiaWeights.push_back( 4.0982E+04 / 199940.0 );
+	//pythiaWeights.push_back( 87.701 / 199837.0 );
+	//pythiaWeights.push_back( 2.3501 / 199640.0 );
+	//pythiaWeights.push_back( 0.033614 / 199206.0 );
+	//pythiaWeights.push_back( 1.3744E-04 / 198767.0 );
+	//pythiaWeights.push_back( 6.2099E-09 / 197077.0 );
+	inputWeights.push_back( pythiaWeights );
+
+	descriptions.push_back( "PYTHIA" );
 	colours.push_back( kMagenta );
 	styles.push_back( 2 );
 	inputTypes.push_back( "InputUETree" );
-	internalPaths.push_back( "benTuple" );
+	internalTruth.push_back( "benTuple" );
+	internalReco.push_back( "benTuple" );
 
-	//Alpgen
+	//Herwig
 	combineFiles.push_back( true );
 
-	truthPaths.push_back( "data/L1_EM5/D3PDalpgenJimmyJ2/combinedTruth.root" );
-	vector< string > alpgenExtraTruth;
-	alpgenExtraTruth.push_back( "data/L1_EM5/D3PDalpgenJimmyJ3/combinedTruth.root" );
-	alpgenExtraTruth.push_back( "data/L1_EM5/D3PDalpgenJimmyJ4/combinedTruth.root" );
-	extraTruthPaths.push_back( alpgenExtraTruth );
+	truthPaths.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.113204.HerwigppJetsJ0.merge.NTUP_JETMET.e598_s934_s946_r1831_p417.v1.110401175103/combinedHerwigJ0.truth.root" );
+	vector< string > herwigExtraTruth;
+	herwigExtraTruth.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.113205.HerwigppJetsJ1.merge.NTUP_JETMET.e598_s934_s946_r1831_p417.v1.110401175158/combinedHerwigJ1.truth.root" );
+	herwigExtraTruth.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.113206.HerwigppJetsJ2.merge.NTUP_JETMET.e598_s934_s946_r1831_p417.v1.110401175125/combinedHerwigJ2.truth.root" );
+	//herwigExtraTruth.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.113207.HerwigppJetsJ3.merge.NTUP_JETMET.e598_s934_s946_r1831_p417.v1.110401175016/combinedHerwigJ3.truth.root" );
+	//herwigExtraTruth.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.113208.HerwigppJetsJ4.merge.NTUP_JETMET.e598_s934_s946_r1831_p417.v1.110401175142/combinedHerwigJ4.truth.root" );
+	//herwigExtraTruth.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.113209.HerwigppJetsJ5.merge.NTUP_JETMET.e598_s934_s946_r1831_p417.v1.110401175044/combinedHerwigJ5.truth.root" );
+	//herwigExtraTruth.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.113210.HerwigppJetsJ6.merge.NTUP_JETMET.e598_s934_s946_r1831_p417.v1.110401175219/combinedHerwigJ6.truth.root" );
+	extraTruthPaths.push_back( herwigExtraTruth );
 
-	recoPaths.push_back( "data/L1_EM5/D3PDalpgenJimmyJ2/combinedReconstructed.root" );
-	vector< string > alpgenExtraReco;
-	alpgenExtraReco.push_back( "data/L1_EM5/D3PDalpgenJimmyJ3/combinedReconstructed.root" );
-	alpgenExtraReco.push_back( "data/L1_EM5/D3PDalpgenJimmyJ4/combinedReconstructed.root" );
-	extraRecoPaths.push_back( alpgenExtraReco );
+	recoPaths.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.113204.HerwigppJetsJ0.merge.NTUP_JETMET.e598_s934_s946_r1831_p417.v1.110401175103/combinedHerwigJ0.reco.root" );
+	vector< string > herwigExtraReco;
+	herwigExtraReco.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.113205.HerwigppJetsJ1.merge.NTUP_JETMET.e598_s934_s946_r1831_p417.v1.110401175158/combinedHerwigJ1.reco.root" );
+	herwigExtraReco.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.113206.HerwigppJetsJ2.merge.NTUP_JETMET.e598_s934_s946_r1831_p417.v1.110401175125/combinedHerwigJ2.reco.root" );
+	//herwigExtraReco.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.113207.HerwigppJetsJ3.merge.NTUP_JETMET.e598_s934_s946_r1831_p417.v1.110401175016/combinedHerwigJ3.reco.root" );
+	//herwigExtraReco.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.113208.HerwigppJetsJ4.merge.NTUP_JETMET.e598_s934_s946_r1831_p417.v1.110401175142/combinedHerwigJ4.reco.root" );
+	//herwigExtraReco.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.113209.HerwigppJetsJ5.merge.NTUP_JETMET.e598_s934_s946_r1831_p417.v1.110401175044/combinedHerwigJ5.reco.root" );
+	//herwigExtraReco.push_back( "/media/My Book/UEdata/L1_J5.v1/user.bwynne.D3PDtoUE.mc10_7TeV.113210.HerwigppJetsJ6.merge.NTUP_JETMET.e598_s934_s946_r1831_p417.v1.110401175219/combinedHerwigJ6.reco.root" );
+	extraRecoPaths.push_back( herwigExtraReco );
 
-	vector< double > alpgenWeights;
-	alpgenWeights.push_back( 1.0 );
-	alpgenWeights.push_back( 1.0 );
-	alpgenWeights.push_back( 1.0 );
-	inputWeights.push_back( alpgenWeights );
+	vector< double > herwigWeights;
+	herwigWeights.push_back( 9.6139E+06 / 398799.0 );
+	herwigWeights.push_back( 7.4366E+05 / 397897.0 );
+	herwigWeights.push_back( 4.4307E+04 / 398498.0 );
+	//herwigWeights.push_back( 2357.6 / 399598.0 );
+	//herwigWeights.push_back( 94.236 / 397443.0 );
+	//herwigWeights.push_back( 2.5813 / 398094.0 );
+	//herwigWeights.push_back( 0.039439 / 397597.0 );
+	inputWeights.push_back( herwigWeights );
 
-	descriptions.push_back( "ALPGEN" );
+	descriptions.push_back( "HERWIG" );
+	colours.push_back( kRed + 3 );
+	styles.push_back( 8 );
+	inputTypes.push_back( "InputUETree" );
+	internalTruth.push_back( "benTuple" );
+	internalReco.push_back( "benTuple" );*/
+
+	//Pythia 6 (MC09?)
+	combineFiles.push_back( false );
+	truthPaths.push_back( "data/user.bwynne.LeadingJetModifiedv3.Pythia6.MC.TruthJet/mergedFile.root" );
+	recoPaths.push_back( "data/user.bwynne.LeadingJetModifiedv3.Pythia6.MC.CaloJet/mergedFile.root" );
+	descriptions.push_back( "PYTHIA6 ATLAS MC09" );
+	colours.push_back( kMagenta );
+	styles.push_back( 2 );
+	inputTypes.push_back( "InputNtuple" );
+	internalTruth.push_back( "benTuple" );
+	internalReco.push_back( "benTuple" );
+
+	//AMBT1
+	combineFiles.push_back( false );
+	truthPaths.push_back( "data/user.bwynne.LeadingJetModifiedv3.AMBT1.MC.TruthJet/mergedFile.root" );
+	recoPaths.push_back( "data/user.bwynne.LeadingJetModifiedv3.AMBT1.MC.CaloJet/mergedFile.root" );
+	descriptions.push_back( "PYTHIA6 AMBT1" );
 	colours.push_back( kRed );
 	styles.push_back( 1 );
-	inputTypes.push_back( "InputUETree" );
-	internalPaths.push_back( "benTuple" );
+	inputTypes.push_back( "InputNtuple" );
+	internalTruth.push_back( "benTuple" );
+	internalReco.push_back( "benTuple" );
+
+	//DW
+	combineFiles.push_back( false );
+	truthPaths.push_back( "data/user.bwynne.LeadingJetModifiedv3.DW.MC.TruthJet/mergedFile.root" );
+	recoPaths.push_back( "data/user.bwynne.LeadingJetModifiedv3.DW.MC.CaloJet/mergedFile.root" );
+	descriptions.push_back( "PYTHIA6 DW" );
+	colours.push_back( kBlue );
+	styles.push_back( 7 );
+	inputTypes.push_back( "InputNtuple" );
+	internalTruth.push_back( "benTuple" );
+	internalReco.push_back( "benTuple" );
+
+	//Herwig++
+	combineFiles.push_back( false );
+	truthPaths.push_back( "data/user.bwynne.LeadingJetModifiedv3.HerwigPP.MC.TruthJet/mergedFile.root" );
+	recoPaths.push_back( "data/user.bwynne.LeadingJetModifiedv3.HerwigPP.MC.CaloJet/mergedFile.root" );
+	descriptions.push_back( "Herwig++ ATLAS MC09" );
+	colours.push_back( kRed + 3 );
+	styles.push_back( 8 );
+	inputTypes.push_back( "InputNtuple" );
+	internalTruth.push_back( "benTuple" );
+	internalReco.push_back( "benTuple" );
+
+	//Pythia 8 non diffractive
+	combineFiles.push_back( false );
+	truthPaths.push_back( "data/user.bwynne.LeadingJetModifiedv3.Pythia8NonDiff.MC.TruthJet/mergedFile.root" );
+	recoPaths.push_back( "data/user.bwynne.LeadingJetModifiedv3.Pythia8NonDiff.MC.CaloJet/mergedFile.root" );
+	descriptions.push_back( "PYTHIA8 Non-Diffractive" );
+	colours.push_back( kGreen + 2 );
+	styles.push_back( 5 );
+	inputTypes.push_back( "InputNtuple" );
+	internalTruth.push_back( "benTuple" );
+	internalReco.push_back( "benTuple" );
 }
 
 MonteCarloInformation::~MonteCarloInformation()
@@ -148,7 +249,7 @@ IFileInput * MonteCarloInformation::MakeTruthInput( unsigned int Index )
 	else
 	{
 		vector< IFileInput* > inputs;
-		inputs.push_back( InstantiateSingleInput( truthPaths[ Index ], Index ) );
+		inputs.push_back( InstantiateSingleInput( truthPaths[ Index ], internalTruth[ Index ], Index ) );
 
 		//Find out whether to combine files or not
 		int extraIndex = FindExtraIndex( Index );
@@ -157,7 +258,7 @@ IFileInput * MonteCarloInformation::MakeTruthInput( unsigned int Index )
 			//Combined object
 			for ( unsigned int pathIndex = 0; pathIndex < extraTruthPaths[ extraIndex ].size(); pathIndex++ )
 			{
-				inputs.push_back( InstantiateSingleInput( extraTruthPaths[ extraIndex ][ pathIndex ], Index ) );
+				inputs.push_back( InstantiateSingleInput( extraTruthPaths[ extraIndex ][ pathIndex ], internalTruth[ Index ], Index ) );
 			}
 
 			//Check there's the same number of weights as files
@@ -187,7 +288,7 @@ IFileInput * MonteCarloInformation::MakeReconstructedInput( unsigned int Index )
 	else
 	{
 		vector< IFileInput* > inputs;
-		inputs.push_back( InstantiateSingleInput( recoPaths[ Index ], Index ) );
+		inputs.push_back( InstantiateSingleInput( recoPaths[ Index ], internalReco[ Index ], Index ) );
 
 		//Find out whether to combine files or not
 		int extraIndex = FindExtraIndex( Index );
@@ -196,7 +297,7 @@ IFileInput * MonteCarloInformation::MakeReconstructedInput( unsigned int Index )
 			//Combined object
 			for ( unsigned int pathIndex = 0; pathIndex < extraRecoPaths[ extraIndex ].size(); pathIndex++ )
 			{
-				inputs.push_back( InstantiateSingleInput( extraRecoPaths[ extraIndex ][ pathIndex ], Index ) );
+				inputs.push_back( InstantiateSingleInput( extraRecoPaths[ extraIndex ][ pathIndex ], internalReco[ Index ], Index ) );
 			}
 
 			//Check there's the same number of weights as files
@@ -216,15 +317,15 @@ IFileInput * MonteCarloInformation::MakeReconstructedInput( unsigned int Index )
 	}
 }
 
-IFileInput * MonteCarloInformation::InstantiateSingleInput( string Path, int Index )
+IFileInput * MonteCarloInformation::InstantiateSingleInput( string FilePath, string InternalPath, int Index )
 {
 	if ( inputTypes[ Index ] == NTUPLE_TYPE_STRING )
 	{
-		return new InputNtuple( Path, internalPaths[ Index ], descriptions[ Index ], Index );
+		return new InputNtuple( FilePath, InternalPath, descriptions[ Index ], Index );
 	}
 	else if ( inputTypes[ Index ] == UE_TREE_TYPE_STRING )
 	{
-		return new InputUETree( Path, internalPaths[ Index ], descriptions[ Index ], Index );
+		return new InputUETree( FilePath, InternalPath, descriptions[ Index ], Index );
 	}
 	else
 	{

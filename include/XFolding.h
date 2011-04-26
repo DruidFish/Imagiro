@@ -10,14 +10,14 @@
 #ifndef X_FOLDING_H
 #define X_FOLDING_H
 
-#include "IPlotMaker.h"
+#include "IFolder.h"
 #include "Folding.h"
 #include "Indices.h"
 #include <string>
 
 using namespace std;
 
-class XFolding : public IPlotMaker
+class XFolding : public IFolder
 {
 	public:
 		XFolding();
@@ -31,17 +31,11 @@ class XFolding : public IPlotMaker
 		virtual void StoreFake( IFileInput * ReconstructedInput );
 		virtual void StoreData( IFileInput * DataInput );
 
-		//Do the unfolding
-		virtual void Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding = false, bool WithSmoothing = false );
+		//Do the folding
+		virtual void Fold();
 
 		//Do a closure test
-                virtual bool ClosureTest( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing = false );
-
-		//Make a cross-check with MC
-		virtual int MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing = false );
-
-		//Return a distribution for use in the cross-checks
-		virtual Distribution * MonteCarloTruthForCrossCheck();
+                virtual bool ClosureTest();
 
 		//Return some plots
 		virtual TH1F * CorrectedHistogram();
@@ -50,7 +44,7 @@ class XFolding : public IPlotMaker
 		virtual TH2F * SmearingMatrix();
 
 		//Copy the object
-		virtual IPlotMaker * Clone( string NewPriorName );
+		virtual IFolder * Clone( string NewPriorName );
 
 		//General info
 		virtual string Description( bool WithSpaces );

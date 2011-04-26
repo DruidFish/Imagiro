@@ -10,14 +10,14 @@
 #ifndef X_PLOTMAKER_H
 #define X_PLOTMAKER_H
 
-#include "IPlotMaker.h"
+#include "IUnfolder.h"
 #include "IterativeUnfolding.h"
 #include "Indices.h"
 #include <string>
 
 using namespace std;
 
-class XPlotMaker : public IPlotMaker
+class XPlotMaker : public IUnfolder
 {
 	public:
 		XPlotMaker();
@@ -32,7 +32,7 @@ class XPlotMaker : public IPlotMaker
 		virtual void StoreData( IFileInput * DataInput );
 
 		//Do the unfolding
-		virtual void Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding = false, bool WithSmoothing = false );
+		virtual void Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding = false, int ErrorMode = 0, bool WithSmoothing = false );
 
 		//Do a closure test
 		virtual bool ClosureTest( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing = false );
@@ -50,7 +50,7 @@ class XPlotMaker : public IPlotMaker
 		virtual TH2F * SmearingMatrix();
 
 		//Copy the object
-		virtual IPlotMaker * Clone( string NewPriorName );
+		virtual IUnfolder * Clone( string NewPriorName );
 
 		//General info
 		virtual string Description( bool WithSpaces );
@@ -58,6 +58,8 @@ class XPlotMaker : public IPlotMaker
 
 		//Error info for corrected distribution
 		virtual vector<double> CorrectedErrors();
+		virtual vector<double> DAgostiniErrors();
+		virtual TH2F * DAgostiniCovariance();
 
 	private:
 		int thisPlotID;
@@ -66,9 +68,9 @@ class XPlotMaker : public IPlotMaker
 		string xName, priorName;
 		bool finalised, normalise;
 		double scaleFactor;
-		vector<double> correctedDataErrors;
+		vector<double> correctedDataErrors, dagostiniErrors;
 		TH1F *correctedDistribution, *uncorrectedDistribution, *mcTruthDistribution;
-		TH2F *smearingMatrix;
+		TH2F *smearingMatrix, *covarianceMatrix;
 };
 
 #endif

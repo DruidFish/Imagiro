@@ -61,7 +61,7 @@ Distribution::Distribution( vector< TH1F* > InputDistributions, Indices * InputI
 }
 
 //Calculate a corrected distribtion
-Distribution::Distribution( Distribution * DataDistribution, SmearingMatrix * Smearing, Distribution * PriorDistribution )
+Distribution::Distribution( Distribution * DataDistribution, UnfoldingMatrix * BayesPosterior )
 {
 	indexCalculator = DataDistribution->indexCalculator;
 	integral = 0.0;
@@ -72,26 +72,21 @@ Distribution::Distribution( Distribution * DataDistribution, SmearingMatrix * Sm
 	//Make a new, empty distribution
 	binValues = vector< double >( binNumber, 0.0 );
 
-	//Create the Bayes theorem inverse of the smearing matrix
-	UnfoldingMatrix * bayes = new UnfoldingMatrix( Smearing, PriorDistribution, indexCalculator );
-
 	//Populate the distribution
-	for ( int effectIndex = 0; effectIndex < binNumber; effectIndex++ )
+	//for ( int unfoldingIndex = 0; unfoldingIndex < BayesPosterior->NumberOfEntries(); unfoldingIndex++ )
+	int entryNumber = BayesPosterior->GetEntryNumberAndResetIterator();
+	for ( int unfoldingIndex = 0; unfoldingIndex < entryNumber; unfoldingIndex++ )
 	{
-		//Retrieve the uncorrected value
-		double effectNumber = DataDistribution->GetBinNumber( effectIndex );
+		//Retrieve the unfolding matrix entry
+		int causeIndex, effectIndex;
+		//double unfoldingValue = BayesPosterior->GetNonZeroEntry( unfoldingIndex, causeIndex, effectIndex );
+		double unfoldingValue = BayesPosterior->GetNextEntry( causeIndex, effectIndex );
 
-		//Apply the unfolding matrix
-		for  ( int causeIndex = 0; causeIndex < binNumber; causeIndex++ )
-		{
-			double newValue = bayes->GetElement( causeIndex, effectIndex ) * effectNumber;
-			binValues[ causeIndex ] += newValue;
-			integral += newValue;
-		}
+		//Apply the unfolding
+		double newValue = unfoldingValue * DataDistribution->GetBinNumber( effectIndex );
+		binValues[ causeIndex ] += newValue;
+		integral += newValue;
 	}
-
-	//Free up some memory
-	delete bayes;
 }
 
 //Make this distribution by smearing another
@@ -106,19 +101,20 @@ Distribution::Distribution( Distribution * InputDistribution, SmearingMatrix * S
 	//Make a new, empty distribution
 	binValues = vector< double >( binNumber, 0.0 );
 
-	//Loop over each bin in this distribution
-	for ( int causeIndex = 0; causeIndex < binNumber; causeIndex++ )
+	//Loop over each entry in the smearing matrix
+	//for ( int smearingIndex = 0; smearingIndex < Smearing->NumberOfEntries(); smearingIndex++ )
+	int entryNumber = Smearing->GetEntryNumberAndResetIterator();
+	for ( int smearingIndex = 0; smearingIndex < entryNumber; smearingIndex++ )
 	{
-		//Retrieve the correct value
-		double causeNumber = InputDistribution->GetBinNumber( causeIndex );
+		//Retrieve the smearing matrix entry
+		int causeIndex, effectIndex;
+		//double smearingValue = Smearing->GetNonZeroEntry( smearingIndex, causeIndex, effectIndex );
+		double smearingValue = Smearing->GetNextEntry( causeIndex, effectIndex );
 
-		//Apply the smearing matrix
-		for ( int effectIndex = 0; effectIndex < binNumber; effectIndex++ )
-		{
-			double newValue = Smearing->GetElement( causeIndex, effectIndex ) * causeNumber;
-			binValues[ effectIndex ] += newValue;
-			integral += newValue;
-		}
+		//Calculate the smearing
+		double newValue = smearingValue * InputDistribution->GetBinNumber( causeIndex );
+		binValues[ effectIndex ] += newValue;
+		integral += newValue;
 	}
 }
 
@@ -282,4 +278,9 @@ void Distribution::Smooth( int SideBinNumber )
 
 	binValues = newBinValues;
 	integral = newIntegral;
+}
+
+double Distribution::Integral()
+{
+	return integral;
 }

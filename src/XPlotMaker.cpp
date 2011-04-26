@@ -63,7 +63,7 @@ XPlotMaker::~XPlotMaker()
 }
 
 //Copy the object
-IPlotMaker * XPlotMaker::Clone( string NewPriorName )
+IUnfolder * XPlotMaker::Clone( string NewPriorName )
 {
 	return new XPlotMaker( xName, NewPriorName,
 			DistributionIndices->GetBinNumber(0) - 2, DistributionIndices->GetMinima()[0], DistributionIndices->GetMaxima()[0],
@@ -166,7 +166,7 @@ void XPlotMaker::StoreData( IFileInput * DataInput )
 }
 
 //Do the unfolding
-void XPlotMaker::Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding, bool WithSmoothing )
+void XPlotMaker::Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding, int ErrorMode, bool WithSmoothing )
 {
 	if ( finalised )
 	{
@@ -178,7 +178,7 @@ void XPlotMaker::Unfold( int MostIterations, double ChiSquaredThreshold, double 
 		//Unfold the distribution
 		if ( !SkipUnfolding )
 		{
-			XUnfolder->Unfold( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
+			XUnfolder->Unfold( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, ErrorMode, WithSmoothing );
 		}
 
 		//Make some plot titles
@@ -194,6 +194,10 @@ void XPlotMaker::Unfold( int MostIterations, double ChiSquaredThreshold, double 
 		TH1F * XUncorrected = XUnfolder->GetUncorrectedDataHistogram( XFullName + "Uncorrected", XFullTitle + " Uncorrected Distribution", normalise );
 		TH1F * XTruth = XUnfolder->GetTruthHistogram( XFullName + "Truth", XFullTitle + " Truth Distribution", normalise );
 		TH2F * XSmearing = XUnfolder->GetSmearingMatrix( XFullName + "Smearing", XFullTitle + " Smearing Matrix" );
+		if ( ErrorMode > 1 && !SkipUnfolding )
+		{
+			covarianceMatrix = XUnfolder->DAgostiniCovariance( XFullName + "Covariance", XFullTitle + " Covariance Matrix" );
+		}
 
 		//Scale the histograms
 		XCorrected->Scale( scaleFactor );
@@ -202,6 +206,11 @@ void XPlotMaker::Unfold( int MostIterations, double ChiSquaredThreshold, double 
 
 		//Get the error vectors
 		vector<double> XErrors = XUnfolder->SumOfDataWeightSquares();
+		vector<double> XVariance;
+		if ( ErrorMode > 0 && !SkipUnfolding )
+		{
+			XVariance = XUnfolder->DAgostiniVariance();
+		}
 
 		//Calculate errors
 		TH1F * XCorrectedNotNormalised;
@@ -213,6 +222,12 @@ void XPlotMaker::Unfold( int MostIterations, double ChiSquaredThreshold, double 
 		for ( unsigned int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
 		{
 			double combinedError = sqrt( XErrors[ binIndex ] ) * scaleFactor;
+
+			double dagostiniError;
+			if ( ErrorMode > 0 && !SkipUnfolding )
+			{
+				dagostiniError = sqrt( XVariance[ binIndex ] ) * scaleFactor;
+			}
 
 			//Scale the errors if the plots are normalised
 			if ( normalise )
@@ -230,9 +245,19 @@ void XPlotMaker::Unfold( int MostIterations, double ChiSquaredThreshold, double 
 				}
 
 				combinedError *= normalisationFactor;
+
+				if ( ErrorMode > 0 && !SkipUnfolding )
+				{
+					dagostiniError *= normalisationFactor;
+				}
 			}
 
 			correctedDataErrors.push_back( combinedError );
+
+			if ( ErrorMode > 0 && !SkipUnfolding )
+			{
+				dagostiniErrors.push_back( dagostiniError );
+			}
 		}
 
 		//Format and save the corrected distribution
@@ -252,10 +277,17 @@ void XPlotMaker::Unfold( int MostIterations, double ChiSquaredThreshold, double 
 
 		//Format and save the smearing matrix
 		smearingMatrix = XSmearing;
-		string smearingXTitle = xName + " Truth";
-		string smearingYTitle = xName + " Reconstructed";
+		string smearingXTitle = xName + " Truth Bin";
+		string smearingYTitle = xName + " Reconstructed Bin";
 		smearingMatrix->SetXTitle( smearingXTitle.c_str() );
 		smearingMatrix->SetYTitle( smearingYTitle.c_str() );
+
+		if ( ErrorMode > 1 && !SkipUnfolding )
+		{
+			//Format the covariance matrix
+			covarianceMatrix->SetXTitle( "Bin Number" );
+			covarianceMatrix->SetYTitle( "Bin Number" );
+		}
 
 		//Bin-by-bin scaling of errors using the corrected data
 		for ( unsigned int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
@@ -371,4 +403,27 @@ vector<double> XPlotMaker::CorrectedErrors()
 		exit(1);
 	}
 }
-
+vector<double> XPlotMaker::DAgostiniErrors()
+{
+	if ( finalised )
+	{
+		return dagostiniErrors;
+	}
+	else
+	{
+		cerr << "Trying to retrieve D'Agostini errors from unfinalised XPlotMaker" << endl;
+		exit(1);
+	}
+}
+TH2F * XPlotMaker::DAgostiniCovariance()
+{
+	if ( finalised )
+	{
+		return covarianceMatrix;
+	}
+	else
+	{
+		cerr << "Trying to retrieve D'Agostini covariance matrix from unfinalised XPlotMaker" << endl;
+		exit(1);
+	}
+}

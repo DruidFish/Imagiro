@@ -14,8 +14,11 @@
 
 #include "MonteCarloInformation.h"
 #include "IFileInput.h"
+#include "IUnfolder.h"
+#include "IFolder.h"
 #include "IPlotMaker.h"
 #include "TCanvas.h"
+#include "TFile.h"
 #include "TStyle.h"
 #include <vector>
 #include <string>
@@ -26,7 +29,8 @@ class MonteCarloSummaryPlotMaker
 {
 	public:
 		MonteCarloSummaryPlotMaker();
-		MonteCarloSummaryPlotMaker( IPlotMaker * TemplatePlotMaker, MonteCarloInformation * PlotInformation, bool CombineMCMode = true );
+		MonteCarloSummaryPlotMaker( IUnfolder * TemplatePlotMaker, MonteCarloInformation * PlotInformation, bool CombineMCMode = true );
+		MonteCarloSummaryPlotMaker( IFolder * TemplatePlotMaker, MonteCarloInformation * PlotInformation, bool CombineMCMode = true );
 		~MonteCarloSummaryPlotMaker();
 
 		//Take input values from ntuples
@@ -41,25 +45,26 @@ class MonteCarloSummaryPlotMaker
 		void SetAxisLabels( string XAxis, string YAxis );
 		void UseLogScale();
 
-		//Do the unfolding
-		void Unfold( bool WithSmoothing = false );
+		//Do the calculation
+		void Process( int ErrorMode = 0, bool WithSmoothing = false );
 
-		//Return result
-		TCanvas * ResultPlot();
-		TH2F * SmearingMatrix();
+		//Save result to given file
+		void SaveResult( TFile * OutputFile );
 
 		//Create an ATLAS style object
 		TStyle * AtlasStyle( string Name );
 
 	private:
+		bool isUnfolding;
 		vector< Distribution* > allTruthDistributions;
 		vector< TH1F* > allTruthPlots;
-		TH2F * smearingMatrix;
+		TH2F *smearingMatrix, *covarianceMatrix;
 		MonteCarloInformation * mcInfo;
 		TCanvas * plotCanvas;
 		bool finalised, combineMode, manualRange, manualLabels, logScale;
+		vector< IFolder* > foldingPlots;
+		vector< IUnfolder* > crossCheckPlots, unfoldingPlots;
 		vector< IPlotMaker* > allPlots;
-		vector< IPlotMaker* > crossCheckPlots;
 		double yRangeMinimum, yRangeMaximum;
 		string dataDescription, xAxisLabel, yAxisLabel;
 };

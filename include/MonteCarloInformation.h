@@ -40,7 +40,7 @@ class MonteCarloInformation
 
 	private:
 		//Make a file reader of the correct type
-		IFileInput * InstantiateSingleInput( string Path, int Index );
+		IFileInput * InstantiateSingleInput( string FilePath, string InternalPath, int Index );
 
 		//Return the index of the additional files to combine for this MC sample
 		int FindExtraIndex( unsigned int RegularIndex );
@@ -48,7 +48,7 @@ class MonteCarloInformation
 		vector< vector< string > > extraTruthPaths, extraRecoPaths;
 		vector< bool > combineFiles;
 		vector< vector< double > > inputWeights;
-		vector<string> descriptions, truthPaths, recoPaths, inputTypes, internalPaths;
+		vector<string> descriptions, truthPaths, recoPaths, inputTypes, internalTruth, internalReco;
 		vector< Color_t > colours;
 		vector< Style_t > styles;
 

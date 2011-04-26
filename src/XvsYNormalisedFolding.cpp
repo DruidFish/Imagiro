@@ -81,7 +81,7 @@ XvsYNormalisedFolding::~XvsYNormalisedFolding()
 }
 
 //Copy the object
-IPlotMaker * XvsYNormalisedFolding::Clone( string NewPriorName )
+IFolder * XvsYNormalisedFolding::Clone( string NewPriorName )
 {
 	return new XvsYNormalisedFolding( xName, yName, NewPriorName,
 			DistributionIndices->GetBinNumber(0) - 2, DistributionIndices->GetMinima()[0], DistributionIndices->GetMaxima()[0],
@@ -225,7 +225,7 @@ void XvsYNormalisedFolding::StoreData( IFileInput * DataInput )
 }
 
 //Do the unfolding
-void XvsYNormalisedFolding::Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding, bool WithSmoothing )
+void XvsYNormalisedFolding::Fold()
 {
 	if ( finalised )
 	{
@@ -392,20 +392,11 @@ void XvsYNormalisedFolding::Unfold( int MostIterations, double ChiSquaredThresho
 }
 
 //Do a closure test
-bool XvsYNormalisedFolding::ClosureTest( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing )
+bool XvsYNormalisedFolding::ClosureTest()
 {
 	bool result = XvsYFolder->ClosureTest();
         result &= XFolder->ClosureTest();
 	return result;
-}
-
-//Make a cross-check with MC
-int XvsYNormalisedFolding::MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing )
-{
-	//Meaningless values
-	ChiSquaredThreshold = 10.0;
-	KolmogorovThreshold = 0.1;
-	return 10;
 }
 
 //Return some plots
@@ -446,13 +437,6 @@ TH1F * XvsYNormalisedFolding::MCTruthHistogram()
 		exit(1);
 	}
 }
-
-//Return a distribution for use in the cross-checks - NULL, since cross-checks make no sense for folding
-Distribution * XvsYNormalisedFolding::MonteCarloTruthForCrossCheck() 
-{
-	return NULL;
-}
-
 
 TH2F * XvsYNormalisedFolding::SmearingMatrix()
 {

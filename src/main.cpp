@@ -39,10 +39,29 @@ time_t timeNow;
 ////////////////////////////////////////////////////////////
 //                                                        //
 // Combine all MC into one smearing matrix,               //
-// or use separate matrices?                              //
+// or use separate matrices? (recommend true)             //
 //                                                        //
 ////////////////////////////////////////////////////////////
-bool COMBINE_MC = true;
+const bool COMBINE_MC = true;
+
+////////////////////////////////////////////////////////////
+//                                                        //
+// Set the error calculation mode:                        //
+// 0) Bin-by-bin scaling of uncorrected errors (fast)     //
+// 1) Variances calculated using D'Agostini's method      //
+// 2) Full D'Agositini moethd covariance matrix (slow)    //
+//                                                        //
+////////////////////////////////////////////////////////////
+const int ERROR_MODE = 2;
+
+////////////////////////////////////////////////////////////
+//                                                        //
+// Set whether to smooth the prior distribution           //
+// before applying it each iteration                      //
+// (recommend false)                                      //
+//                                                        //
+////////////////////////////////////////////////////////////
+const bool WITH_SMOOTHING = false;
 
 ////////////////////////////////////////////////////////////
 //                                                        //
@@ -75,7 +94,8 @@ int main ( int argc, char * argv[] )
 	// Load the data - Again, set this up yourself            //
 	//                                                        //
 	////////////////////////////////////////////////////////////
-	//IFileInput * dataInput = new InputUETree( "data/D3PDjetEtMissData/combinedData.root", "benTuple", "Data D3PD", mcInfo->NumberOfSources() );
+	//IFileInput * dataInput = new InputUETree( "/media/My Book/UEdata/L1_J5.v1/combinedJetTauEtmiss/combinedJetTauEtmiss.root", "benTuple", "Data D3PD", mcInfo->NumberOfSources() );
+	//IFileInput * dataInput = new InputUETree( "/media/My Book/UEdata/L1_EM5.v1/D3PDjetEtMissData/combinedData.root", "benTuple", "Data D3PD", mcInfo->NumberOfSources() );
 	int sourceIndex = 0;
 	IFileInput * dataInput = mcInfo->MakeReconstructedInput( sourceIndex );
 
@@ -88,31 +108,31 @@ int main ( int argc, char * argv[] )
 	// Then put it into a MonteCarloSummaryPlotMaker          //
 	//                                                        //
 	////////////////////////////////////////////////////////////
-	double scaleFactor = 3.0 / ( 10.0 * M_PI );
-	int jetPtBins = 30;
+/*	double scaleFactor = 3.0 / ( 10.0 * M_PI );
+	int jetPtBins = 100;
 	double jetPtMin = 0.0;
-	double jetPtMax = 300000.0;
-	int nChargeBins = 50;
+	double jetPtMax = 200000.0;
+	int nChargeBins = 500;
 	double nChargeMin = 0.5;
 	double nChargeMax = 500.5;
 
 	//1D Unfolding
 
 	//Lead jet pT
-	XPlotMaker * leadJetPtPlot = new XPlotMaker( "LeadJetPt", "Pythia J3", jetPtBins, jetPtMin, jetPtMax, 1.0, true );
+	XPlotMaker * leadJetPtPlot = new XPlotMaker( "LeadJetPt", "PYTHIA", jetPtBins, jetPtMin, jetPtMax, 1.0, true );
 	MonteCarloSummaryPlotMaker * leadJetPtSummary = new MonteCarloSummaryPlotMaker( leadJetPtPlot, mcInfo, COMBINE_MC );
 	leadJetPtSummary->SetYRange( 0.0, 0.4 );
 	allPlotMakers.push_back( leadJetPtSummary );
 
 	//N charge towards
-//	XPlotMaker * nChargedTowardsPlot = new XPlotMaker( "NChargedTowards", "Pythia J3", nChargeBins, nChargeMin, nChargeMax, 1.0 );
-//	MonteCarloSummaryPlotMaker * nChargedTowardsSummary = new MonteCarloSummaryPlotMaker( nChargedTowardsPlot, mcInfo, COMBINE_MC );
-//	allPlotMakers.push_back( nChargedTowardsSummary );
+	XPlotMaker * nChargedTowardsPlot = new XPlotMaker( "NChargedTowards", "PYTHIA", nChargeBins, nChargeMin, nChargeMax, 1.0 );
+	MonteCarloSummaryPlotMaker * nChargedTowardsSummary = new MonteCarloSummaryPlotMaker( nChargedTowardsPlot, mcInfo, COMBINE_MC );
+	allPlotMakers.push_back( nChargedTowardsSummary );
 
-/*	//2D Unfolding
+	//2D Unfolding
 
 	//Make a plot of number of charged particles in the toward region vs lead jet pT
-	XvsYNormalisedPlotMaker * pTvsNChargedTowardPlot = new XvsYNormalisedPlotMaker( "LeadJetPt", "NChargedTowards", "Pythia J3",
+	XvsYNormalisedPlotMaker * pTvsNChargedTowardPlot = new XvsYNormalisedPlotMaker( "LeadJetPt", "NChargedTowards", "PYTHIA",
 			jetPtBins, jetPtMin, jetPtMax, nChargeBins, nChargeMin, nChargeMax, scaleFactor );
 	MonteCarloSummaryPlotMaker * pTvsNChargedTowardSummary = new MonteCarloSummaryPlotMaker( pTvsNChargedTowardPlot, mcInfo, COMBINE_MC );
 	pTvsNChargedTowardSummary->SetYRange( 0.1, 2.9 );
@@ -120,7 +140,7 @@ int main ( int argc, char * argv[] )
 	allPlotMakers.push_back( pTvsNChargedTowardSummary );
 
 	//Make a plot of number of charged particles in the away region vs lead jet pT
-	XvsYNormalisedPlotMaker * pTvsNChargedAwayPlot = new XvsYNormalisedPlotMaker( "LeadJetPt", "NChargedAway", "Pythia J3",
+	XvsYNormalisedPlotMaker * pTvsNChargedAwayPlot = new XvsYNormalisedPlotMaker( "LeadJetPt", "NChargedAway", "PYTHIA",
 			jetPtBins, jetPtMin, jetPtMax, nChargeBins, nChargeMin, nChargeMax, scaleFactor );
 	MonteCarloSummaryPlotMaker * pTvsNChargedAwaySummary = new MonteCarloSummaryPlotMaker( pTvsNChargedAwayPlot, mcInfo, COMBINE_MC );
 	pTvsNChargedAwaySummary->SetYRange( 0.1, 2.9 );
@@ -128,13 +148,77 @@ int main ( int argc, char * argv[] )
 	allPlotMakers.push_back( pTvsNChargedAwaySummary );
 
 	//Make a plot of number of charged particles in the transverse region vs lead jet pT
-	XvsYNormalisedPlotMaker * pTvsNChargedTransPlot = new XvsYNormalisedPlotMaker( "LeadJetPt", "NChargedTransverse", "Pythia J3",
+	XvsYNormalisedPlotMaker * pTvsNChargedTransPlot = new XvsYNormalisedPlotMaker( "LeadJetPt", "NChargedTransverse", "PYTHIA",
 			jetPtBins, jetPtMin, jetPtMax, nChargeBins, nChargeMin, nChargeMax, scaleFactor );
 	MonteCarloSummaryPlotMaker * pTvsNChargedTransSummary = new MonteCarloSummaryPlotMaker( pTvsNChargedTransPlot, mcInfo, COMBINE_MC );
 	pTvsNChargedTransSummary->SetYRange( 0.1, 2.9 );
 	pTvsNChargedTransSummary->SetAxisLabels( "p_{T}^{lead} [GeV]", "<d^{2}N_{ch}/d#etad#phi>" );
-	allPlotMakers.push_biack( pTvsNChargedTransSummary );*/
+	allPlotMakers.push_back( pTvsNChargedTransSummary );*/
 
+	double scaleFactor = 3.0 / ( 10.0 * M_PI );
+	int jetPtBins = 30;
+	double jetPtMin = 20.0;
+	double jetPtMax = 50.0;
+	int nChargeBins = 50;
+	double nChargeMin = 0.5;
+	double nChargeMax = 50.5;
+
+/*	//2D Unfolding
+
+	//Make a plot of number of charged particles in the toward region vs lead jet pT
+	XvsYNormalisedPlotMaker * pTvsNChargedTowardPlot = new XvsYNormalisedPlotMaker( "MaxJetPt", "NChargeToward", "Pythia6",
+			jetPtBins, jetPtMin, jetPtMax, nChargeBins, nChargeMin, nChargeMax, scaleFactor );
+	MonteCarloSummaryPlotMaker * pTvsNChargedTowardSummary = new MonteCarloSummaryPlotMaker( pTvsNChargedTowardPlot, mcInfo, COMBINE_MC );
+	pTvsNChargedTowardSummary->SetYRange( 0.1, 2.9 );
+	pTvsNChargedTowardSummary->SetAxisLabels( "p_{T}^{lead} [GeV]", "<d^{2}N_{ch}/d#etad#phi>" );
+	allPlotMakers.push_back( pTvsNChargedTowardSummary );
+
+	//Make a plot of number of charged particles in the away region vs lead jet pT
+	XvsYNormalisedPlotMaker * pTvsNChargedAwayPlot = new XvsYNormalisedPlotMaker( "MaxJetPt", "NChargeAway", "Pythia6",
+			jetPtBins, jetPtMin, jetPtMax, nChargeBins, nChargeMin, nChargeMax, scaleFactor );
+	MonteCarloSummaryPlotMaker * pTvsNChargedAwaySummary = new MonteCarloSummaryPlotMaker( pTvsNChargedAwayPlot, mcInfo, COMBINE_MC );
+	pTvsNChargedAwaySummary->SetYRange( 0.1, 2.9 );
+	pTvsNChargedAwaySummary->SetAxisLabels( "p_{T}^{lead} [GeV]", "<d^{2}N_{ch}/d#etad#phi>" );
+	allPlotMakers.push_back( pTvsNChargedAwaySummary );
+
+	//Make a plot of number of charged particles in the transverse region vs lead jet pT
+	XvsYNormalisedPlotMaker * pTvsNChargedTransPlot = new XvsYNormalisedPlotMaker( "MaxJetPt", "NChargeTrans", "Pythia6",
+			jetPtBins, jetPtMin, jetPtMax, nChargeBins, nChargeMin, nChargeMax, scaleFactor );
+	MonteCarloSummaryPlotMaker * pTvsNChargedTransSummary = new MonteCarloSummaryPlotMaker( pTvsNChargedTransPlot, mcInfo, COMBINE_MC );
+	pTvsNChargedTransSummary->SetYRange( 0.1, 2.9 );
+	pTvsNChargedTransSummary->SetAxisLabels( "p_{T}^{lead} [GeV]", "<d^{2}N_{ch}/d#etad#phi>" );
+	allPlotMakers.push_back( pTvsNChargedTransSummary );*/
+
+	//1D Unfolding
+
+	//Make a plot of lead jet pT in each event
+	XPlotMaker * pTPlot = new XPlotMaker( "MaxJetPt", "Pythia6", jetPtBins, jetPtMin, jetPtMax, 1.0, true );
+	MonteCarloSummaryPlotMaker * pTSummary = new MonteCarloSummaryPlotMaker( pTPlot, mcInfo, COMBINE_MC );
+	pTSummary->SetYRange( 0.01, 0.19 );
+	pTSummary->SetAxisLabels( "p_{T}^{lead} [GeV]", "Events" );
+	pTSummary->UseLogScale();
+	allPlotMakers.push_back( pTSummary );
+
+	//Make a plot of number of charged particles in the toward region in each event
+	XPlotMaker * nChargedTowardPlot = new XPlotMaker( "NChargeToward", "Pythia6", nChargeBins, nChargeMin, nChargeMax, 1.0, true );
+	MonteCarloSummaryPlotMaker * nChargeTowardSummary = new MonteCarloSummaryPlotMaker( nChargedTowardPlot, mcInfo, COMBINE_MC );
+	nChargeTowardSummary->SetYRange( 0.01, 0.09 );
+	nChargeTowardSummary->SetAxisLabels( "N_{ch}", "Events" );
+	allPlotMakers.push_back( nChargeTowardSummary );
+
+	//Make a plot of number of charged particles in the away region in each event
+	XPlotMaker * nChargedAwayPlot = new XPlotMaker( "NChargeAway", "Pythia6", nChargeBins, nChargeMin, nChargeMax, 1.0, true );
+	MonteCarloSummaryPlotMaker * nChargeAwaySummary = new MonteCarloSummaryPlotMaker( nChargedAwayPlot, mcInfo, COMBINE_MC );
+	nChargeAwaySummary->SetYRange( 0.01, 0.09 );
+	nChargeAwaySummary->SetAxisLabels( "N_{ch}", "Events" );
+	allPlotMakers.push_back( nChargeAwaySummary );
+
+	//Make a plot of number of charged particles in the transverse region in each event
+	XPlotMaker * nChargedTransPlot = new XPlotMaker( "NChargeTrans", "Pythia6", nChargeBins, nChargeMin, nChargeMax, 1.0, true );
+	MonteCarloSummaryPlotMaker * nChargeTransSummary = new MonteCarloSummaryPlotMaker( nChargedTransPlot, mcInfo, COMBINE_MC );
+	nChargeTransSummary->SetYRange( 0.01, 0.09 );
+	nChargeTransSummary->SetAxisLabels( "N_{ch}", "Events" );
+	allPlotMakers.push_back( nChargeTransSummary );
 
 	/////////////////////////////////////////////////////////////
 	//                                                         //
@@ -252,13 +336,10 @@ void DoTheUnfolding( IFileInput * DataInput )
 	for ( unsigned int plotIndex = 0; plotIndex < allPlotMakers.size(); plotIndex++ )
 	{
 		//Unfold the data
-		allPlotMakers[ plotIndex ]->Unfold();
+		allPlotMakers[ plotIndex ]->Process( ERROR_MODE, WITH_SMOOTHING );
 
-		//Save the output
-		OutputFile->cd();
-		allPlotMakers[ plotIndex ]->ResultPlot()->Write();
-		allPlotMakers[ plotIndex ]->SmearingMatrix()->Write();
-		OutputFile->Flush();
+		//Write the result to file
+		allPlotMakers[ plotIndex ]->SaveResult( OutputFile );
 
 		//Free up some memory
 		delete allPlotMakers[ plotIndex ];
