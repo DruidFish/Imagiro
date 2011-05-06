@@ -262,7 +262,7 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 		TH1F * XvsYTruth = XvsYUnfolder->GetTruthHistogram( XvsYName + "Truth", XvsYTitle + " Truth Distribution" );
 
 		//TH2F * XSmearing = XUnfolder->GetSmearingMatrix( XFullName + "Smearing", XFullTitle + " Smearing Matrix" );
-		TH2F * XvsYSmearing = XvsYUnfolder->GetSmearingMatrix( XvsYName + "Smearing", XvsYTitle + " Smearing Matrix" );
+		//TH2F * XvsYSmearing = XvsYUnfolder->GetSmearingMatrix( XvsYName + "Smearing", XvsYTitle + " Smearing Matrix" );
 		if ( ErrorMode > 1 )
 		{
 			covarianceMatrix = XvsYUnfolder->DAgostiniCovariance( XvsYName + "Covariance", XvsYTitle + " Covariance Matrix" );
@@ -330,30 +330,33 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 			//Compare the delinearised value with one calculated without going through delinearisation
 			double correctValue = xvsyTruthCheck->GetBinContent( binIndex );
 			double delinearisedValue = DelinearisedXvsYTruth->GetBinContent( binIndex );
-			double errorFraction = fabs( delinearisedValue - correctValue ) / correctValue;
-			double percentError = errorFraction * 100.0;
-
-			//Check for stupid values
-			if ( isnan( percentError ) )
+			if ( correctValue != 0.0 )
 			{
-				percentError = 0.0;
-			}
+				double errorFraction = fabs( delinearisedValue - correctValue ) / correctValue;
+				double percentError = errorFraction * 100.0;
 
-			//Add this error to the overall error calculation
-			correctedDataErrors[ binIndex ] *= ( 1.0 + errorFraction );
-			if ( ErrorMode > 0 )
-			{
-				dagostiniErrors[ binIndex ] *= ( 1.0 + errorFraction );
-			}
+				//Check for stupid values
+				if ( isnan( percentError ) )
+				{
+					percentError = 0.0;
+				}
 
-			//Increment average error
-			averagePercentError += percentError;
+				//Add this error to the overall error calculation
+				correctedDataErrors[ binIndex ] *= ( 1.0 + errorFraction );
+				if ( ErrorMode > 0 )
+				{
+					dagostiniErrors[ binIndex ] *= ( 1.0 + errorFraction );
+				}
 
-			//If there's a > 1%  discrepancy between the delinearised truth value and the correct value, warn that data is being lost in binning
-			if ( fabs( percentError ) > 1.0 )
-			{
-				cerr << "Bin " << binIndex << " has value " << delinearisedValue << " which has a " << percentError << "\% error vs the reference value (" << correctValue << ")" << endl;
-				dataLost = true;
+				//Increment average error
+				averagePercentError += percentError;
+
+				//If there's a > 1%  discrepancy between the delinearised truth value and the correct value, warn that data is being lost in binning
+				if ( fabs( percentError ) > 1.0 )
+				{
+					cerr << "Bin " << binIndex << " has value " << delinearisedValue << " which has a " << percentError << "\% error vs the reference value (" << correctValue << ")" << endl;
+					dataLost = true;
+				}
 			}
 		}
 		averagePercentError /= (double)( xTruthCheck->GetNbinsX() + 2 );
@@ -396,7 +399,7 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 		mcTruthDistribution->GetYaxis()->SetRangeUser( yMinimum, yMaximum );
 
 		//Format and save the smearing matrix
-		smearingMatrix = XvsYSmearing;
+		smearingMatrix = new TH2F( XvsYName.c_str(), XvsYTitle.c_str(), 1, 0.0, 1.0, 1, 0.0, 1.0 );//XvsYSmearing;
 		string smearingXTitle = xName + " vs " + yName + " Truth";
 		string smearingYTitle = xName + " vs " + yName + " Reconstructed";
 		smearingMatrix->SetXTitle( smearingXTitle.c_str() );

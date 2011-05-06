@@ -82,7 +82,7 @@ void Comparison::CompareDistributions( Distribution * FirstInput, Distribution *
 			sumErrors += error;
 
 			double deviation = fabs( error - 1.0 );
-			if ( deviation > maxDeviation || binIndex == 0 )
+			if ( deviation > maxDeviation || binIndex == 1 )
 			{
 				maxDeviation = deviation;
 				maxError = error;
@@ -90,7 +90,11 @@ void Comparison::CompareDistributions( Distribution * FirstInput, Distribution *
 			}
 		}
 		cout << "Average ratio ( unfolded bin ) / ( reference bin ) = " << sumErrors / (double)firstPlot->GetNbinsX() << endl;
-		cout << "Greatest discrepancy ( " << maxError << " ) is in bin " << maxDeviationIndex << " of " << firstPlot->GetNbinsX() << endl;
+
+		if ( maxDeviation > 1E-10 )
+		{
+			cout << "Greatest discrepancy ( " << maxError << " ) is in bin " << maxDeviationIndex << " of " << firstPlot->GetNbinsX() << endl;
+		}
 	}
 
 	//Clean up

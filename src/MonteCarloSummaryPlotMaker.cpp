@@ -550,6 +550,10 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 						covarianceMatrix = ( TH2F* )unfoldingPlots[plotIndex]->DAgostiniCovariance()->Clone( covarianceName.c_str() );
 						covarianceMatrix->SetTitle( covarianceTitle.c_str() );
 					}
+					else
+					{
+						covarianceMatrix = 0;
+					}
 
 					firstPlot = false;
 				}

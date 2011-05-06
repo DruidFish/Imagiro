@@ -11,6 +11,7 @@
 #include "TLeaf.h"
 #include <iostream>
 #include <cstdlib>
+#include <cmath>
 
 const string EVENT_NUMBER_COLUMN_NAME = "EventNumber";
 const string EVENT_WEIGHT_COLUMN_NAME = "EventWeight";
@@ -191,7 +192,15 @@ double InputUETree::GetValue( string VariableName )
 	else
 	{
 		//Found - return corresponding value
-		return currentValues[ columnIterator->second ];
+		double storedValue = currentValues[ columnIterator->second ];
+
+		if ( isnan( storedValue ) )
+		{
+			//cout << "Input NaN converted to 0" << endl;
+			storedValue = 0.0;
+		}
+
+		return storedValue;
 	}
 }
 
