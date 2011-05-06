@@ -24,13 +24,13 @@ class InputNtuple : public IFileInput
 {
 	public:
 		InputNtuple();
-		InputNtuple( string FilePath, string NtuplePath, string Description, int InputIndex );
+		InputNtuple( string FilePath, string NtuplePath, string Description, unsigned int InputIndex );
 		~InputNtuple();
 
 		//Change the Ntuple row being examined
-		virtual bool ReadRow( long RowIndex );
+		virtual bool ReadRow( unsigned long RowIndex );
 		virtual bool ReadEvent( UInt_t EventNumber );
-		virtual bool ReadEvent( UInt_t EventNumber, int FileIndex );
+		virtual bool ReadEvent( UInt_t EventNumber, unsigned int FileIndex );
 
 		//Get the standard event number and weight information
 		virtual UInt_t EventNumber();
@@ -40,17 +40,17 @@ class InputNtuple : public IFileInput
 		virtual double GetValue( string VariableName );
 
 		//Get the number of rows
-		virtual long NumberOfRows();
-		virtual long CurrentRow();
-		virtual long CurrentFile();
+		virtual unsigned long NumberOfRows();
+		virtual unsigned long CurrentRow();
+		virtual unsigned int CurrentFile();
 
 		//Get the description of the source
 		virtual string * Description();
-		virtual int DescriptionIndex();
+		virtual unsigned int DescriptionIndex();
 
 	private:
 		//Caching
-		long currentRowNumber, numberOfRows;
+		unsigned long currentRowNumber, numberOfRows;
 		float currentEventNumber, currentEventWeight;
 		TBranch *eventNumberBranch, *eventWeightBranch;
 		vector< TBranch* > branches;
@@ -66,7 +66,7 @@ class InputNtuple : public IFileInput
 		TFile * inputFile;
 		TTree * wrappedNtuple;
 		string sourceDescription;
-		int sourceDescriptionIndex;
+		unsigned int sourceDescriptionIndex;
 };
 
 #endif

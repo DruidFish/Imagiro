@@ -267,7 +267,7 @@ void MakeSmearingMatrices( IFileInput * TruthInput, IFileInput * ReconstructedIn
 	cout << endl << "Loading " << *( TruthInput->Description() ) << " events" << endl;
 
 	//Loop over all truth events to try and match to reconstructed events
-	for ( long truthIndex = 0; truthIndex < TruthInput->NumberOfRows(); truthIndex++ )
+	for ( unsigned long truthIndex = 0; truthIndex < TruthInput->NumberOfRows(); truthIndex++ )
 	{
 		//Get the event number for each truth event
 		TruthInput->ReadRow( truthIndex );
@@ -301,7 +301,7 @@ void MakeSmearingMatrices( IFileInput * TruthInput, IFileInput * ReconstructedIn
 	}
 
 	//Loop over all reconstructed events looking for fakes
-	for ( long reconstructedIndex = 0; reconstructedIndex < ReconstructedInput->NumberOfRows(); reconstructedIndex++ )
+	for ( unsigned long reconstructedIndex = 0; reconstructedIndex < ReconstructedInput->NumberOfRows(); reconstructedIndex++ )
 	{
 		//Use the cached search success/fail rather than search again (half the disk io: big time saver)
 		if ( !recoWasMatched[ reconstructedIndex ] )
@@ -330,7 +330,7 @@ void DoTheUnfolding( IFileInput * DataInput )
 {
 	//Populate the data distribution
 	cout << endl << "Loading " << *( DataInput->Description() ) << " events" << endl;
-	for ( long rowIndex = 0; rowIndex < DataInput->NumberOfRows(); rowIndex++ )
+	for ( unsigned long rowIndex = 0; rowIndex < DataInput->NumberOfRows(); rowIndex++ )
 	{
 		//Load the row into memory
 		DataInput->ReadRow( rowIndex );

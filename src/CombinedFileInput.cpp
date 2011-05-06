@@ -16,7 +16,7 @@ CombinedFileInput::CombinedFileInput()
 {
 }
 
-CombinedFileInput::CombinedFileInput( vector< IFileInput* > FileInputs, vector< double > FileWeights, string Description, int DescriptionIndex )
+CombinedFileInput::CombinedFileInput( vector< IFileInput* > FileInputs, vector< double > FileWeights, string Description, unsigned int DescriptionIndex )
 {
 	sourceDescription = Description;
 	sourceIndex = DescriptionIndex;
@@ -56,7 +56,7 @@ CombinedFileInput::~CombinedFileInput()
 }
 
 //Access a particular event, return false if the event is not found
-bool CombinedFileInput::ReadRow( long RowNumber )
+bool CombinedFileInput::ReadRow( unsigned long RowNumber )
 {
 	//Check for out of range
 	if ( RowNumber < 0 || RowNumber >= totalRows )
@@ -112,7 +112,7 @@ bool CombinedFileInput::ReadEvent( UInt_t EventNumber )
 
 	return found;
 }
-bool CombinedFileInput::ReadEvent( UInt_t EventNumber, int FileIndex )
+bool CombinedFileInput::ReadEvent( UInt_t EventNumber, unsigned int FileIndex )
 {
 	//Constrain the search to a particular file to avoid event number conflicts
 	currentFile = FileIndex;
@@ -137,12 +137,12 @@ double CombinedFileInput::GetValue( string VariableName )
 }
 
 //Get the number of rows
-long CombinedFileInput::NumberOfRows()
+unsigned long CombinedFileInput::NumberOfRows()
 {
 	return totalRows;
 }
 
-long CombinedFileInput::CurrentRow()
+unsigned long CombinedFileInput::CurrentRow()
 {
 	long currentRow = 0;
 
@@ -158,7 +158,7 @@ long CombinedFileInput::CurrentRow()
 	return currentRow;
 }
 
-long CombinedFileInput::CurrentFile()
+unsigned int CombinedFileInput::CurrentFile()
 {
 	return currentFile;
 }
@@ -169,7 +169,7 @@ string * CombinedFileInput::Description()
 	return &sourceDescription;
 }
 
-int CombinedFileInput::DescriptionIndex()
+unsigned int CombinedFileInput::DescriptionIndex()
 {
 	return sourceIndex;
 }

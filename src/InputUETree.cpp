@@ -22,7 +22,7 @@ InputUETree::InputUETree()
 }
 
 //Constructor taking arguments pointing to a particular Ntuple in a root file
-InputUETree::InputUETree( string FilePath, string NtuplePath, string Description, int DescriptionIndex )
+InputUETree::InputUETree( string FilePath, string NtuplePath, string Description, unsigned int DescriptionIndex )
 {
 	sourceDescription = Description;
 	sourceDescriptionIndex = DescriptionIndex;
@@ -92,7 +92,7 @@ InputUETree::InputUETree( string FilePath, string NtuplePath, string Description
 	}
 
 	//Loop over all rows to map event number to row index
-	for ( long rowIndex = 0; rowIndex < numberOfRows; rowIndex++ )
+	for ( unsigned long rowIndex = 0; rowIndex < numberOfRows; rowIndex++ )
 	{
 		//Load the row
 		currentRowNumber = rowIndex;
@@ -112,7 +112,7 @@ InputUETree::~InputUETree()
 }
 
 //Change the Ntuple row being examined
-bool InputUETree::ReadRow( long RowIndex )
+bool InputUETree::ReadRow( unsigned long RowIndex )
 {
 	//Check if we're already there
 	if ( currentRowNumber == RowIndex )
@@ -161,7 +161,7 @@ bool InputUETree::ReadEvent( UInt_t EventNumber )
 		}
 	}
 }
-bool InputUETree::ReadEvent( UInt_t EventNumber, int FileIndex )
+bool InputUETree::ReadEvent( UInt_t EventNumber, unsigned int FileIndex )
 {
         return ReadEvent( EventNumber );
 }
@@ -205,15 +205,15 @@ double InputUETree::GetValue( string VariableName )
 }
 
 //Get the number of rows
-long InputUETree::NumberOfRows()
+unsigned long InputUETree::NumberOfRows()
 {
 	return numberOfRows;
 }
-long InputUETree::CurrentRow()
+unsigned long InputUETree::CurrentRow()
 {
 	return currentRowNumber;
 }
-long InputUETree::CurrentFile()
+unsigned int InputUETree::CurrentFile()
 {
         return 0;
 }
@@ -225,7 +225,7 @@ string * InputUETree::Description()
 }
 
 //Get the index of the source
-int InputUETree::DescriptionIndex()
+unsigned int InputUETree::DescriptionIndex()
 {
 	return sourceDescriptionIndex;
 }

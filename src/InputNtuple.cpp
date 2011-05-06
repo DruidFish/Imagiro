@@ -22,7 +22,7 @@ InputNtuple::InputNtuple()
 }
 
 //Constructor taking arguments pointing to a particular Ntuple in a root file
-InputNtuple::InputNtuple( string FilePath, string NtuplePath, string Description, int DescriptionIndex )
+InputNtuple::InputNtuple( string FilePath, string NtuplePath, string Description, unsigned int DescriptionIndex )
 {
 	sourceDescription = Description;
 	sourceDescriptionIndex = DescriptionIndex;
@@ -92,7 +92,7 @@ InputNtuple::InputNtuple( string FilePath, string NtuplePath, string Description
 	}
 
 	//Loop over all rows to map event number to row index
-	for ( long rowIndex = 0; rowIndex < numberOfRows; rowIndex++ )
+	for ( unsigned long rowIndex = 0; rowIndex < numberOfRows; rowIndex++ )
 	{
 		//Load the row
 		currentRowNumber = rowIndex;
@@ -112,7 +112,7 @@ InputNtuple::~InputNtuple()
 }
 
 //Change the Ntuple row being examined
-bool InputNtuple::ReadRow( long RowIndex )
+bool InputNtuple::ReadRow( unsigned long RowIndex )
 {
 	//Check if we're already there
 	if ( currentRowNumber == RowIndex )
@@ -161,7 +161,7 @@ bool InputNtuple::ReadEvent( UInt_t EventNumber )
 		}
 	}
 }
-bool InputNtuple::ReadEvent( UInt_t EventNumber, int FileIndex )
+bool InputNtuple::ReadEvent( UInt_t EventNumber, unsigned int FileIndex )
 {
 	return ReadEvent( EventNumber );
 }
@@ -197,15 +197,15 @@ double InputNtuple::GetValue( string VariableName )
 }
 
 //Get the number of rows
-long InputNtuple::NumberOfRows()
+unsigned long InputNtuple::NumberOfRows()
 {
 	return numberOfRows;
 }
-long InputNtuple::CurrentRow()
+unsigned long InputNtuple::CurrentRow()
 {
 	return currentRowNumber;
 }
-long InputNtuple::CurrentFile()
+unsigned int InputNtuple::CurrentFile()
 {
         return 0;
 }
@@ -217,7 +217,7 @@ string * InputNtuple::Description()
 }
 
 //Get the index of the source
-int InputNtuple::DescriptionIndex()
+unsigned int InputNtuple::DescriptionIndex()
 {
 	return sourceDescriptionIndex;
 }

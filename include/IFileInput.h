@@ -20,9 +20,9 @@ class IFileInput
 {
 	public:
 		//Access a particular event, return false if the event is not found
-		virtual bool ReadRow( long RowIndex ) = 0;
+		virtual bool ReadRow( unsigned long RowIndex ) = 0;
 		virtual bool ReadEvent( UInt_t EventNumber ) = 0;
-		virtual bool ReadEvent( UInt_t EventNumber, int FileIndex ) = 0;
+		virtual bool ReadEvent( UInt_t EventNumber, unsigned int FileIndex ) = 0;
 
 		//Get the standard event number and weight information
 		virtual UInt_t EventNumber() = 0;
@@ -32,13 +32,13 @@ class IFileInput
 		virtual double GetValue( string VariableName ) = 0;
 
 		//Get the number of rows
-		virtual long NumberOfRows() = 0;
-		virtual long CurrentRow() = 0;
-		virtual long CurrentFile() = 0;
+		virtual unsigned long NumberOfRows() = 0;
+		virtual unsigned long CurrentRow() = 0;
+		virtual unsigned int CurrentFile() = 0;
 
 		//Get the description of the source
 		virtual string * Description() = 0;
-		virtual int DescriptionIndex() = 0;
+		virtual unsigned int DescriptionIndex() = 0;
 };
 
 #endif

@@ -1,34 +1,33 @@
 /**
-  @class InputUETree
+  @class TriggerChoosingInput
 
-  Accesses a slightly less general file format I use for the underlying event analysis
+  UE ANALYSIS SPECIFIC HARD CODE
+  An interface to pick events from different files, according to LeadJetPt
 
   @author Benjamin M Wynne bwynne@cern.ch
-  @date 06-04-2011
+  @date 06-05-2011
  */
 
 
-#ifndef INPUT_UE_TREE_H
-#define INPUT_UE_TREE_H
+#ifndef TRIGGER_CHOOSING_INPUT_H
+#define TRIGGER_CHOOSING_INPUT_H
 
 #include "IFileInput.h"
+#include <string>
 #include <map>
 #include <vector>
-#include "TFile.h"
-#include "TTree.h"
-#include "TBranch.h"
-#include "MonteCarloInformation.h"
+#include "Rtypes.h"
 
 using namespace std;
 
-class InputUETree : public IFileInput
+class TriggerChoosingInput : public IFileInput
 {
 	public:
-		InputUETree();
-		InputUETree( string FilePath, string NtuplePath, string Description, unsigned int InputIndex );
-		~InputUETree();
+		TriggerChoosingInput();
+		TriggerChoosingInput( string FilePath, string NtuplePath, string Description, unsigned int InputIndex );
+		~TriggerChoosingInput();
 
-		//Change the Ntuple row being examined
+		//Access a particular event, return false if the event is not found
 		virtual bool ReadRow( unsigned long RowIndex );
 		virtual bool ReadEvent( UInt_t EventNumber );
 		virtual bool ReadEvent( UInt_t EventNumber, unsigned int FileIndex );
@@ -50,23 +49,21 @@ class InputUETree : public IFileInput
 		virtual unsigned int DescriptionIndex();
 
 	private:
+		string ReplaceString( string Input, string FindString, string ReplaceString );
+
 		//Caching
-		unsigned long currentRowNumber, numberOfRows;
+		unsigned int currentFileNumber;
+		unsigned long currentRowNumber;
 		UInt_t currentEventNumber;
-		double currentEventWeight;
-		TBranch *eventNumberBranch, *eventWeightBranch;
-		vector< TBranch* > branches;
-		vector< double > currentValues;
 
 		//Mapping
+		vector< UInt_t > eventNumbers;
+		map< UInt_t, int > eventNumberToFile;
 		map< UInt_t, long > eventNumberToRow;
-		map< UInt_t, long >::iterator eventIterator;
-		map< string, int > columnNameToIndex;
-		map< string, int >::iterator columnIterator;
+		map< UInt_t, int >::iterator fileIterator;
 
 		//IO
-		TFile * inputFile;
-		TTree * wrappedNtuple;
+		vector< IFileInput* > triggerInputs;
 		string sourceDescription;
 		unsigned int sourceDescriptionIndex;
 };

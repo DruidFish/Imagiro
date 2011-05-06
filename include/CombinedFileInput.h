@@ -20,13 +20,13 @@ class CombinedFileInput : public IFileInput
 {
 	public:
 		CombinedFileInput();
-		CombinedFileInput( vector< IFileInput* > FileInputs, vector< double > FileWeights, string Description, int DescriptionIndex );
+		CombinedFileInput( vector< IFileInput* > FileInputs, vector< double > FileWeights, string Description, unsigned int DescriptionIndex );
 		~CombinedFileInput();
 
 		//Access a particular event, return false if the event is not found
-		virtual bool ReadRow( long RowIndex );
+		virtual bool ReadRow( unsigned long RowIndex );
 		virtual bool ReadEvent( UInt_t EventNumber );
-		virtual bool ReadEvent( UInt_t EventNumber, int FileIndex );
+		virtual bool ReadEvent( UInt_t EventNumber, unsigned int FileIndex );
 
 		//Get the standard event number and weight information
 		virtual UInt_t EventNumber();
@@ -36,19 +36,19 @@ class CombinedFileInput : public IFileInput
 		virtual double GetValue( string VariableName );
 
 		//Get the number of rows
-		virtual long NumberOfRows();
-		virtual long CurrentRow();
-		virtual long CurrentFile();
+		virtual unsigned long NumberOfRows();
+		virtual unsigned long CurrentRow();
+		virtual unsigned int CurrentFile();
 
 		//Get the description of the source
 		virtual string * Description();
-		virtual int DescriptionIndex();
+		virtual unsigned int DescriptionIndex();
 
 	private:
 		UInt_t currentEventNumber;
 		string sourceDescription;
-		int currentFile, sourceIndex;
-		long totalRows;
+		unsigned int currentFile, sourceIndex;
+		unsigned long totalRows;
 		vector< IFileInput* > fileInputs;
 		vector< double > fileWeights;
 };
