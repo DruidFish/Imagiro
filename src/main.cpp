@@ -94,8 +94,8 @@ int main ( int argc, char * argv[] )
 	// Load the data - Again, set this up yourself            //
 	//                                                        //
 	////////////////////////////////////////////////////////////
-	IFileInput * dataInput = new InputUETree( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/JetTauEtmiss/combined.root", "benTuple", "JetTauEtmiss Data (2010)", mcInfo->NumberOfSources() );
-	//IFileInput * dataInput = mcInfo->MakeReconstructedInput( 0 );
+	//IFileInput * dataInput = new InputUETree( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/JetTauEtmiss/combined.root", "benTuple", "JetTauEtmiss Data (2010)", mcInfo->NumberOfSources() );
+	IFileInput * dataInput = mcInfo->MakeReconstructedInput( 0 );
 
 	////////////////////////////////////////////////////////////
 	//                                                        //
@@ -109,7 +109,7 @@ int main ( int argc, char * argv[] )
 	double scaleFactor = 3.0 / ( 10.0 * M_PI );
 	int jetPtBins = 100;
 	double jetPtMin = 0.0;
-	double jetPtMax = 200000.0;
+	double jetPtMax = 400000.0;
 	int nChargeBins = 60;
 	double nChargeMin = 0.5;
 	double nChargeMax = 60.5;
@@ -132,7 +132,7 @@ int main ( int argc, char * argv[] )
 	leadJetPtSummary->UseLogScale();
 	allPlotMakers.push_back( leadJetPtSummary );
 
-	//N charge towards
+/*	//N charge towards
 	XPlotMaker * nChargedTowardsPlot = new XPlotMaker( "NChargedTowards", "PYTHIA", nChargeBins, nChargeMin, nChargeMax, 1.0, true );
 	MonteCarloSummaryPlotMaker * nChargedTowardsSummary = new MonteCarloSummaryPlotMaker( nChargedTowardsPlot, mcInfo, COMBINE_MC );
 	allPlotMakers.push_back( nChargedTowardsSummary );
@@ -233,9 +233,8 @@ int main ( int argc, char * argv[] )
 	MonteCarloSummaryPlotMaker * pTmeanvsNChargedTransSummary = new MonteCarloSummaryPlotMaker( pTmeanvsNChargedTransPlot, mcInfo, COMBINE_MC );
 	pTmeanvsNChargedTransSummary->SetYRange( 800.0, 1600.0 );
 	pTmeanvsNChargedTransSummary->SetAxisLabels( "N_{ch}", "<p_{T}>" );
-	allPlotMakers.push_back( pTmeanvsNChargedTransSummary );
+	allPlotMakers.push_back( pTmeanvsNChargedTransSummary );*/
 
-	//Make a plot of mean pT of charged particles in the toward region vs lead jet pT
 	/////////////////////////////////////////////////////////////
 	//                                                         //
 	// No further user edits required                          //

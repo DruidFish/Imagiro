@@ -13,11 +13,13 @@
 #include "CombinedFileInput.h"
 #include "InputNtuple.h"
 #include "InputUETree.h"
+#include "TriggerChoosingInput.h"
 #include <cstdlib>
 #include <iostream>
 
 const string NTUPLE_TYPE_STRING = "InputNtuple";
 const string UE_TREE_TYPE_STRING = "InputUETree";
+const string TRIGGER_CHOOSING_TYPE_STRING = "TriggerChoosingInput";
 
 MonteCarloInformation::MonteCarloInformation()
 {
@@ -28,31 +30,31 @@ MonteCarloInformation::MonteCarloInformation()
 	//                                                        //
 	////////////////////////////////////////////////////////////
 
-	//Pythia
+	//Pythia 6 AMBT1
 	combineFiles.push_back( true );
 
-	truthPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J0_pythia/combinedTruth.root" );
+	truthPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J0_AMBT1/combinedTruth.root" );
 	vector< string > pythiaExtraTruth;
-	pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J1_pythia/combinedTruth.root" );
-	pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J2_pythia/combinedTruth.root" );
-	pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J3_pythia/combinedTruth.root" );
-	//pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J4_pythia/combinedTruth.root" );
-	//pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J5_pythia/combinedTruth.root" );
-	//pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J6_pythia/combinedTruth.root" );
-	//pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J7_pythia/combinedTruth.root" );
-	//pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J8_pythia/combinedTruth.root" );
+	pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J1_AMBT1/combinedTruth.root" );
+	pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J2_AMBT1/combinedTruth.root" );
+	pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J3_AMBT1/combinedTruth.root" );
+	pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J4_AMBT1/combinedTruth.root" );
+	pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J5_AMBT1/combinedTruth.root" );
+	pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J6_AMBT1/combinedTruth.root" );
+	//pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J7_AMBT1/combinedTruth.root" );
+	//pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J8_AMBT1/combinedTruth.root" );
 	extraTruthPaths.push_back( pythiaExtraTruth );
 
-	recoPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J0_pythia/combinedReco.root" );
+	recoPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J0_AMBT1/combinedReco.TriggerName.root" );
 	vector< string > pythiaExtraReco;
-	pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J1_pythia/combinedReco.root" );
-	pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J2_pythia/combinedReco.root" );
-	pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J3_pythia/combinedReco.root" );
-	//pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J4_pythia/combinedReco.root" );
-	//pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J5_pythia/combinedReco.root" );
-	//pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J6_pythia/combinedReco.root" );
-	//pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J7_pythia/combinedReco.root" );
-	//pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J8_pythia/combinedReco.root" );
+	pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J1_AMBT1/combinedReco.TriggerName.root" );
+	pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J2_AMBT1/combinedReco.TriggerName.root" );
+	pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J3_AMBT1/combinedReco.TriggerName.root" );
+	pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J4_AMBT1/combinedReco.TriggerName.root" );
+	pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J5_AMBT1/combinedReco.TriggerName.root" );
+	pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J6_AMBT1/combinedReco.TriggerName.root" );
+	//pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J7_AMBT1/combinedReco.TriggerName.root" );
+	//pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J8_AMBT1/combinedReco.TriggerName.root" );
 	extraRecoPaths.push_back( pythiaExtraReco );
 
 	vector< double > pythiaWeights;
@@ -60,41 +62,41 @@ MonteCarloInformation::MonteCarloInformation()
 	pythiaWeights.push_back( 6.7818E+05 / 199968.0 );
 	pythiaWeights.push_back( 4.0982E+04 / 199940.0 );
 	pythiaWeights.push_back( 2.1929E+03 / 199929.0 );
-	//pythiaWeights.push_back( 87.701 / 199837.0 );
-	//pythiaWeights.push_back( 2.3501 / 199640.0 );
-	//pythiaWeights.push_back( 0.033614 / 199206.0 );
+	pythiaWeights.push_back( 87.701 / 199837.0 );
+	pythiaWeights.push_back( 2.3501 / 199640.0 );
+	pythiaWeights.push_back( 0.033614 / 199206.0 );
 	//pythiaWeights.push_back( 1.3744E-04 / 198767.0 );
 	//pythiaWeights.push_back( 6.2099E-09 / 197077.0 );
 	inputWeights.push_back( pythiaWeights );
 
-	descriptions.push_back( "PYTHIA" );
+	descriptions.push_back( "PYTHIA6 AMBT1" );
 	colours.push_back( kMagenta );
 	styles.push_back( 2 );
-	inputTypes.push_back( "InputUETree" );
+	inputTypes.push_back( "TriggerChoosingInput" );
 	internalTruth.push_back( "benTuple" );
 	internalReco.push_back( "benTuple" );
 
-	//Herwig
-/*	combineFiles.push_back( true );
+	//Herwig++
+	combineFiles.push_back( true );
 
-	truthPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J0_herwig/combinedTruth.root" );
+	truthPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J0_Herwig/combinedTruth.root" );
 	vector< string > herwigExtraTruth;
-	herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J1_herwig/combinedTruth.root" );
-	herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J2_herwig/combinedTruth.root" );
-	herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J3_herwig/combinedTruth.root" );
-	//herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J4_herwig/combinedTruth.root" );
-	//herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J5_herwig/combinedTruth.root" );
-	//herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J6_herwig/combinedTruth.root" );
+	herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J1_Herwig/combinedTruth.root" );
+	herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J2_Herwig/combinedTruth.root" );
+	herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J3_Herwig/combinedTruth.root" );
+	herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J4_Herwig/combinedTruth.root" );
+	herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J5_Herwig/combinedTruth.root" );
+	herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J6_Herwig/combinedTruth.root" );
 	extraTruthPaths.push_back( herwigExtraTruth );
 
-	recoPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J0_herwig/combinedReco.root" );
+	recoPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J0_Herwig/combinedReco.TriggerName.root" );
 	vector< string > herwigExtraReco;
-	herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J1_herwig/combinedReco.root" );
-	herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J2_herwig/combinedReco.root" );
-	herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J3_herwig/combinedReco.root" );
-	//herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J4_herwig/combinedReco.root" );
-	//herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J5_herwig/combinedReco.root" );
-	//herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/J6_herwig/combinedReco.root" );
+	herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J1_Herwig/combinedReco.TriggerName.root" );
+	herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J2_Herwig/combinedReco.TriggerName.root" );
+	herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J3_Herwig/combinedReco.TriggerName.root" );
+	herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J4_Herwig/combinedReco.TriggerName.root" );
+	herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J5_Herwig/combinedReco.TriggerName.root" );
+	herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J6_Herwig/combinedReco.TriggerName.root" );
 	extraRecoPaths.push_back( herwigExtraReco );
 
 	vector< double > herwigWeights;
@@ -102,72 +104,63 @@ MonteCarloInformation::MonteCarloInformation()
 	herwigWeights.push_back( 7.4366E+05 / 397897.0 );
 	herwigWeights.push_back( 4.4307E+04 / 398498.0 );
 	herwigWeights.push_back( 2357.6 / 399598.0 );
-	//herwigWeights.push_back( 94.236 / 397443.0 );
-	//herwigWeights.push_back( 2.5813 / 398094.0 );
-	//herwigWeights.push_back( 0.039439 / 397597.0 );
+	herwigWeights.push_back( 94.236 / 397443.0 );
+	herwigWeights.push_back( 2.5813 / 398094.0 );
+	herwigWeights.push_back( 0.039439 / 397597.0 );
 	inputWeights.push_back( herwigWeights );
 
-	descriptions.push_back( "HERWIG" );
+	descriptions.push_back( "HERWIG++" );
 	colours.push_back( kRed + 3 );
 	styles.push_back( 8 );
 	inputTypes.push_back( "InputUETree" );
 	internalTruth.push_back( "benTuple" );
-	internalReco.push_back( "benTuple" );*/
-
-	//Pythia 6 (MC09?)
-	/*combineFiles.push_back( false );
-	truthPaths.push_back( "data/user.bwynne.LeadingJetModifiedv3.Pythia6.MC.TruthJet/mergedFile.root" );
-	recoPaths.push_back( "data/user.bwynne.LeadingJetModifiedv3.Pythia6.MC.CaloJet/mergedFile.root" );
-	descriptions.push_back( "PYTHIA6 ATLAS MC09" );
-	colours.push_back( kMagenta );
-	styles.push_back( 2 );
-	inputTypes.push_back( "InputNtuple" );
-	internalTruth.push_back( "benTuple" );
 	internalReco.push_back( "benTuple" );
 
-	//AMBT1
-	combineFiles.push_back( false );
-	truthPaths.push_back( "data/user.bwynne.LeadingJetModifiedv3.AMBT1.MC.TruthJet/mergedFile.root" );
-	recoPaths.push_back( "data/user.bwynne.LeadingJetModifiedv3.AMBT1.MC.CaloJet/mergedFile.root" );
-	descriptions.push_back( "PYTHIA6 AMBT1" );
-	colours.push_back( kRed );
-	styles.push_back( 1 );
-	inputTypes.push_back( "InputNtuple" );
+	//Pythia 6 Perugia 2010
+	combineFiles.push_back( true );
+
+	truthPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J0_Perugia2010/combinedTruth.root" );
+	vector< string > perugiaExtraTruth;
+	perugiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J1_Perugia2010/combinedTruth.root" );
+	perugiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J2_Perugia2010/combinedTruth.root" );
+	perugiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J3_Perugia2010/combinedTruth.root" );
+	perugiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J4_Perugia2010/combinedTruth.root" );
+	perugiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J5_Perugia2010/combinedTruth.root" );
+	perugiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J6_Perugia2010/combinedTruth.root" );
+	//perugiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J7_Perugia2010/combinedTruth.root" );
+	//perugiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J8_Perugia2010/combinedTruth.root" );
+	extraTruthPaths.push_back( perugiaExtraTruth );
+
+	recoPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J0_Perugia2010/combinedReco.TriggerName.root" );
+	vector< string > perugiaExtraReco;
+	perugiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J1_Perugia2010/combinedReco.TriggerName.root" );
+	perugiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J2_Perugia2010/combinedReco.TriggerName.root" );
+	perugiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J3_Perugia2010/combinedReco.TriggerName.root" );
+	perugiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J4_Perugia2010/combinedReco.TriggerName.root" );
+	perugiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J5_Perugia2010/combinedReco.TriggerName.root" );
+	perugiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J6_Perugia2010/combinedReco.TriggerName.root" );
+	//perugiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J7_Perugia2010/combinedReco.TriggerName.root" );
+	//perugiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v3/J8_Perugia2010/combinedReco.TriggerName.root" );
+	extraRecoPaths.push_back( perugiaExtraReco );
+
+	vector< double > perugiaWeights;
+	perugiaWeights.push_back( 7.7714E+06 / 398849.0 );
+	perugiaWeights.push_back( 5.0385E+05 / 1498393.0 );
+	perugiaWeights.push_back( 2.9358E+04 / 988144.0 );
+	perugiaWeights.push_back( 1.5600E+03 / 399497.0 );
+	perugiaWeights.push_back( 64.393 / 398199.0 );
+	perugiaWeights.push_back( 1.8764 / 398046.0 );
+	perugiaWeights.push_back( 3.0412E-02 / 397900.0 );
+	//perugiaWeights.push_back( 1.3212E-04 / 399145.0 );
+	//perugiaWeights.push_back( 4.9978E-09 / 396886.0 );
+	inputWeights.push_back( perugiaWeights );
+
+	descriptions.push_back( "PYTHIA6 Perugia2010" );
+	colours.push_back( kGreen );
+	styles.push_back( 3 );
+	inputTypes.push_back( "TriggerChoosingInput" );
 	internalTruth.push_back( "benTuple" );
 	internalReco.push_back( "benTuple" );
-
-	//DW
-	combineFiles.push_back( false );
-	truthPaths.push_back( "data/user.bwynne.LeadingJetModifiedv3.DW.MC.TruthJet/mergedFile.root" );
-	recoPaths.push_back( "data/user.bwynne.LeadingJetModifiedv3.DW.MC.CaloJet/mergedFile.root" );
-	descriptions.push_back( "PYTHIA6 DW" );
-	colours.push_back( kBlue );
-	styles.push_back( 7 );
-	inputTypes.push_back( "InputNtuple" );
-	internalTruth.push_back( "benTuple" );
-	internalReco.push_back( "benTuple" );
-
-	//Herwig++
-	combineFiles.push_back( false );
-	truthPaths.push_back( "data/user.bwynne.LeadingJetModifiedv3.HerwigPP.MC.TruthJet/mergedFile.root" );
-	recoPaths.push_back( "data/user.bwynne.LeadingJetModifiedv3.HerwigPP.MC.CaloJet/mergedFile.root" );
-	descriptions.push_back( "Herwig++ ATLAS MC09" );
-	colours.push_back( kRed + 3 );
-	styles.push_back( 8 );
-	inputTypes.push_back( "InputNtuple" );
-	internalTruth.push_back( "benTuple" );
-	internalReco.push_back( "benTuple" );
-
-	//Pythia 8 non diffractive
-	combineFiles.push_back( false );
-	truthPaths.push_back( "data/user.bwynne.LeadingJetModifiedv3.Pythia8NonDiff.MC.TruthJet/mergedFile.root" );
-	recoPaths.push_back( "data/user.bwynne.LeadingJetModifiedv3.Pythia8NonDiff.MC.CaloJet/mergedFile.root" );
-	descriptions.push_back( "PYTHIA8 Non-Diffractive" );
-	colours.push_back( kGreen + 2 );
-	styles.push_back( 5 );
-	inputTypes.push_back( "InputNtuple" );
-	internalTruth.push_back( "benTuple" );
-	internalReco.push_back( "benTuple" );*/
 }
 
 MonteCarloInformation::~MonteCarloInformation()
@@ -329,6 +322,10 @@ IFileInput * MonteCarloInformation::InstantiateSingleInput( string FilePath, str
 	else if ( inputTypes[ Index ] == UE_TREE_TYPE_STRING )
 	{
 		return new InputUETree( FilePath, InternalPath, descriptions[ Index ], Index );
+	}
+	else if ( inputTypes[ Index ] == TRIGGER_CHOOSING_TYPE_STRING )
+	{
+		return new TriggerChoosingInput( FilePath, InternalPath, descriptions[ Index ], Index );
 	}
 	else
 	{
