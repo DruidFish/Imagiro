@@ -19,8 +19,14 @@ using namespace std;
 class IFileInput
 {
 	public:
+		//Destructor
+		virtual ~IFileInput()
+		{
+		}
+
 		//Access a particular event, return false if the event is not found
 		virtual bool ReadRow( unsigned long RowIndex ) = 0;
+		virtual bool ReadNextRow() = 0;
 		virtual bool ReadEvent( UInt_t EventNumber ) = 0;
 		virtual bool ReadEvent( UInt_t EventNumber, unsigned int FileIndex ) = 0;
 

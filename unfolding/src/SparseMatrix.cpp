@@ -11,6 +11,7 @@
 #include "SparseMatrix.h"
 #include <iostream>
 #include <cstdlib>
+#include <cassert>
 
 SparseMatrix::SparseMatrix()
 {
@@ -37,9 +38,9 @@ void SparseMatrix::AddToEntry( int FirstIndex, int SecondIndex, double Value )
 	}
 
 	//Find if this matrix element already exists
-	pair< int, int > searchPair( FirstIndex, SecondIndex );
-	map< pair< int, int >, double >::iterator searchResult;
-	searchResult = matrix.find( searchPair );
+	//const pair< int, int > searchPair = make_pair( FirstIndex, SecondIndex );
+	const pair< int, int > searchPair( FirstIndex, SecondIndex );
+	const map< pair< int, int >, double >::iterator searchResult = matrix.find( searchPair );
 
 	//Either create a new element or add to the existing one
 	if ( searchResult == matrix.end() )
@@ -51,6 +52,8 @@ void SparseMatrix::AddToEntry( int FirstIndex, int SecondIndex, double Value )
 	{
 		matrix[ searchPair ] += Value;
 	}
+
+	assert( entryNumber == (int)matrix.size() );
 }
 
 //Get the next non-zero entry in an iteration through them

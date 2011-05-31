@@ -29,7 +29,7 @@ MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker()
 {
 }
 
-//Constructor with the names to use for the variables
+//Constructor for unfolding plots
 MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker( IUnfolder * TemplatePlotMaker, MonteCarloInformation * PlotInformation, bool CombineMCMode )
 {
 	isUnfolding = true;
@@ -42,7 +42,8 @@ MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker( IUnfolder * TemplatePlot
 	dataDescription = "";
 
 	//Make a separate plot for each MC source
-	for ( int mcIndex = 0; mcIndex < mcInfo->NumberOfSources(); mcIndex++ )
+	bool usedTheTemplate = false;
+	for ( unsigned int mcIndex = 0; mcIndex < mcInfo->NumberOfSources(); mcIndex++ )
 	{
 		string mcDescription = mcInfo->Description( mcIndex );
 
@@ -51,6 +52,7 @@ MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker( IUnfolder * TemplatePlot
 		{
 			unfoldingPlots.push_back( TemplatePlotMaker );
 			allPlots.push_back( TemplatePlotMaker );
+			usedTheTemplate = true;
 		}
 		else
 		{
@@ -62,8 +64,13 @@ MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker( IUnfolder * TemplatePlot
 		//Make plots for testing the unfolding with MC
 		crossCheckPlots.push_back( TemplatePlotMaker->Clone( mcDescription ) );
 	}
+	if ( !usedTheTemplate )
+	{
+		delete TemplatePlotMaker;
+	}
 }
 
+//Constructor for folding plots
 MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker( IFolder * TemplatePlotMaker, MonteCarloInformation * PlotInformation, bool CombineMCMode )
 {
 	isUnfolding = false;
@@ -76,7 +83,8 @@ MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker( IFolder * TemplatePlotMa
 	dataDescription = "";
 
 	//Make a separate plot for each MC source
-	for ( int mcIndex = 0; mcIndex < mcInfo->NumberOfSources(); mcIndex++ )
+	bool usedTheTemplate = false;
+	for ( unsigned int mcIndex = 0; mcIndex < mcInfo->NumberOfSources(); mcIndex++ )
 	{
 		string mcDescription = mcInfo->Description( mcIndex );
 
@@ -85,6 +93,7 @@ MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker( IFolder * TemplatePlotMa
 		{
 			foldingPlots.push_back( TemplatePlotMaker );
 			allPlots.push_back( TemplatePlotMaker );
+			usedTheTemplate = true;
 		}
 		else
 		{
@@ -92,6 +101,10 @@ MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker( IFolder * TemplatePlotMa
 			foldingPlots.push_back( clonePlot );
 			allPlots.push_back( clonePlot );
 		}
+	}
+	if ( !usedTheTemplate )
+	{
+		delete TemplatePlotMaker;
 	}
 }
 
@@ -536,11 +549,15 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 					combinedCorrectedHistogramWithSystematics = new TH1F( *correctedHistogram );
 					combinedCorrectedHistogramWithStatistics = new TH1F( *correctedHistogram );
 
-					//Copy a smearing matrix
-					string smearingName = allPlots[plotIndex]->Description(false) + "SmearingMatrix";
-					string smearingTitle = allPlots[plotIndex]->Description(true) + " Smearing Matrix";
-					smearingMatrix = ( TH2F* )allPlots[plotIndex]->SmearingMatrix()->Clone( smearingName.c_str() );
-					smearingMatrix->SetTitle( smearingTitle.c_str() );
+					//Copy a smearing matrix if it exists
+					smearingMatrix = NULL;
+					if ( allPlots[plotIndex]->SmearingMatrix() )
+					{
+						string smearingName = allPlots[plotIndex]->Description(false) + "SmearingMatrix";
+						string smearingTitle = allPlots[plotIndex]->Description(true) + " Smearing Matrix";
+						smearingMatrix = ( TH2F* )allPlots[plotIndex]->SmearingMatrix()->Clone( smearingName.c_str() );
+						smearingMatrix->SetTitle( smearingTitle.c_str() );
+					}
 
 					//Copy a covariance matrix
 					if ( ErrorMode > 1 && isUnfolding )
@@ -816,7 +833,11 @@ void MonteCarloSummaryPlotMaker::SaveResult( TFile * OutputFile )
 	//Save the output
 	OutputFile->cd();
 	plotCanvas->Write();
-	smearingMatrix->Write();
+
+	if ( smearingMatrix )
+	{
+		smearingMatrix->Write();
+	}
 
 	if ( covarianceMatrix )
 	{

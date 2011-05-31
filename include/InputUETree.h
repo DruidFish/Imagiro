@@ -25,11 +25,13 @@ class InputUETree : public IFileInput
 {
 	public:
 		InputUETree();
-		InputUETree( string FilePath, string NtuplePath, string Description, unsigned int InputIndex );
-		~InputUETree();
+		InputUETree( string FilePath, string NtuplePath, string Description, unsigned int InputIndex,
+				string CutName = "NoCut", double CutMinimum = 0.0, double CutMaximum = 0.0 );
+		virtual ~InputUETree();
 
 		//Change the Ntuple row being examined
 		virtual bool ReadRow( unsigned long RowIndex );
+		virtual bool ReadNextRow();
 		virtual bool ReadEvent( UInt_t EventNumber );
 		virtual bool ReadEvent( UInt_t EventNumber, unsigned int FileIndex );
 
@@ -51,7 +53,7 @@ class InputUETree : public IFileInput
 
 	private:
 		//Caching
-		unsigned long currentRowNumber, numberOfRows;
+		unsigned long currentRowNumber;
 		UInt_t currentEventNumber;
 		double currentEventWeight;
 		TBranch *eventNumberBranch, *eventWeightBranch;
@@ -59,10 +61,11 @@ class InputUETree : public IFileInput
 		vector< double > currentValues;
 
 		//Mapping
-		map< UInt_t, long > eventNumberToRow;
-		map< UInt_t, long >::iterator eventIterator;
-		map< string, int > columnNameToIndex;
-		map< string, int >::iterator columnIterator;
+		map< UInt_t, unsigned long > eventNumberToRow;
+		map< UInt_t, unsigned long >::iterator eventIterator;
+		map< string, unsigned int > columnNameToIndex;
+		map< string, unsigned int >::iterator columnIterator;
+		vector< UInt_t > validRows;
 
 		//IO
 		TFile * inputFile;

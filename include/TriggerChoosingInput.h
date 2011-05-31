@@ -25,10 +25,11 @@ class TriggerChoosingInput : public IFileInput
 	public:
 		TriggerChoosingInput();
 		TriggerChoosingInput( string FilePath, string NtuplePath, string Description, unsigned int InputIndex );
-		~TriggerChoosingInput();
+		virtual ~TriggerChoosingInput();
 
 		//Access a particular event, return false if the event is not found
 		virtual bool ReadRow( unsigned long RowIndex );
+		virtual bool ReadNextRow();
 		virtual bool ReadEvent( UInt_t EventNumber );
 		virtual bool ReadEvent( UInt_t EventNumber, unsigned int FileIndex );
 
@@ -53,14 +54,7 @@ class TriggerChoosingInput : public IFileInput
 
 		//Caching
 		unsigned int currentFileNumber;
-		unsigned long currentRowNumber;
-		UInt_t currentEventNumber;
-
-		//Mapping
-		vector< UInt_t > eventNumbers;
-		map< UInt_t, int > eventNumberToFile;
-		map< UInt_t, long > eventNumberToRow;
-		map< UInt_t, int >::iterator fileIterator;
+		unsigned long totalRows, currentRowNumber, rowInCurrentFile;
 
 		//IO
 		vector< IFileInput* > triggerInputs;

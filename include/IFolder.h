@@ -22,6 +22,11 @@ using namespace std;
 class IFolder : public IPlotMaker
 {
 	public:
+		//Destructor
+		virtual ~IFolder()
+		{
+		}
+
 		//Take input values from ntuples
 		//To reduce file access, the appropriate row must already be in memory, the method does not change row
 		virtual void StoreMatch( IFileInput * TruthInput, IFileInput * ReconstructedInput ) = 0;

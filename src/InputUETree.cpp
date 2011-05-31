@@ -22,17 +22,25 @@ InputUETree::InputUETree()
 }
 
 //Constructor taking arguments pointing to a particular Ntuple in a root file
-InputUETree::InputUETree( string FilePath, string NtuplePath, string Description, unsigned int DescriptionIndex )
+InputUETree::InputUETree( string FilePath, string NtuplePath, string Description, unsigned int DescriptionIndex,
+	       string CutName, double CutMinimum, double CutMaximum )
 {
 	sourceDescription = Description;
 	sourceDescriptionIndex = DescriptionIndex;
 
 	//Get the Ntuple from the file
 	inputFile = new TFile( FilePath.c_str(), "READ" );
+	if ( !inputFile->IsOpen() )
+	{
+		cerr << "Failed to open file " << FilePath << endl;
+		exit(1);
+	}
 	wrappedNtuple = ( TTree* )inputFile->Get( NtuplePath.c_str() );
-
-	//Find out the number of rows
-	numberOfRows = wrappedNtuple->GetEntries();
+	if ( !wrappedNtuple )
+	{
+		cerr << "Failed to retrieve " << NtuplePath << " from " << FilePath << endl;
+		exit(1);
+	}
 
 	//Loop over all columns/branches to find their names
 	TIter branchIterator( wrappedNtuple->GetListOfLeaves() );
@@ -43,22 +51,27 @@ InputUETree::InputUETree( string FilePath, string NtuplePath, string Description
 	while ( ( nextLeaf = ( TLeaf* )branchIterator() ) )
 	{
 		string leafName = nextLeaf->GetName();
+		string leafType = nextLeaf->GetTypeName();
 
 		//Find the special columns for EventNumber and EventWeight
-		if ( leafName == EVENT_NUMBER_COLUMN_NAME )
+		if ( leafType == "UInt_t" && leafName == EVENT_NUMBER_COLUMN_NAME )
 		{
 			wrappedNtuple->SetBranchAddress( EVENT_NUMBER_COLUMN_NAME.c_str(), &currentEventNumber, &eventNumberBranch );
 			eventNumberFound = true;
 		}
-		else if ( leafName == EVENT_WEIGHT_COLUMN_NAME )
+		else if ( leafType == "Double_t" )
 		{
-			wrappedNtuple->SetBranchAddress( EVENT_WEIGHT_COLUMN_NAME.c_str(), &currentEventWeight, &eventWeightBranch );
-			eventWeightFound = true;
-		}
-		else
-		{
-			if ( leafName != "DeltaPhi" )
+			//Hack at the moment to remove other formats
+
+			if ( leafName == EVENT_WEIGHT_COLUMN_NAME )
 			{
+				//Event weight
+				wrappedNtuple->SetBranchAddress( EVENT_WEIGHT_COLUMN_NAME.c_str(), &currentEventWeight, &eventWeightBranch );
+				eventWeightFound = true;
+			}
+			else
+			{
+				//All other readable columns
 				otherColumnNames.push_back(leafName);
 			}
 		}
@@ -92,23 +105,52 @@ InputUETree::InputUETree( string FilePath, string NtuplePath, string Description
 	}
 
 	//Loop over all rows to map event number to row index
-	for ( unsigned long rowIndex = 0; rowIndex < numberOfRows; rowIndex++ )
+	bool calculateCut = !( CutMaximum == 0.0 && CutMinimum == 0.0 && CutName == "NoCut" );
+	currentRowNumber = 0;
+	currentEventNumber = 0;
+	for ( unsigned long rowIndex = 0; rowIndex < wrappedNtuple->GetEntries(); rowIndex++ )
 	{
 		//Load the row
-		currentRowNumber = rowIndex;
 		wrappedNtuple->GetEvent( rowIndex );
 
-		//Map the event number
-		eventNumberToRow[ currentEventNumber ] = rowIndex;
+		//Perform a cut if required
+		bool storeEvent = true;
+		if ( calculateCut )
+		{
+			double cutValue = GetValue( CutName );
+			storeEvent = ( cutValue >= CutMinimum && cutValue < CutMaximum );
+		}
+
+		//Make maps to the event
+		if ( storeEvent )
+		{
+			eventNumberToRow[ currentEventNumber ] = rowIndex;
+			validRows.push_back( rowIndex );
+		}
+	}
+
+	//Settle on a valid row
+	if ( validRows.size() > 0 )
+	{
+		 wrappedNtuple->GetEvent( validRows[ 0 ] );
+		 currentRowNumber = 0;
 	}
 }
 
 //Destructor
 InputUETree::~InputUETree()
 {
+	//STL
+	eventNumberToRow.clear();
+	validRows.clear();
+	columnNameToIndex.clear();
+	branches.clear();
+	currentValues.clear();
+
+	//IO
+	delete wrappedNtuple;
 	inputFile->Close();
 	delete inputFile;
-	delete wrappedNtuple;
 }
 
 //Change the Ntuple row being examined
@@ -122,7 +164,7 @@ bool InputUETree::ReadRow( unsigned long RowIndex )
 	else
 	{
 		//Check if the row index is in range
-		if ( RowIndex < 0 || RowIndex >= numberOfRows )
+		if ( RowIndex >= validRows.size() )
 		{
 			return false;
 		}
@@ -130,11 +172,28 @@ bool InputUETree::ReadRow( unsigned long RowIndex )
 		{
 			//Load the corresponding row from the file
 			currentRowNumber = RowIndex;
-			wrappedNtuple->GetEvent( RowIndex );
+			wrappedNtuple->GetEvent( validRows[ RowIndex ] );
 			return true;
 		}
 	}
 }
+
+bool InputUETree::ReadNextRow()
+{
+	if ( currentRowNumber < validRows.size() - 1 )
+	{
+		//Load the next row
+		currentRowNumber++;
+		wrappedNtuple->GetEvent( validRows[ currentRowNumber ] );
+		return true;
+	}
+	else
+	{
+		//No more rows
+		return false;
+	}
+}
+
 bool InputUETree::ReadEvent( UInt_t EventNumber )
 {
 	//Check if we're already there
@@ -155,8 +214,17 @@ bool InputUETree::ReadEvent( UInt_t EventNumber )
 		else
 		{
 			//Load the corresponding row from the file
-			currentRowNumber = eventIterator->second;
 			wrappedNtuple->GetEvent( eventIterator->second );
+
+			//Find out which valid row that corresponds to
+			for ( unsigned int rowIndex = 0; rowIndex < validRows.size(); rowIndex++ )
+			{
+				if ( eventIterator->second == validRows[ rowIndex ] )
+				{
+					currentRowNumber = rowIndex;
+					break;
+				}
+			}
 			return true;
 		}
 	}
@@ -207,7 +275,7 @@ double InputUETree::GetValue( string VariableName )
 //Get the number of rows
 unsigned long InputUETree::NumberOfRows()
 {
-	return numberOfRows;
+	return validRows.size();
 }
 unsigned long InputUETree::CurrentRow()
 {

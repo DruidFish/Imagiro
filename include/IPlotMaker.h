@@ -21,6 +21,11 @@ using namespace std;
 class IPlotMaker
 {
 	public:
+		//Destructor
+		virtual ~IPlotMaker()
+		{
+		}
+
 		//Take input values from ntuples
 		//To reduce file access, the appropriate row must already be in memory, the method does not change row
 		virtual void StoreMatch( IFileInput * TruthInput, IFileInput * ReconstructedInput ) = 0;
@@ -28,26 +33,11 @@ class IPlotMaker
 		virtual void StoreFake( IFileInput * ReconstructedInput ) = 0;
 		virtual void StoreData( IFileInput * DataInput ) = 0;
 
-		//Do the unfolding
-		//virtual void Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding = false, bool WithVariance = false, bool WithSmoothing = false ) = 0;
-
-		//Do a closure test
-	        //virtual bool ClosureTest( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing = false ) = 0;
-
-		//Make a cross-check with MC
-		//virtual int MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing = false ) = 0;
-
-		//Return a distribution for use in the cross-checks
-		//virtual Distribution * MonteCarloTruthForCrossCheck() = 0;
-
 		//Return some plots
 		virtual TH1F * CorrectedHistogram() = 0;
 		virtual TH1F * UncorrectedHistogram() = 0;
 		virtual TH1F * MCTruthHistogram() = 0;
 		virtual TH2F * SmearingMatrix() = 0;
-
-		//Copy the object
-		//virtual IPlotMaker * Clone( string NewPriorName ) = 0;
 
 		//General info
 		virtual string Description( bool WithSpaces ) = 0;

@@ -19,8 +19,8 @@ const string EVENT_NUMBER_COLUMN_NAME = "EventNumber";
 const string EVENT_WEIGHT_COLUMN_NAME = "EventWeight";
 const string LEAD_JET_PT_COLUMN_NAME = "LeadJetPt";
 const string REPLACE_FOR_TRIGGER_IN_PATH = "TriggerName";
-const char * TRIGGER_NAMES[] = { "L1_J5", "L1_J15", "L1_J30", "L1_J55", "L1_J75", "L1_J95" };
-const double TRIGGER_LOWER_BOUNDS[] = { 60000.0, 110000.0, 160000.0, 210000.0, 260000.0, 310000.0 };
+const char * TRIGGER_NAMES[] = { "L1_MBTS_1", "L1_J5", "L1_J15", "L1_J30", "L1_J55", "L1_J75", "L1_J95" };
+const double TRIGGER_LOWER_BOUNDS[] = { 20000.0, 60000.0, 110000.0, 160000.0, 210000.0, 260000.0, 310000.0, 1E10 };
 
 //Default constructor - useless
 TriggerChoosingInput::TriggerChoosingInput()
@@ -32,48 +32,50 @@ TriggerChoosingInput::TriggerChoosingInput( string FilePath, string NtuplePath, 
 {
 	sourceDescription = Description;
 	sourceDescriptionIndex = DescriptionIndex;
+	totalRows = 0;
 
-	//Open the input file corresponding to each trigger name
-	vector< string > allTriggers( TRIGGER_NAMES, TRIGGER_NAMES + sizeof( TRIGGER_NAMES ) / sizeof( char* ) );
-	vector< double > triggerLowerBounds( TRIGGER_LOWER_BOUNDS, TRIGGER_LOWER_BOUNDS + sizeof( TRIGGER_LOWER_BOUNDS ) / sizeof( double ) );
-	for ( unsigned int triggerIndex = 0; triggerIndex < allTriggers.size(); triggerIndex++ )
+	//Check we can actually do the find-and-replace on the input path name
+	if ( FilePath.find( REPLACE_FOR_TRIGGER_IN_PATH ) == string::npos )
 	{
-		//Load the file for this trigger
-		currentFileNumber = triggerIndex;
-		string inputTriggerFilePath = ReplaceString( FilePath, REPLACE_FOR_TRIGGER_IN_PATH, allTriggers[ triggerIndex ] );
-		IFileInput * inputTriggerFile = new InputUETree( inputTriggerFilePath, NtuplePath, Description, DescriptionIndex );
-		triggerInputs.push_back( inputTriggerFile );
+		//Can't find and replace - only one input file
+		IFileInput * inputFile = new InputUETree( FilePath, NtuplePath, Description, DescriptionIndex );
+		triggerInputs.push_back( inputFile );
 
-		//Select all events from the file with the correct lead jet pT
-		for ( unsigned int rowIndex = 0; rowIndex < inputTriggerFile->NumberOfRows(); rowIndex++ )
+		//Book-keeping
+		totalRows = inputFile->NumberOfRows();
+		currentRowNumber = inputFile->CurrentRow();
+		currentFileNumber = 0;
+		rowInCurrentFile = inputFile->CurrentRow();
+	}
+	else
+	{
+		//Open the input file corresponding to each trigger name
+		vector< string > allTriggers( TRIGGER_NAMES, TRIGGER_NAMES + sizeof( TRIGGER_NAMES ) / sizeof( char* ) );
+		vector< double > triggerLowerBounds( TRIGGER_LOWER_BOUNDS, TRIGGER_LOWER_BOUNDS + sizeof( TRIGGER_LOWER_BOUNDS ) / sizeof( double ) );
+		currentRowNumber = 0;
+		rowInCurrentFile = 0;
+		for ( unsigned int triggerIndex = 0; triggerIndex < allTriggers.size(); triggerIndex++ )
 		{
-			//Load the event
-			inputTriggerFile->ReadRow( rowIndex );
-			double leadJetPt = inputTriggerFile->GetValue( LEAD_JET_PT_COLUMN_NAME );
+			//Find and replace the wildcard to make the input file name
+			string inputTriggerFilePath = ReplaceString( FilePath, REPLACE_FOR_TRIGGER_IN_PATH, allTriggers[ triggerIndex ] );
 
-			//Reject the event if the pT is not in range for this trigger
+			//Load the file for this trigger
+			IFileInput * inputTriggerFile = new InputUETree( inputTriggerFilePath, NtuplePath, Description, DescriptionIndex,
+					LEAD_JET_PT_COLUMN_NAME, triggerLowerBounds[ triggerIndex ], triggerLowerBounds[ triggerIndex + 1 ] );
+			triggerInputs.push_back( inputTriggerFile );
+
+			//Book-keeping
+			totalRows += inputTriggerFile->NumberOfRows();
+			currentFileNumber = triggerIndex;
+			rowInCurrentFile = inputTriggerFile->CurrentRow();
 			if ( triggerIndex == allTriggers.size() - 1 )
 			{
-				//No upper bound on highest trigger
-				if ( leadJetPt < triggerLowerBounds[ triggerIndex ] )
-				{
-					continue;
-				}
+				currentRowNumber += inputTriggerFile->CurrentRow();
 			}
 			else
 			{
-				if ( leadJetPt < triggerLowerBounds[ triggerIndex ] || leadJetPt > triggerLowerBounds[ triggerIndex + 1 ] )
-				{
-					continue;
-				}
+				currentRowNumber += inputTriggerFile->NumberOfRows();
 			}
-
-			//Make a mapping to the event
-			currentRowNumber = eventNumbers.size();
-			currentEventNumber = inputTriggerFile->EventNumber();
-			eventNumbers.push_back( currentEventNumber );
-			eventNumberToFile[ currentEventNumber ] = currentFileNumber;
-			eventNumberToRow[ currentEventNumber ] = currentRowNumber;
 		}
 	}
 }
@@ -90,56 +92,98 @@ TriggerChoosingInput::~TriggerChoosingInput()
 //Change the Ntuple row being examined
 bool TriggerChoosingInput::ReadRow( unsigned long RowIndex )
 {
-	//Check if we're already there
-	if ( currentRowNumber == RowIndex )
+	//Check if we are already there
+	if ( RowIndex == currentRowNumber )
 	{
 		return true;
 	}
+	//Check if the row index is in range
+	else if ( RowIndex >= totalRows )
+	{
+		return false;
+	}
 	else
 	{
-		//Check if the row index is in range
-		if ( RowIndex < 0 || RowIndex >= eventNumbers.size() )
+		//Load the corresponding row from the file
+		currentRowNumber = RowIndex;
+		for ( unsigned int triggerIndex = 0; triggerIndex < triggerInputs.size(); triggerIndex++ )
 		{
-			return false;
+			if ( RowIndex >= triggerInputs[ triggerIndex ]->NumberOfRows() )
+			{
+				RowIndex -= triggerInputs[ triggerIndex ]->NumberOfRows();
+			}
+			else
+			{
+				currentFileNumber = triggerIndex;
+				rowInCurrentFile = RowIndex;
+				return triggerInputs[ triggerIndex ]->ReadRow( RowIndex );
+			}
+		}
+	}
+
+	//Stop -Wall complaining
+	return false;
+}
+
+bool TriggerChoosingInput::ReadNextRow()
+{
+	//Check if there are any more rows
+	if ( currentRowNumber < totalRows - 1 )
+	{
+		//Check if the next row is within the current file
+		if ( rowInCurrentFile < triggerInputs[ currentFileNumber ]->NumberOfRows() - 1 )
+		{
+			//Read the next row
+			currentRowNumber++;
+			rowInCurrentFile++;
+			return triggerInputs[ currentFileNumber ]->ReadRow( rowInCurrentFile );
 		}
 		else
 		{
-			//Load the corresponding row from the file
-			currentRowNumber = RowIndex;
-			currentEventNumber = eventNumbers[ RowIndex ];
-			currentFileNumber = eventNumberToFile[ currentEventNumber ];
-			triggerInputs[ currentFileNumber ]->ReadEvent( currentEventNumber );
-			return true;
+			//Check if there are more files
+			if ( currentFileNumber < triggerInputs.size() - 1 )
+			{
+				//Read the first row of the next file
+				currentFileNumber++;
+				currentRowNumber++;
+				rowInCurrentFile = 0;
+				return triggerInputs[ currentFileNumber ]->ReadRow( rowInCurrentFile );
+			}
+			else
+			{
+				//No more files - shouldn't get here
+				return false;
+			}
 		}
+	}
+	else
+	{
+		return false;
 	}
 }
+
 bool TriggerChoosingInput::ReadEvent( UInt_t EventNumber )
 {
-	//Check if we're already there
-	if ( currentEventNumber == EventNumber )
+	//Check for this event in each input
+	unsigned long newRowNumber = 0;
+	for ( unsigned int triggerIndex = 0; triggerIndex < triggerInputs.size(); triggerIndex++ )
 	{
-		return true;
-	}
-	else
-	{
-		//Look for an event with this number
-		fileIterator = eventNumberToFile.find( EventNumber );
-
-		//Check if the event exists
-		if ( fileIterator == eventNumberToFile.end() )
+		if ( triggerInputs[ triggerIndex ]->ReadEvent( EventNumber ) )
 		{
-			return false;
+			//Found the event in this file
+			rowInCurrentFile = triggerInputs[ triggerIndex ]->CurrentRow();
+			currentRowNumber = newRowNumber + triggerInputs[ triggerIndex ]->CurrentRow();
+			currentFileNumber = triggerIndex;
+			return true;
 		}
 		else
 		{
-			//Load the corresponding row from the file
-			currentRowNumber = eventNumberToRow[ EventNumber ];
-			currentEventNumber = EventNumber;
-			currentFileNumber = eventNumberToFile[ EventNumber ];
-			triggerInputs[ currentFileNumber ]->ReadEvent( EventNumber );
-			return true;
+			newRowNumber += triggerInputs[ triggerIndex ]->NumberOfRows();
 		}
 	}
+
+	//If you get this far, the event number was not found
+	return false;
 }
 bool TriggerChoosingInput::ReadEvent( UInt_t EventNumber, unsigned int FileIndex )
 {
@@ -149,7 +193,7 @@ bool TriggerChoosingInput::ReadEvent( UInt_t EventNumber, unsigned int FileIndex
 //Get the standard event number and weight information
 UInt_t TriggerChoosingInput::EventNumber()
 {
-	return currentEventNumber;
+	return triggerInputs[ currentFileNumber ]->EventNumber();
 }
 double TriggerChoosingInput::EventWeight()
 {
@@ -165,7 +209,7 @@ double TriggerChoosingInput::GetValue( string VariableName )
 //Get the number of rows
 unsigned long TriggerChoosingInput::NumberOfRows()
 {
-	return eventNumbers.size();
+	return totalRows;
 }
 unsigned long TriggerChoosingInput::CurrentRow()
 {

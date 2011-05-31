@@ -80,6 +80,7 @@ class XvsYNormalisedPlotMaker : public IUnfolder
 		StatisticsSummary * yValueSummary;
 		TH1F *correctedDistribution, *uncorrectedDistribution, *mcTruthDistribution, *xvsyTruthCheck, *xTruthCheck;
 		TH2F *smearingMatrix, *covarianceMatrix;
+		bool doPlotSmearing;
 };
 
 #endif

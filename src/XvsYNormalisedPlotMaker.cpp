@@ -65,6 +65,9 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 
 	//Make a summary for the y data values
 	yValueSummary = new StatisticsSummary();
+
+	//Avoid killing ROOT
+	doPlotSmearing = ( XBinNumber * YBinNumber < 1000 );
 }
 
 //Destructor
@@ -75,10 +78,20 @@ XvsYNormalisedPlotMaker::~XvsYNormalisedPlotMaker()
 	delete DistributionIndices;
 	delete XUnfolder;
 	delete XvsYUnfolder;
-	delete correctedDistribution;
-	delete uncorrectedDistribution;
-	delete mcTruthDistribution;
-	delete smearingMatrix;
+	if ( finalised )
+	{
+		delete correctedDistribution;
+		delete uncorrectedDistribution;
+		delete mcTruthDistribution;
+		if ( smearingMatrix )
+		{
+			delete smearingMatrix;
+		}
+		if ( covarianceMatrix )
+		{
+			delete covarianceMatrix;
+		}
+	}
 }
 
 //Copy the object
@@ -261,13 +274,6 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 		TH1F * XTruth = XUnfolder->GetTruthHistogram( XFullName + "Truth", XFullTitle + " Truth Distribution" );
 		TH1F * XvsYTruth = XvsYUnfolder->GetTruthHistogram( XvsYName + "Truth", XvsYTitle + " Truth Distribution" );
 
-		//TH2F * XSmearing = XUnfolder->GetSmearingMatrix( XFullName + "Smearing", XFullTitle + " Smearing Matrix" );
-		//TH2F * XvsYSmearing = XvsYUnfolder->GetSmearingMatrix( XvsYName + "Smearing", XvsYTitle + " Smearing Matrix" );
-		if ( ErrorMode > 1 )
-		{
-			covarianceMatrix = XvsYUnfolder->DAgostiniCovariance( XvsYName + "Covariance", XvsYTitle + " Covariance Matrix" );
-		}
-
 		//De-linearise the x vs y distributions
 		TH1F * DelinearisedXvsYCorrected = Delinearise(XvsYCorrected);
 		TH1F * DelinearisedXvsYUncorrected = Delinearise(XvsYUncorrected);
@@ -367,7 +373,7 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 			cerr << "Improve the binning of " << yName << " in the " << xName << " vs " << yName << " plot" << endl;
 			cerr << "Try using a finer binning, and avoid large numbers of events in under or overflow bins" << endl;
 			cerr << "Suggested bin width: " << yValueSummary->OptimumBinWidth() << endl;
-			exit(1);
+			//exit(1);
 		}
 
 		//Free some memory
@@ -399,17 +405,29 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 		mcTruthDistribution->GetYaxis()->SetRangeUser( yMinimum, yMaximum );
 
 		//Format and save the smearing matrix
-		smearingMatrix = new TH2F( XvsYName.c_str(), XvsYTitle.c_str(), 1, 0.0, 1.0, 1, 0.0, 1.0 );//XvsYSmearing;
-		string smearingXTitle = xName + " vs " + yName + " Truth";
-		string smearingYTitle = xName + " vs " + yName + " Reconstructed";
-		smearingMatrix->SetXTitle( smearingXTitle.c_str() );
-		smearingMatrix->SetYTitle( smearingYTitle.c_str() );
+		if ( doPlotSmearing )
+		{
+			smearingMatrix = XvsYUnfolder->GetSmearingMatrix( XvsYName + "Smearing", XvsYTitle + " Smearing Matrix" );
+			string smearingXTitle = xName + " vs " + yName + " Truth";
+			string smearingYTitle = xName + " vs " + yName + " Reconstructed";
+			smearingMatrix->SetXTitle( smearingXTitle.c_str() );
+			smearingMatrix->SetYTitle( smearingYTitle.c_str() );
+		}
+		else
+		{
+			smearingMatrix = NULL;
+		}
 
+		//Format and save the covariance matrix
 		if ( ErrorMode > 1 )
 		{
-			//Format the covariance matrix
+			covarianceMatrix = XvsYUnfolder->DAgostiniCovariance( XvsYName + "Covariance", XvsYTitle + " Covariance Matrix" );
 			covarianceMatrix->SetXTitle( "Bin Number" );
 			covarianceMatrix->SetYTitle( "Bin Number" );
+		}
+		else
+		{
+			covarianceMatrix = NULL;
 		}
 
 		//Bin-by-bin scaling of errors using the corrected data
@@ -497,7 +515,15 @@ TH2F * XvsYNormalisedPlotMaker::SmearingMatrix()
 {
 	if ( finalised )
 	{
-		return smearingMatrix;
+		if ( doPlotSmearing )
+		{
+			return smearingMatrix;
+		}
+		else
+		{
+			cout << "Not plotting smearing matrix: it's too big, and Root won't like it" << endl;
+			return NULL;
+		}
 	}       
 	else
 	{

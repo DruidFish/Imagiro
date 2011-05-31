@@ -29,6 +29,7 @@ class InputNtuple : public IFileInput
 
 		//Change the Ntuple row being examined
 		virtual bool ReadRow( unsigned long RowIndex );
+		virtual bool ReadNextRow();
 		virtual bool ReadEvent( UInt_t EventNumber );
 		virtual bool ReadEvent( UInt_t EventNumber, unsigned int FileIndex );
 

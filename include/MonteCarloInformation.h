@@ -25,7 +25,7 @@ class MonteCarloInformation
 		~MonteCarloInformation();
 
 		//Return the number of different MC samples defined here
-		int NumberOfSources();
+		unsigned int NumberOfSources();
 
 		//Make an object that will read the truth or reconstructed files(s) for this MC sample
 		IFileInput * MakeTruthInput( unsigned int Index );
@@ -40,7 +40,7 @@ class MonteCarloInformation
 
 	private:
 		//Make a file reader of the correct type
-		IFileInput * InstantiateSingleInput( string FilePath, string InternalPath, int Index );
+		IFileInput * InstantiateSingleInput( string FilePath, string InternalPath, unsigned int Index );
 
 		//Return the index of the additional files to combine for this MC sample
 		int FindExtraIndex( unsigned int RegularIndex );

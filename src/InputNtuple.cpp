@@ -122,7 +122,7 @@ bool InputNtuple::ReadRow( unsigned long RowIndex )
 	else
 	{
 		//Check if the row index is in range
-		if ( RowIndex < 0 || RowIndex >= numberOfRows )
+		if ( RowIndex >= numberOfRows )
 		{
 			return false;
 		}
@@ -135,6 +135,23 @@ bool InputNtuple::ReadRow( unsigned long RowIndex )
 		}
 	}
 }
+
+bool InputNtuple::ReadNextRow()
+{
+	if ( currentRowNumber < numberOfRows - 1 )
+	{
+		//Load next row
+		currentRowNumber++;
+		wrappedNtuple->GetEvent( currentRowNumber );
+		return true;
+	}
+	else
+	{
+		//No more rows
+		return false;
+	}
+}
+
 bool InputNtuple::ReadEvent( UInt_t EventNumber )
 {
 	//Check if we're already there
