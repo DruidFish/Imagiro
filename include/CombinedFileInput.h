@@ -22,13 +22,10 @@ class CombinedFileInput : public IFileInput
 	public:
 		CombinedFileInput();
 		CombinedFileInput( vector< string > FilePaths, vector< double > FileWeights, string InternalPath, string InputType, string Description, unsigned int DescriptionIndex );
-		//CombinedFileInput( vector< IFileInput* > FileInputs, vector< double > FileWeights, string Description, unsigned int DescriptionIndex );
 		virtual ~CombinedFileInput();
 
 		//Access a particular event, return false if the event is not found
-		virtual bool ReadRow( unsigned long RowIndex );
-		virtual bool ReadNextRow();
-		virtual bool ReadEvent( UInt_t EventNumber );
+		virtual bool ReadRow( unsigned long RowIndex, unsigned int FileIndex );
 		virtual bool ReadEvent( UInt_t EventNumber, unsigned int FileIndex );
 
 		//Get the standard event number and weight information
@@ -41,6 +38,7 @@ class CombinedFileInput : public IFileInput
 		//Get the number of rows
 		virtual unsigned long NumberOfRows();
 		virtual unsigned long CurrentRow();
+		virtual unsigned int NumberOfFiles();
 		virtual unsigned int CurrentFile();
 
 		//Get the description of the source
@@ -48,11 +46,12 @@ class CombinedFileInput : public IFileInput
 		virtual unsigned int DescriptionIndex();
 
 	private:
+		//Used to instantiate files when they are needed
 		IFileInput * InstantiateSingleInput( string FilePath, string InternalPath, string Type );
 
 		string m_sourceDescription, m_inputType, m_internalPath;
 		unsigned int m_currentFile, m_sourceIndex;
-		unsigned long m_totalRows, m_rowInCurrentFile;
+		unsigned long m_rowInCurrentFile;
 		vector< string > m_filePaths;
 		vector< double > m_fileWeights;
 		vector< long > m_eventsPerFile;

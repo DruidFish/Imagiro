@@ -154,8 +154,15 @@ InputUETree::~InputUETree()
 }
 
 //Change the Ntuple row being examined
-bool InputUETree::ReadRow( unsigned long RowIndex )
+bool InputUETree::ReadRow( unsigned long RowIndex, unsigned int FileIndex )
 {
+	//Stupidity check
+	if ( FileIndex != 0 )
+	{
+		cerr << "Asking for file " << FileIndex << " in InputUETree which only holds file 0" << endl;
+		exit(1);
+	}
+
 	//Check if we're already there
 	if ( currentRowNumber == RowIndex )
 	{
@@ -178,24 +185,15 @@ bool InputUETree::ReadRow( unsigned long RowIndex )
 	}
 }
 
-bool InputUETree::ReadNextRow()
+bool InputUETree::ReadEvent( UInt_t EventNumber, unsigned int FileIndex )
 {
-	if ( currentRowNumber < validRows.size() - 1 )
+	//Stupidity check
+	if ( FileIndex != 0 )
 	{
-		//Load the next row
-		currentRowNumber++;
-		wrappedNtuple->GetEvent( validRows[ currentRowNumber ] );
-		return true;
+		cerr << "Asking for file " << FileIndex << " in InputUETree which only holds file 0" << endl;
+		exit(1);
 	}
-	else
-	{
-		//No more rows
-		return false;
-	}
-}
 
-bool InputUETree::ReadEvent( UInt_t EventNumber )
-{
 	//Check if we're already there
 	if ( currentEventNumber == EventNumber )
 	{
@@ -228,10 +226,6 @@ bool InputUETree::ReadEvent( UInt_t EventNumber )
 			return true;
 		}
 	}
-}
-bool InputUETree::ReadEvent( UInt_t EventNumber, unsigned int FileIndex )
-{
-        return ReadEvent( EventNumber );
 }
 
 //Get the standard event number and weight information
@@ -272,7 +266,7 @@ double InputUETree::GetValue( string VariableName )
 	}
 }
 
-//Get the number of rows
+//Get the number of rows and files
 unsigned long InputUETree::NumberOfRows()
 {
 	return validRows.size();
@@ -280,6 +274,10 @@ unsigned long InputUETree::NumberOfRows()
 unsigned long InputUETree::CurrentRow()
 {
 	return currentRowNumber;
+}
+unsigned int InputUETree::NumberOfFiles()
+{
+	return 1;
 }
 unsigned int InputUETree::CurrentFile()
 {

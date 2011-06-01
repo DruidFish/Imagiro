@@ -28,9 +28,7 @@ class TriggerChoosingInput : public IFileInput
 		virtual ~TriggerChoosingInput();
 
 		//Access a particular event, return false if the event is not found
-		virtual bool ReadRow( unsigned long RowIndex );
-		virtual bool ReadNextRow();
-		virtual bool ReadEvent( UInt_t EventNumber );
+		virtual bool ReadRow( unsigned long RowIndex, unsigned int FileIndex );
 		virtual bool ReadEvent( UInt_t EventNumber, unsigned int FileIndex );
 
 		//Get the standard event number and weight information
@@ -43,6 +41,7 @@ class TriggerChoosingInput : public IFileInput
 		//Get the number of rows
 		virtual unsigned long NumberOfRows();
 		virtual unsigned long CurrentRow();
+		virtual unsigned int NumberOfFiles();
 		virtual unsigned int CurrentFile();
 
 		//Get the description of the source
@@ -54,7 +53,7 @@ class TriggerChoosingInput : public IFileInput
 
 		//Caching
 		unsigned int currentFileNumber;
-		unsigned long totalRows, currentRowNumber, rowInCurrentFile;
+		unsigned long totalRows, currentRowNumber;
 
 		//IO
 		vector< IFileInput* > triggerInputs;

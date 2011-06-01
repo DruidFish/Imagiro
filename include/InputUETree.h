@@ -30,9 +30,7 @@ class InputUETree : public IFileInput
 		virtual ~InputUETree();
 
 		//Change the Ntuple row being examined
-		virtual bool ReadRow( unsigned long RowIndex );
-		virtual bool ReadNextRow();
-		virtual bool ReadEvent( UInt_t EventNumber );
+		virtual bool ReadRow( unsigned long RowIndex, unsigned int FileIndex );
 		virtual bool ReadEvent( UInt_t EventNumber, unsigned int FileIndex );
 
 		//Get the standard event number and weight information
@@ -45,6 +43,7 @@ class InputUETree : public IFileInput
 		//Get the number of rows
 		virtual unsigned long NumberOfRows();
 		virtual unsigned long CurrentRow();
+		virtual unsigned int NumberOfFiles();
 		virtual unsigned int CurrentFile();
 
 		//Get the description of the source

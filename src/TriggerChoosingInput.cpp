@@ -45,7 +45,6 @@ TriggerChoosingInput::TriggerChoosingInput( string FilePath, string NtuplePath, 
 		totalRows = inputFile->NumberOfRows();
 		currentRowNumber = inputFile->CurrentRow();
 		currentFileNumber = 0;
-		rowInCurrentFile = inputFile->CurrentRow();
 	}
 	else
 	{
@@ -53,7 +52,6 @@ TriggerChoosingInput::TriggerChoosingInput( string FilePath, string NtuplePath, 
 		vector< string > allTriggers( TRIGGER_NAMES, TRIGGER_NAMES + sizeof( TRIGGER_NAMES ) / sizeof( char* ) );
 		vector< double > triggerLowerBounds( TRIGGER_LOWER_BOUNDS, TRIGGER_LOWER_BOUNDS + sizeof( TRIGGER_LOWER_BOUNDS ) / sizeof( double ) );
 		currentRowNumber = 0;
-		rowInCurrentFile = 0;
 		for ( unsigned int triggerIndex = 0; triggerIndex < allTriggers.size(); triggerIndex++ )
 		{
 			//Find and replace the wildcard to make the input file name
@@ -67,7 +65,6 @@ TriggerChoosingInput::TriggerChoosingInput( string FilePath, string NtuplePath, 
 			//Book-keeping
 			totalRows += inputTriggerFile->NumberOfRows();
 			currentFileNumber = triggerIndex;
-			rowInCurrentFile = inputTriggerFile->CurrentRow();
 			if ( triggerIndex == allTriggers.size() - 1 )
 			{
 				currentRowNumber += inputTriggerFile->CurrentRow();
@@ -90,8 +87,16 @@ TriggerChoosingInput::~TriggerChoosingInput()
 }
 
 //Change the Ntuple row being examined
-bool TriggerChoosingInput::ReadRow( unsigned long RowIndex )
+bool TriggerChoosingInput::ReadRow( unsigned long RowIndex, unsigned int FileIndex )
 {
+	//Stupidity check
+	if ( FileIndex != 0 )
+	{
+		cerr << "Requesting file " << FileIndex << " in TriggerChoosingInput" << endl; 
+		cerr << "It does technically contain multiple files, but you really shouldn't access them this way" << endl;
+		exit(1);
+	}
+
 	//Check if we are already there
 	if ( RowIndex == currentRowNumber )
 	{
@@ -115,8 +120,7 @@ bool TriggerChoosingInput::ReadRow( unsigned long RowIndex )
 			else
 			{
 				currentFileNumber = triggerIndex;
-				rowInCurrentFile = RowIndex;
-				return triggerInputs[ triggerIndex ]->ReadRow( RowIndex );
+				return triggerInputs[ triggerIndex ]->ReadRow( RowIndex, 0 );
 			}
 		}
 	}
@@ -125,53 +129,23 @@ bool TriggerChoosingInput::ReadRow( unsigned long RowIndex )
 	return false;
 }
 
-bool TriggerChoosingInput::ReadNextRow()
+bool TriggerChoosingInput::ReadEvent( UInt_t EventNumber, unsigned int FileIndex )
 {
-	//Check if there are any more rows
-	if ( currentRowNumber < totalRows - 1 )
+	//Stupidity check
+	if ( FileIndex != 0 )
 	{
-		//Check if the next row is within the current file
-		if ( rowInCurrentFile < triggerInputs[ currentFileNumber ]->NumberOfRows() - 1 )
-		{
-			//Read the next row
-			currentRowNumber++;
-			rowInCurrentFile++;
-			return triggerInputs[ currentFileNumber ]->ReadRow( rowInCurrentFile );
-		}
-		else
-		{
-			//Check if there are more files
-			if ( currentFileNumber < triggerInputs.size() - 1 )
-			{
-				//Read the first row of the next file
-				currentFileNumber++;
-				currentRowNumber++;
-				rowInCurrentFile = 0;
-				return triggerInputs[ currentFileNumber ]->ReadRow( rowInCurrentFile );
-			}
-			else
-			{
-				//No more files - shouldn't get here
-				return false;
-			}
-		}
+		cerr << "Requesting file " << FileIndex << " in TriggerChoosingInput" << endl; 
+		cerr << "It does technically contain multiple files, but you really shouldn't access them this way" << endl;
+		exit(1);
 	}
-	else
-	{
-		return false;
-	}
-}
 
-bool TriggerChoosingInput::ReadEvent( UInt_t EventNumber )
-{
 	//Check for this event in each input
 	unsigned long newRowNumber = 0;
 	for ( unsigned int triggerIndex = 0; triggerIndex < triggerInputs.size(); triggerIndex++ )
 	{
-		if ( triggerInputs[ triggerIndex ]->ReadEvent( EventNumber ) )
+		if ( triggerInputs[ triggerIndex ]->ReadEvent( EventNumber, 0 ) )
 		{
 			//Found the event in this file
-			rowInCurrentFile = triggerInputs[ triggerIndex ]->CurrentRow();
 			currentRowNumber = newRowNumber + triggerInputs[ triggerIndex ]->CurrentRow();
 			currentFileNumber = triggerIndex;
 			return true;
@@ -184,10 +158,6 @@ bool TriggerChoosingInput::ReadEvent( UInt_t EventNumber )
 
 	//If you get this far, the event number was not found
 	return false;
-}
-bool TriggerChoosingInput::ReadEvent( UInt_t EventNumber, unsigned int FileIndex )
-{
-	return ReadEvent( EventNumber );
 }
 
 //Get the standard event number and weight information
@@ -215,9 +185,15 @@ unsigned long TriggerChoosingInput::CurrentRow()
 {
 	return currentRowNumber;
 }
+unsigned int TriggerChoosingInput::NumberOfFiles()
+{
+	//Technically a lie, but necessary - should not allow separate file access
+	return 1;
+}
 unsigned int TriggerChoosingInput::CurrentFile()
 {
-	return currentFileNumber;
+	//Technically a lie, but necessary - should not allow separate file access
+	return 0;
 }
 
 //Get the description of the source

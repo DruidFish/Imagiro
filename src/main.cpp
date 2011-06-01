@@ -43,7 +43,7 @@ time_t timeNow;
 // or use separate matrices? (recommend true)             //
 //                                                        //
 ////////////////////////////////////////////////////////////
-const bool COMBINE_MC = false;
+const bool COMBINE_MC = true;
 
 ////////////////////////////////////////////////////////////
 //                                                        //
@@ -121,16 +121,16 @@ int main ( int argc, char * argv[] )
 	//1D Unfolding
 
 	//Lead jet pT
-	/*	XPlotMaker * leadJetPtPlot = new XPlotMaker( "LeadJetPt", "PYTHIA", jetPtBins, jetPtMin, jetPtMax, 1.0, true );
-		MonteCarloSummaryPlotMaker * leadJetPtSummary = new MonteCarloSummaryPlotMaker( leadJetPtPlot, mcInfo, COMBINE_MC );
-		leadJetPtSummary->SetYRange( 1E-7, 1.0 );
-		leadJetPtSummary->UseLogScale();
-		allPlotMakers.push_back( leadJetPtSummary );
+	XPlotMaker * leadJetPtPlot = new XPlotMaker( "LeadJetPt", "PYTHIA", jetPtBins, jetPtMin, jetPtMax, 1.0, true );
+	MonteCarloSummaryPlotMaker * leadJetPtSummary = new MonteCarloSummaryPlotMaker( leadJetPtPlot, mcInfo, COMBINE_MC );
+	leadJetPtSummary->SetYRange( 1E-7, 1.0 );
+	leadJetPtSummary->UseLogScale();
+	allPlotMakers.push_back( leadJetPtSummary );
 
 	//N charge towards
 	XPlotMaker * nChargedTowardsPlot = new XPlotMaker( "NChargedTowards500", "PYTHIA", nChargeBins, nChargeMin, nChargeMax, 1.0, true );
 	MonteCarloSummaryPlotMaker * nChargedTowardsSummary = new MonteCarloSummaryPlotMaker( nChargedTowardsPlot, mcInfo, COMBINE_MC );
-	allPlotMakers.push_back( nChargedTowardsSummary );*/
+	allPlotMakers.push_back( nChargedTowardsSummary );
 
 	//2D Unfolding
 
@@ -258,110 +258,101 @@ int main ( int argc, char * argv[] )
 //Match up event numbers between truth and reco inputs
 void MakeSmearingMatrices( IFileInput * TruthInput, IFileInput * ReconstructedInput )
 {
-	//Debug object to check for duplication
-	map< pair< UInt_t, int >, bool > foundEventInFile;
-	map< pair< UInt_t, int >, bool >::iterator uniqueChecker;
-	pair< UInt_t, int > searchPair;
-
 	//Initialise
 	long matchedEvents = 0;
 	long fakeEvents = 0;
 	long missedEvents = 0;
-	vector<bool> recoWasMatched( 1, false );
 	cout << endl << "Loading " << *( TruthInput->Description() ) << " events" << endl;
 
-	//Loop over all truth events to try and match to reconstructed events
-	if ( TruthInput->ReadRow(0) )
+	//Check that truth and reco comprise the same number of files
+	if ( TruthInput->NumberOfFiles() != ReconstructedInput->NumberOfFiles() )
 	{
-		do
-		{
-			//Get the event number for each truth event
-			UInt_t truthEventNumber = TruthInput->EventNumber();
-			int truthEventFile = TruthInput->CurrentFile();
-
-			//Check for uniqueness
-			searchPair = make_pair( truthEventNumber, truthEventFile );
-			uniqueChecker = foundEventInFile.find( searchPair );
-			if ( uniqueChecker == foundEventInFile.end() )
-			{
-				//Unique - it's ok. Store the location for future checks
-				foundEventInFile[ searchPair ] = true;
-			}
-			else
-			{
-				//Not unique!
-				cerr << "Unique event number check failed: event " << truthEventNumber << " in file " << truthEventFile << " row " << TruthInput->CurrentRow() << endl;
-				exit(1);
-			}
-
-			//Try to find a reconstructed event with that number
-			if ( ReconstructedInput->ReadEvent( truthEventNumber, truthEventFile ) )
-			{
-				//Add the match to all plot makers
-				for ( unsigned int plotIndex = 0; plotIndex < allPlotMakers.size(); plotIndex++ )
-				{
-					allPlotMakers[ plotIndex ]->StoreMatch( TruthInput, ReconstructedInput );
-				}
-
-				//Record the match
-				unsigned long matchedRow = ReconstructedInput->CurrentRow();
-				while ( recoWasMatched.size() <= matchedRow )
-				{
-					recoWasMatched.push_back( false );
-				}
-				recoWasMatched[ matchedRow ] = true;
-				matchedEvents++;
-			}
-			else
-			{
-				//Add the miss to all plot makers
-				for ( unsigned int plotIndex = 0; plotIndex < allPlotMakers.size(); plotIndex++ )
-				{
-					allPlotMakers[ plotIndex ]->StoreMiss( TruthInput );
-				}
-
-				//Record the miss
-				missedEvents++;
-			}
-		} while ( TruthInput->ReadNextRow() );
+		cerr << "Smearing matrix construction given " << TruthInput->NumberOfFiles() << " truth files and " << ReconstructedInput->NumberOfFiles() << " reconstructed" << endl;
+		cerr << "These numbers must be the same" << endl;
+		exit(1);
 	}
 
-	//Loop over all reconstructed events looking for fakes
-	if ( ReconstructedInput->ReadRow(0) )
+	//Loop over each truth-reco file pair
+	for ( unsigned int fileIndex = 0; fileIndex < TruthInput->NumberOfFiles(); fileIndex++ )
 	{
-		do
+		//Force loading the file, so that NumberOfRows is accurate
+		TruthInput->ReadRow( 0, fileIndex );
+		ReconstructedInput->ReadRow( 0, fileIndex );
+
+		//Cache to store results of event number searches
+		vector< bool > recoMatched( ReconstructedInput->NumberOfRows(), false );
+
+		//Attempt to pair each truth event with a reco event
+		for ( unsigned long truthIndex = 0; truthIndex < TruthInput->NumberOfRows(); truthIndex++ )
 		{
-			//Use the cached search success/fail rather than search again (half the disk io: big time saver)
-			unsigned long reconstructedRow = ReconstructedInput->CurrentRow();
-			if ( reconstructedRow >= recoWasMatched.size() || !recoWasMatched[ reconstructedRow ] )
+			//Read the row, find the event number;
+			if ( TruthInput->ReadRow( truthIndex, fileIndex ) )
 			{
-				//Check for uniqueness
-				UInt_t recoEventNumber = ReconstructedInput->EventNumber();
-				int recoEventFile = ReconstructedInput->CurrentFile();
-				searchPair = make_pair( recoEventNumber, recoEventFile );
-				uniqueChecker = foundEventInFile.find( searchPair );
-				if ( uniqueChecker == foundEventInFile.end() )
+				UInt_t truthEventNumber = TruthInput->EventNumber();
+
+				//Look for that event number in the reco file
+				if ( ReconstructedInput->ReadEvent( truthEventNumber, fileIndex ) )
 				{
-					//Unique - it's ok. Store the location for future checks
-					foundEventInFile[ searchPair ] = true;
+					//Matched event
+
+					//Add the match to all plot makers
+					for ( unsigned int plotIndex = 0; plotIndex < allPlotMakers.size(); plotIndex++ )
+					{
+						allPlotMakers[ plotIndex ]->StoreMatch( TruthInput, ReconstructedInput );
+					}
+
+					//Count the match
+					recoMatched[ ReconstructedInput->CurrentRow() ] = true;
+					matchedEvents++;
 				}
 				else
 				{
-					//Not unique!
-					cerr << "Unique event number check failed when storing fakes: event " << recoEventNumber << " in file " << recoEventFile << " row " << reconstructedRow << endl;
+					//Missed event
+
+					//Add the miss to all plot makers
+					for ( unsigned int plotIndex = 0; plotIndex < allPlotMakers.size(); plotIndex++ )
+					{
+						allPlotMakers[ plotIndex ]->StoreMiss( TruthInput );
+					}
+
+					//Count the miss
+					missedEvents++;
+				}
+			}
+			else
+			{
+				cerr << "Stupidity fail" << endl;
+				exit(1);
+			}
+		}
+
+		//Any reconstructed events not paired are fake
+		for ( unsigned long recoIndex = 0; recoIndex < ReconstructedInput->NumberOfRows(); recoIndex++ )
+		{
+			//Find the rows that weren't matched
+			if ( !recoMatched[ recoIndex ] )
+			{
+				//Fake event
+
+				//Read the event from disk
+				if ( ReconstructedInput->ReadRow( recoIndex, fileIndex ) )
+				{
+					//Add the fake to all plotmakers
+					for ( unsigned int plotIndex = 0; plotIndex < allPlotMakers.size(); plotIndex++ )
+					{
+						allPlotMakers[plotIndex]->StoreFake( ReconstructedInput );
+					}
+
+					//Record the fake
+					fakeEvents++;
+				}
+				else
+				{
+					cerr << "Stupidity fail" << endl;
 					exit(1);
 				}
-
-				//Add the fake to all plotmakers
-				for ( unsigned int plotIndex = 0; plotIndex < allPlotMakers.size(); plotIndex++ )
-				{
-					allPlotMakers[plotIndex]->StoreFake( ReconstructedInput );
-				}
-
-				//Record the fake
-				fakeEvents++;
 			}
-		} while ( ReconstructedInput->ReadNextRow() );
+		}
 	}
 
 	//Debug
@@ -375,18 +366,32 @@ void DoTheUnfolding( IFileInput * DataInput )
 	//Populate the data distribution
 	cout << endl << "Loading " << *( DataInput->Description() ) << " events" << endl;
 	long dataTotal = 0;
-	if ( DataInput->ReadRow(0) )
+	for ( unsigned int fileIndex = 0; fileIndex < DataInput->NumberOfFiles(); fileIndex++ )
 	{
-		do
-		{
-			//Store the row in all plot makers
-			for ( unsigned int plotIndex = 0; plotIndex < allPlotMakers.size(); plotIndex++ )
-			{
-				allPlotMakers[ plotIndex ]->StoreData( DataInput );
-			}
+		//Force loading the file, so that NumberOfRows is accurate
+		DataInput->ReadRow( 0, fileIndex );
 
-			dataTotal++;
-		} while ( DataInput->ReadNextRow() );
+		//Loop over each row in the file
+		for ( unsigned long dataIndex = 0; dataIndex < DataInput->NumberOfRows(); dataIndex++ )
+		{
+			//Read the row from disk
+			if ( DataInput->ReadRow( dataIndex, fileIndex ) )
+			{
+				//Store the row in all plot makers
+				for ( unsigned int plotIndex = 0; plotIndex < allPlotMakers.size(); plotIndex++ )
+				{
+					allPlotMakers[ plotIndex ]->StoreData( DataInput );
+				}
+
+				//Count the data
+				dataTotal++;
+			}
+			else
+			{
+				cerr << "Stupidity fail" << endl;
+				exit(1);
+			}
+		}
 	}
 	cout << "Total: " << dataTotal << endl;
 	delete DataInput;

@@ -22,7 +22,6 @@ CombinedFileInput::CombinedFileInput()
 {
 }
 
-//CombinedFileInput::CombinedFileInput( vector< IFileInput* > FileInputs, vector< double > FileWeights, string Description, unsigned int DescriptionIndex )
 CombinedFileInput::CombinedFileInput( vector< string > FilePaths, vector< double > FileWeights, string InternalPath, string InputType, string Description, unsigned int DescriptionIndex )
 {
 	m_sourceDescription = Description;
@@ -31,7 +30,6 @@ CombinedFileInput::CombinedFileInput( vector< string > FilePaths, vector< double
 	m_filePaths = FilePaths;
 	m_internalPath = InternalPath;
 	m_inputType = InputType;
-	m_totalRows = 0;
 	m_currentFile = 0;
 	m_rowInCurrentFile = 0;
 
@@ -47,150 +45,67 @@ CombinedFileInput::CombinedFileInput( vector< string > FilePaths, vector< double
 		exit(1);
 	}
 
+	//Load the first file
 	cout << "Initialisation loading file 0 " << FilePaths[ 0 ] << endl;
 	m_currentInput = InstantiateSingleInput( FilePaths[ 0 ], InternalPath, InputType );
-	m_rowInCurrentFile = m_currentInput->CurrentRow();
-	m_eventsPerFile = vector< long >( FilePaths.size(), 0 );
-	m_eventsPerFile[ 0 ] = m_currentInput->NumberOfRows();
-
-	/*else
-	  {
-	//Set up each slice input
-	fileInputs = FileInputs;
-	for ( unsigned int fileIndex = 0; fileIndex < fileInputs.size(); fileIndex++ )
-	{
-	currentFile = fileIndex;
-	totalRows += fileInputs[ fileIndex ]->NumberOfRows();
-	}
-	}*/
 }
 
 CombinedFileInput::~CombinedFileInput()
 {
 	delete m_currentInput;
-
-	/*for ( unsigned int fileIndex = 0; fileIndex < fileInputs.size(); fileIndex++ )
-	  {
-	  delete fileInputs[ fileIndex ];
-	  }*/
 }
 
 //Access a particular event, return false if the event is not found
-bool CombinedFileInput::ReadRow( unsigned long RowNumber )
+bool CombinedFileInput::ReadRow( unsigned long RowNumber, unsigned int FileIndex )
 {
-	if ( RowNumber == 0 )
+	//Check we're asking for a valid file
+	if ( FileIndex < m_filePaths.size() )
 	{
-		if ( m_currentFile == 0 )
+		//See if we've already got the file loaded
+		if ( FileIndex != m_currentFile )
 		{
-			m_rowInCurrentFile = 0;
-		}
-		else
-		{
-			m_currentFile = 0;
-			m_rowInCurrentFile = 0;
+			//Load the new file
+			m_currentFile = FileIndex;
 			delete m_currentInput;
 			cout << "ReadRow loading file " << m_currentFile << " " << m_filePaths[ m_currentFile ] << endl;
 			m_currentInput = InstantiateSingleInput( m_filePaths[ m_currentFile ], m_internalPath, m_inputType );
-			m_eventsPerFile[ m_currentFile ] = m_currentInput->NumberOfRows();
 		}
 
-		return m_currentInput->ReadRow( RowNumber );
+		//Read the row in the file
+		return m_currentInput->ReadRow( RowNumber, 0 );
 	}
 	else
 	{
-		cerr << "Trying to use CombinedFileInput::ReadRow for index other than 0" << endl;
+		cerr << "Requested invalid file " << FileIndex << " of " << m_filePaths.size() << endl;
 		exit(1);
 	}
 }
 
-//Access the next row
-bool CombinedFileInput::ReadNextRow()
-{
-	if ( m_rowInCurrentFile < m_currentInput->NumberOfRows() - 1 )
-	{
-		//Increment position in current file
-		m_rowInCurrentFile++;
-		return m_currentInput->ReadRow( m_rowInCurrentFile );
-	}
-	else
-	{
-		if ( m_currentFile < m_filePaths.size() - 1 )
-		{
-			//Open the next file
-			m_rowInCurrentFile = 0;
-			m_currentFile++;
-			delete m_currentInput;
-			cout << "ReadNextRow loading file " << m_currentFile << " " << m_filePaths[ m_currentFile ] << endl;
-			m_currentInput = InstantiateSingleInput( m_filePaths[ m_currentFile ], m_internalPath, m_inputType );
-			m_eventsPerFile[ m_currentFile ] = m_currentInput->NumberOfRows();
-			return m_currentInput->ReadRow( m_rowInCurrentFile );
-		}
-		else
-		{
-			//No more files
-			return false;
-		}
-	}
-}
-
 //Access a particular event, return false if the event is not found
-bool CombinedFileInput::ReadEvent( UInt_t EventNumber )
-{
-	//Shouldn't use this any more...
-	cerr << "Trying to use CombinedFileInput::ReadRow - don't!" << endl;
-	exit(1);
-
-	/*bool found = false;
-
-	//Look for the event in each slice
-	for ( unsigned int fileIndex = 0; fileIndex < fileInputs.size(); fileIndex++ )
-	{
-	if ( fileInputs[ fileIndex ]->ReadEvent( EventNumber ) )
-	{
-	//Check there are no duplicate event numbers - should use the other ReadEvent method if so
-	if ( found )
-	{
-	cerr << "Duplicate event numbers!" << endl;
-	exit(1);
-	}
-	else
-	{
-	currentFile = fileIndex;
-	found = true;
-	}
-	}
-	}
-
-	return found;*/
-}
-
 bool CombinedFileInput::ReadEvent( UInt_t EventNumber, unsigned int FileIndex )
 {
-	//See if this file is already loaded
-	if ( m_currentFile != FileIndex )
+	//Check we're asking for a valid file
+	if ( FileIndex < m_filePaths.size() )
 	{
-		if ( FileIndex >= m_filePaths.size() )
+		//See if we've already got the file loaded
+		if ( FileIndex != m_currentFile )
 		{
-			return false;
-		}
-		else
-		{
-			//Change the current input
+			//Load the new file
 			m_currentFile = FileIndex;
 			delete m_currentInput;
 			cout << "ReadEvent loading file " << m_currentFile << " " << m_filePaths[ m_currentFile ] << endl;
-			m_currentInput = InstantiateSingleInput( m_filePaths[ FileIndex ], m_internalPath, m_inputType );
-			m_eventsPerFile[ m_currentFile ] = m_currentInput->NumberOfRows();
+			m_currentInput = InstantiateSingleInput( m_filePaths[ m_currentFile ], m_internalPath, m_inputType );
 		}
+
+		//Search for the event in the file
+		return m_currentInput->ReadEvent( EventNumber, 0 );
+
 	}
-
-	bool result = m_currentInput->ReadEvent( EventNumber );
-	m_rowInCurrentFile = m_currentInput->CurrentRow();
-	return result;
-
-	//Constrain the search to a particular file to avoid event number conflicts
-	//currentFile = FileIndex;
-	//return fileInputs[ FileIndex ]->ReadEvent( EventNumber );
+	else
+	{
+		cerr << "Requested invalid file " << FileIndex << " of " << m_filePaths.size() << endl;
+		exit(1);
+	}
 }
 
 //Get the standard event number and weight information
@@ -213,27 +128,17 @@ double CombinedFileInput::GetValue( string VariableName )
 //Get the number of rows
 unsigned long CombinedFileInput::NumberOfRows()
 {
-	return m_totalRows;
+	return m_currentInput->NumberOfRows();
 }
 
 unsigned long CombinedFileInput::CurrentRow()
 {
-	long currentRow = 0;
-
-	//Add up the rows in earlier slices
-	for ( unsigned int fileIndex = 0; fileIndex < m_currentFile; fileIndex++ )
-	{
-		//cout << m_eventsPerFile[ fileIndex ] << ", ";
-		currentRow += m_eventsPerFile[ fileIndex ];
-	}
-
-	//Then add the row of the active slice
-	//cout << m_rowInCurrentFile << endl;
-	currentRow += m_rowInCurrentFile;
-
-	return currentRow;
+	return m_currentInput->CurrentRow();
 }
-
+unsigned int CombinedFileInput::NumberOfFiles()
+{
+	return m_filePaths.size();
+}
 unsigned int CombinedFileInput::CurrentFile()
 {
 	return m_currentFile;

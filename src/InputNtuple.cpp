@@ -112,8 +112,15 @@ InputNtuple::~InputNtuple()
 }
 
 //Change the Ntuple row being examined
-bool InputNtuple::ReadRow( unsigned long RowIndex )
+bool InputNtuple::ReadRow( unsigned long RowIndex, unsigned int FileIndex )
 {
+	//Stupidity check
+	if ( FileIndex != 0 )
+	{
+		cerr << "Requesting file " << FileIndex << " in InputNtuple which only reads file 0" << endl;
+		exit(1);
+	}
+
 	//Check if we're already there
 	if ( currentRowNumber == RowIndex )
 	{
@@ -136,24 +143,15 @@ bool InputNtuple::ReadRow( unsigned long RowIndex )
 	}
 }
 
-bool InputNtuple::ReadNextRow()
+bool InputNtuple::ReadEvent( UInt_t EventNumber, unsigned int FileIndex )
 {
-	if ( currentRowNumber < numberOfRows - 1 )
+	//Stupidity check
+	if ( FileIndex != 0 )
 	{
-		//Load next row
-		currentRowNumber++;
-		wrappedNtuple->GetEvent( currentRowNumber );
-		return true;
+		cerr << "Requesting file " << FileIndex << " in InputNtuple which only reads file 0" << endl;
+		exit(1);
 	}
-	else
-	{
-		//No more rows
-		return false;
-	}
-}
 
-bool InputNtuple::ReadEvent( UInt_t EventNumber )
-{
 	//Check if we're already there
 	if ( currentEventNumber == ( float )EventNumber )
 	{
@@ -177,10 +175,6 @@ bool InputNtuple::ReadEvent( UInt_t EventNumber )
 			return true;
 		}
 	}
-}
-bool InputNtuple::ReadEvent( UInt_t EventNumber, unsigned int FileIndex )
-{
-	return ReadEvent( EventNumber );
 }
 
 //Get the standard event number and weight information
@@ -221,6 +215,10 @@ unsigned long InputNtuple::NumberOfRows()
 unsigned long InputNtuple::CurrentRow()
 {
 	return currentRowNumber;
+}
+unsigned int InputNtuple::NumberOfFiles()
+{
+	return 1;
 }
 unsigned int InputNtuple::CurrentFile()
 {

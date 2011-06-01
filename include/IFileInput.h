@@ -25,9 +25,7 @@ class IFileInput
 		}
 
 		//Access a particular event, return false if the event is not found
-		virtual bool ReadRow( unsigned long RowIndex ) = 0;
-		virtual bool ReadNextRow() = 0;
-		virtual bool ReadEvent( UInt_t EventNumber ) = 0;
+		virtual bool ReadRow( unsigned long RowIndex, unsigned int FileIndex ) = 0;
 		virtual bool ReadEvent( UInt_t EventNumber, unsigned int FileIndex ) = 0;
 
 		//Get the standard event number and weight information
@@ -37,9 +35,10 @@ class IFileInput
 		//Get any other column value by name
 		virtual double GetValue( string VariableName ) = 0;
 
-		//Get the number of rows
+		//Get the number of rows and files
 		virtual unsigned long NumberOfRows() = 0;
 		virtual unsigned long CurrentRow() = 0;
+		virtual unsigned int NumberOfFiles() = 0;
 		virtual unsigned int CurrentFile() = 0;
 
 		//Get the description of the source
