@@ -30,7 +30,7 @@ MonteCarloInformation::MonteCarloInformation()
 	//                                                        //
 	////////////////////////////////////////////////////////////
 
-	//Pythia 6 AMBT1
+/*	//Pythia 6 AMBT1
 	combineFiles.push_back( true );
 
 	truthPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J0_AMBT1/combinedTruth.AntiKt4TopoEM.root" );
@@ -74,7 +74,7 @@ MonteCarloInformation::MonteCarloInformation()
 	styles.push_back( 2 );
 	inputTypes.push_back( "TriggerChoosingInput" );
 	internalTruth.push_back( "benTuple" );
-	internalReco.push_back( "benTuple" );
+	internalReco.push_back( "benTuple" );*/
 
 	//Herwig++
 	combineFiles.push_back( true );
@@ -85,8 +85,8 @@ MonteCarloInformation::MonteCarloInformation()
 	herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J2_Herwig/combinedTruth.AntiKt4TopoEM.root" );
 	herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J3_Herwig/combinedTruth.AntiKt4TopoEM.root" );
 	herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J4_Herwig/combinedTruth.AntiKt4TopoEM.root" );
-	//herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J5_Herwig/combinedTruth.AntiKt4TopoEM.root" );
-	//herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J6_Herwig/combinedTruth.AntiKt4TopoEM.root" );
+	herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J5_Herwig/combinedTruth.AntiKt4TopoEM.root" );
+	herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J6_Herwig/combinedTruth.AntiKt4TopoEM.root" );
 	extraTruthPaths.push_back( herwigExtraTruth );
 
 	recoPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J0_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
@@ -95,8 +95,8 @@ MonteCarloInformation::MonteCarloInformation()
 	herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J2_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
 	herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J3_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
 	herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J4_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
-	//herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J5_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
-	//herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J6_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J5_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J6_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
 	extraRecoPaths.push_back( herwigExtraReco );
 
 	vector< double > herwigWeights;
@@ -105,8 +105,8 @@ MonteCarloInformation::MonteCarloInformation()
 	herwigWeights.push_back( 4.4307E+04 / 398498.0 );
 	herwigWeights.push_back( 2357.6 / 399598.0 );
 	herwigWeights.push_back( 94.236 / 397443.0 );
-	//herwigWeights.push_back( 2.5813 / 398094.0 );
-	//herwigWeights.push_back( 0.039439 / 397597.0 );
+	herwigWeights.push_back( 2.5813 / 398094.0 );
+	herwigWeights.push_back( 0.039439 / 397597.0 );
 	inputWeights.push_back( herwigWeights );
 
 	descriptions.push_back( "HERWIG++" );
@@ -117,7 +117,7 @@ MonteCarloInformation::MonteCarloInformation()
 	internalReco.push_back( "benTuple" );
 
 	//Pythia 6 Perugia 2010
-	combineFiles.push_back( true );
+/*	combineFiles.push_back( true );
 
 	truthPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J0_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
 	vector< string > perugiaExtraTruth;
@@ -160,7 +160,7 @@ MonteCarloInformation::MonteCarloInformation()
 	styles.push_back( 3 );
 	inputTypes.push_back( "TriggerChoosingInput" );
 	internalTruth.push_back( "benTuple" );
-	internalReco.push_back( "benTuple" );
+	internalReco.push_back( "benTuple" );*/
 }
 
 MonteCarloInformation::~MonteCarloInformation()

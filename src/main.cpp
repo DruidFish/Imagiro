@@ -102,9 +102,12 @@ int main ( int argc, char * argv[] )
 	//                                                        //
 	////////////////////////////////////////////////////////////
 	double scaleFactor = 3.0 / ( 10.0 * M_PI );
+	//int jetPtBins = 100;
+	//double jetPtMin = 0.0;
+	//double jetPtMax = 200000.0;
 	int jetPtBins = 100;
 	double jetPtMin = 0.0;
-	double jetPtMax = 200000.0;
+	double jetPtMax = 1200000.0;
 	int nChargeBins = 60;
 	double nChargeMin = 0.5;
 	double nChargeMax = 60.5;
@@ -123,7 +126,7 @@ int main ( int argc, char * argv[] )
 	//Lead jet pT
 	XPlotMaker * leadJetPtPlot = new XPlotMaker( "LeadJetPt", "PYTHIA", jetPtBins, jetPtMin, jetPtMax, 1.0, true );
 	MonteCarloSummaryPlotMaker * leadJetPtSummary = new MonteCarloSummaryPlotMaker( leadJetPtPlot, mcInfo, COMBINE_MC );
-	leadJetPtSummary->SetYRange( 1E-7, 1.0 );
+	leadJetPtSummary->SetYRange( 1E-13, 1.0 );
 	leadJetPtSummary->UseLogScale();
 	allPlotMakers.push_back( leadJetPtSummary );
 
