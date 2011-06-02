@@ -20,6 +20,8 @@
 #include "TH2F.h"
 #include "TFile.h"
 #include <ctime>
+#include <fstream>
+#include <unistd.h>
 #include <iostream>
 #include <string>
 #include <cmath>
@@ -30,12 +32,10 @@ using namespace std;
 //Method declarations
 void MakeSmearingMatrices( IFileInput * TruthInput, IFileInput * ReconstructedInput );
 void DoTheUnfolding( IFileInput * DataInput );
+void TimeAndMemory();
 
 //The plotmakers
 vector< MonteCarloSummaryPlotMaker* > allPlotMakers;
-
-//Time
-time_t timeNow;
 
 ////////////////////////////////////////////////////////////
 //                                                        //
@@ -74,8 +74,8 @@ const string OUTPUT_FILE_NAME = "UnfoldedFinal.Data.root";
 int main ( int argc, char * argv[] )
 {
 	//Status message
-	time(&timeNow);
-	cout << endl << "Imagiro started: " << ctime( &timeNow ) << endl;
+	cout << endl << "Imagiro started" << endl;
+	TimeAndMemory();
 
 	////////////////////////////////////////////////////////////
 	//                                                        //
@@ -102,9 +102,6 @@ int main ( int argc, char * argv[] )
 	//                                                        //
 	////////////////////////////////////////////////////////////
 	double scaleFactor = 3.0 / ( 10.0 * M_PI );
-	//int jetPtBins = 100;
-	//double jetPtMin = 0.0;
-	//double jetPtMax = 200000.0;
 	int jetPtBins = 100;
 	double jetPtMin = 0.0;
 	double jetPtMax = 1200000.0;
@@ -254,8 +251,8 @@ int main ( int argc, char * argv[] )
 	DoTheUnfolding( dataInput );
 
 	//Status message
-	time(&timeNow);
-	cout << endl << "Imagiro finished: " << ctime( &timeNow ) << endl;
+	cout << endl << "Imagiro finished" << endl;
+	TimeAndMemory();
 }
 
 //Match up event numbers between truth and reco inputs
@@ -278,6 +275,10 @@ void MakeSmearingMatrices( IFileInput * TruthInput, IFileInput * ReconstructedIn
 	//Loop over each truth-reco file pair
 	for ( unsigned int fileIndex = 0; fileIndex < TruthInput->NumberOfFiles(); fileIndex++ )
 	{
+		//Status message
+		cout << "File " << fileIndex << " ";
+		TimeAndMemory();
+
 		//Force loading the file, so that NumberOfRows is accurate
 		TruthInput->ReadRow( 0, fileIndex );
 		ReconstructedInput->ReadRow( 0, fileIndex );
@@ -366,11 +367,17 @@ void MakeSmearingMatrices( IFileInput * TruthInput, IFileInput * ReconstructedIn
 
 void DoTheUnfolding( IFileInput * DataInput )
 {
-	//Populate the data distribution
+	//Status message
 	cout << endl << "Loading " << *( DataInput->Description() ) << " events" << endl;
+
+	//Populate the data distribution
 	long dataTotal = 0;
 	for ( unsigned int fileIndex = 0; fileIndex < DataInput->NumberOfFiles(); fileIndex++ )
 	{
+		//Status message
+		cout << "File " << fileIndex << " ";
+		TimeAndMemory();
+
 		//Force loading the file, so that NumberOfRows is accurate
 		DataInput->ReadRow( 0, fileIndex );
 
@@ -400,8 +407,8 @@ void DoTheUnfolding( IFileInput * DataInput )
 	delete DataInput;
 
 	//Status message
-	time(&timeNow);
-	cout << endl << "Loading finished: " << ctime( &timeNow ) << endl;
+	cout << endl << "Loading finished" << endl;
+	TimeAndMemory();
 
 	//Produce the plots
 	TFile * OutputFile = new TFile( OUTPUT_FILE_NAME.c_str(), "RECREATE" );
@@ -417,4 +424,27 @@ void DoTheUnfolding( IFileInput * DataInput )
 		delete allPlotMakers[ plotIndex ];
 	}
 	OutputFile->Close();
+}
+
+//Ouput the current memory usage and time to stdout
+void TimeAndMemory()
+{
+	//Connect to the file that has the memory usage for this process
+	static std::ifstream meminfo( "/proc/self/statm" );
+	meminfo.seekg(0);
+	meminfo.sync();
+
+	//Read the file
+	unsigned long current_virt;
+	meminfo >> current_virt;
+
+	//Convert from pages to megabytes
+	double memoryUsage = (double)current_virt * (double)getpagesize() / ( 1024.0 * 1024.0 );
+
+	//Find out the time
+	time_t timeNow;
+	time( &timeNow );
+
+	//Status message
+        cout << "Memory usage: " << memoryUsage << " MB at time " << ctime( &timeNow ) << endl;
 }

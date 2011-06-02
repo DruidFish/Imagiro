@@ -430,7 +430,8 @@ int IterativeUnfolding::MonteCarloCrossCheck( Distribution * ReferenceDistributi
 		priorDistribution = adjustedDistribution;
 
 		//Check to see if things have got worse
-		if ( referenceChi2 > lastChiSquared || referenceKolmogorov < lastKolmogorov || iteration == MAX_ITERATIONS_FOR_CROSS_CHECK - 1 || ( referenceChi2 == lastChiSquared && referenceKolmogorov == lastKolmogorov ) )
+		//if ( referenceChi2 > lastChiSquared || referenceKolmogorov < lastKolmogorov || iteration == MAX_ITERATIONS_FOR_CROSS_CHECK - 1 || ( referenceChi2 == lastChiSquared && referenceKolmogorov == lastKolmogorov ) )
+		if ( iteration == MAX_ITERATIONS_FOR_CROSS_CHECK - 1 )
 		{
 			//Return the criteria
 			ChiSquaredThreshold = chiSquaredResult;

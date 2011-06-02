@@ -244,19 +244,11 @@ IFileInput * MonteCarloInformation::MakeTruthInput( unsigned int Index )
 	}
 	else
 	{
-		//vector< IFileInput* > inputs;
-		//inputs.push_back( InstantiateSingleInput( truthPaths[ Index ], internalTruth[ Index ], Index ) );
-
 		//Find out whether to combine files or not
 		int extraIndex = FindExtraIndex( Index );
 		if ( extraIndex >= 0 )
 		{
-			//Combined object
-			//for ( unsigned int pathIndex = 0; pathIndex < extraTruthPaths[ extraIndex ].size(); pathIndex++ )
-			//{
-			//	inputs.push_back( InstantiateSingleInput( extraTruthPaths[ extraIndex ][ pathIndex ], internalTruth[ Index ], Index ) );
-			//}
-
+			//Make a vector of all the file paths
 			vector<string> allTruthPaths( 1, truthPaths[ Index ] );
                         allTruthPaths.insert( allTruthPaths.end(), extraTruthPaths[ extraIndex ].begin(), extraTruthPaths[ extraIndex ].end() );
 
@@ -288,19 +280,11 @@ IFileInput * MonteCarloInformation::MakeReconstructedInput( unsigned int Index )
 	}
 	else
 	{
-		//vector< IFileInput* > inputs;
-		//inputs.push_back( InstantiateSingleInput( recoPaths[ Index ], internalReco[ Index ], Index ) );
-
 		//Find out whether to combine files or not
 		int extraIndex = FindExtraIndex( Index );
 		if ( extraIndex >= 0 )
 		{
-			//Combined object
-			//for ( unsigned int pathIndex = 0; pathIndex < extraRecoPaths[ extraIndex ].size(); pathIndex++ )
-			//{
-			//	inputs.push_back( InstantiateSingleInput( extraRecoPaths[ extraIndex ][ pathIndex ], internalReco[ Index ], Index ) );
-			//}
-
+			//Make a vector of all the file paths
 			vector<string> allRecoPaths( 1, recoPaths[ Index ] );
 			allRecoPaths.insert( allRecoPaths.end(), extraRecoPaths[ extraIndex ].begin(), extraRecoPaths[ extraIndex ].end() );
 
