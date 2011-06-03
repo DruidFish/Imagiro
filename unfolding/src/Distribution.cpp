@@ -121,6 +121,7 @@ Distribution::Distribution( Distribution * InputDistribution, SmearingMatrix * S
 //Destructor
 Distribution::~Distribution()
 {
+	binValues.clear();
 }
 
 //Store an event

@@ -66,8 +66,10 @@ void Comparison::CompareDistributions( Distribution * FirstInput, Distribution *
 	//For closure tests, give some more detailed info
 	if ( IsClosureTest )
 	{
-		int maxDeviationIndex;
-		double sumErrors, maxDeviation, maxError;
+		int maxDeviationIndex = 0;
+		double sumErrors = 0;
+		double maxDeviation = 0;
+		double maxError = 0;
 		for ( int binIndex = 1; binIndex <= firstPlot->GetNbinsX(); binIndex++ )
 		{
 			double error = secondPlot->GetBinContent( binIndex ) / firstPlot->GetBinContent( binIndex );

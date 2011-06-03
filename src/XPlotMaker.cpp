@@ -56,10 +56,13 @@ XPlotMaker::~XPlotMaker()
 {
 	delete DistributionIndices;
 	delete XUnfolder;
-	delete correctedDistribution;
-	delete uncorrectedDistribution;
-	delete mcTruthDistribution;
-	delete smearingMatrix;
+	if ( finalised )
+	{
+		delete correctedDistribution;
+		delete uncorrectedDistribution;
+		delete mcTruthDistribution;
+		delete smearingMatrix;
+	}
 }
 
 //Copy the object

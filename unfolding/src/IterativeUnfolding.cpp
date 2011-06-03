@@ -356,6 +356,7 @@ bool IterativeUnfolding::ClosureTest( int MostIterations, double ChiSquaredThres
 
 	//Output result
 	double binNumber = (double)indexCalculator->GetBinNumber();
+	delete unfoldedReconstructedDistribution;
 	if ( chi2Reference == 0.0 && kolmogorovReference == 1.0 )
 	{
 		cout << "Perfect closure test: chi squared = " << chi2Reference << " and K-S probability = " << kolmogorovReference << ". Nice one!" << endl;
@@ -437,6 +438,7 @@ int IterativeUnfolding::MonteCarloCrossCheck( Distribution * ReferenceDistributi
 			KolmogorovThreshold = kolmogorovResult;
 			cout << " <--" << endl << iteration + 1 << ": " << referenceChi2 << ", " << referenceKolmogorov << endl;
 			cout << "-------------------------------------" << endl;
+			delete adjustedDistribution;
 			return iteration;
 		}
 		else

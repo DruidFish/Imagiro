@@ -46,7 +46,6 @@ CombinedFileInput::CombinedFileInput( vector< string > FilePaths, vector< double
 	}
 
 	//Load the first file
-	cout << "Initialisation loading file 0 " << FilePaths[ 0 ] << endl;
 	m_currentInput = InstantiateSingleInput( FilePaths[ 0 ], InternalPath, InputType );
 }
 
@@ -67,7 +66,6 @@ bool CombinedFileInput::ReadRow( unsigned long RowNumber, unsigned int FileIndex
 			//Load the new file
 			m_currentFile = FileIndex;
 			delete m_currentInput;
-			cout << "ReadRow loading file " << m_currentFile << " " << m_filePaths[ m_currentFile ] << endl;
 			m_currentInput = InstantiateSingleInput( m_filePaths[ m_currentFile ], m_internalPath, m_inputType );
 		}
 
@@ -93,7 +91,6 @@ bool CombinedFileInput::ReadEvent( UInt_t EventNumber, unsigned int FileIndex )
 			//Load the new file
 			m_currentFile = FileIndex;
 			delete m_currentInput;
-			cout << "ReadEvent loading file " << m_currentFile << " " << m_filePaths[ m_currentFile ] << endl;
 			m_currentInput = InstantiateSingleInput( m_filePaths[ m_currentFile ], m_internalPath, m_inputType );
 		}
 

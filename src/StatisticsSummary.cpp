@@ -12,8 +12,15 @@
 #include <iostream>
 
 //Default constructor
-StatisticsSummary::StatisticsSummary() : freshStart( true )
+StatisticsSummary::StatisticsSummary()
 {
+	currentMaximum = 0.0;
+	currentMinimum = 0.0;
+       	meanNumerator = 0.0;
+	meanDenominator = 0.0;
+	meanSquaredNumerator = 0.0;
+	meanSquaredDenominator = 0.0;
+        freshStart = true;
 }
 
 //Destructor
@@ -57,13 +64,37 @@ void StatisticsSummary::StoreEvent( double Value, double Weight )
 //Return the mean of a vector of doubles
 double StatisticsSummary::Mean()
 {
-	return meanNumerator / meanDenominator;
+	if ( meanNumerator == 0.0 )
+	{
+		return 0.0;
+	}
+	else if ( meanDenominator == 0.0 )
+	{
+		cerr << "Divide by zero error in StatisticsSummary::Mean" << endl;
+		return 0.0;
+	}
+	else
+	{
+		return meanNumerator / meanDenominator;
+	}
 }
 
 //Return the variance of a vector of doubles
 double StatisticsSummary::Variance()
 {
-	return ( meanSquaredNumerator / meanSquaredDenominator ) - ( Mean() * Mean() );
+	if ( meanSquaredNumerator == 0.0 )
+	{
+		return -( Mean() * Mean() );
+	}
+	else if ( meanSquaredDenominator == 0.0 )
+	{
+		cerr << "Divide by zero error in StatisticsSummary::Variance" << endl;
+		return 0.0;
+	}
+	else
+	{
+		return ( meanSquaredNumerator / meanSquaredDenominator ) - ( Mean() * Mean() );
+	}
 }
 
 //Return the ideal number of bins for a histogram of a vector of doubles

@@ -30,7 +30,7 @@ MonteCarloInformation::MonteCarloInformation()
 	//                                                        //
 	////////////////////////////////////////////////////////////
 
-/*	//Pythia 6 AMBT1
+	//Pythia 6 AMBT1
 	combineFiles.push_back( true );
 
 	truthPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J0_AMBT1/combinedTruth.AntiKt4TopoEM.root" );
@@ -74,10 +74,10 @@ MonteCarloInformation::MonteCarloInformation()
 	styles.push_back( 2 );
 	inputTypes.push_back( "TriggerChoosingInput" );
 	internalTruth.push_back( "benTuple" );
-	internalReco.push_back( "benTuple" );*/
+	internalReco.push_back( "benTuple" );
 
 	//Herwig++
-	combineFiles.push_back( true );
+/*	combineFiles.push_back( true );
 
 	truthPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J0_Herwig/combinedTruth.AntiKt4TopoEM.root" );
 	vector< string > herwigExtraTruth;
@@ -114,7 +114,7 @@ MonteCarloInformation::MonteCarloInformation()
 	styles.push_back( 8 );
 	inputTypes.push_back( "TriggerChoosingInput" );
 	internalTruth.push_back( "benTuple" );
-	internalReco.push_back( "benTuple" );
+	internalReco.push_back( "benTuple" );*/
 
 	//Pythia 6 Perugia 2010
 /*	combineFiles.push_back( true );
@@ -125,8 +125,8 @@ MonteCarloInformation::MonteCarloInformation()
 	perugiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J2_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
 	perugiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J3_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
 	perugiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J4_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
-	//perugiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J5_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
-	//perugiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J6_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
+	perugiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J5_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
+	perugiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J6_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
 	//perugiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J7_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
 	//perugiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J8_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
 	extraTruthPaths.push_back( perugiaExtraTruth );
@@ -137,8 +137,8 @@ MonteCarloInformation::MonteCarloInformation()
 	perugiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J2_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
 	perugiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J3_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
 	perugiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J4_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
-	//perugiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J5_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
-	//perugiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J6_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	perugiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J5_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	perugiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J6_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
 	//perugiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J7_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
 	//perugiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J8_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
 	extraRecoPaths.push_back( perugiaExtraReco );
@@ -149,8 +149,8 @@ MonteCarloInformation::MonteCarloInformation()
 	perugiaWeights.push_back( 2.9358E+04 / 988144.0 );
 	perugiaWeights.push_back( 1.5600E+03 / 399497.0 );
 	perugiaWeights.push_back( 64.393 / 398199.0 );
-	//perugiaWeights.push_back( 1.8764 / 398046.0 );
-	//perugiaWeights.push_back( 3.0412E-02 / 397900.0 );
+	perugiaWeights.push_back( 1.8764 / 398046.0 );
+	perugiaWeights.push_back( 3.0412E-02 / 397900.0 );
 	//perugiaWeights.push_back( 1.3212E-04 / 399145.0 );
 	//perugiaWeights.push_back( 4.9978E-09 / 396886.0 );
 	inputWeights.push_back( perugiaWeights );
