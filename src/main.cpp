@@ -16,9 +16,9 @@
 #include "MonteCarloInformation.h"
 #include "XPlotMaker.h"
 #include "XFolding.h"
-#include "TH1F.h"
-#include "TH2F.h"
 #include "TFile.h"
+#include "TROOT.h"
+#include "TStyle.h"
 #include <ctime>
 #include <fstream>
 #include <unistd.h>
@@ -33,6 +33,7 @@ using namespace std;
 void MakeSmearingMatrices( IFileInput * TruthInput, IFileInput * ReconstructedInput );
 void DoTheUnfolding( IFileInput * DataInput );
 void TimeAndMemory();
+TStyle * PlotStyle( string StyleName );
 
 //The plotmakers
 vector< MonteCarloSummaryPlotMaker* > allPlotMakers;
@@ -91,6 +92,15 @@ int main ( int argc, char * argv[] )
 	////////////////////////////////////////////////////////////
 	//IFileInput * dataInput = new InputUETree( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/JetTauEtmiss/combined.root", "benTuple", "JetTauEtmiss Data (2010)", mcInfo->NumberOfSources() );
 	//IFileInput * dataInput = mcInfo->MakeReconstructedInput( 0 );
+
+	////////////////////////////////////////////////////////////
+	//                                                        //
+	// Set the plot style - customise this below              //
+	//                                                        //
+	////////////////////////////////////////////////////////////
+	TStyle * rootPlotStyle = PlotStyle( "ATLAS" );
+        gROOT->SetStyle( "ATLAS" );
+	gROOT->ForceStyle();
 
 	////////////////////////////////////////////////////////////
 	//                                                        //
@@ -249,6 +259,7 @@ int main ( int argc, char * argv[] )
 	//Unfold!
 	IFileInput * dataInput = mcInfo->MakeReconstructedInput( 0 );
 	DoTheUnfolding( dataInput );
+	delete rootPlotStyle;
 
 	//Status message
 	cout << endl << "Imagiro finished" << endl;
@@ -446,5 +457,78 @@ void TimeAndMemory()
 	time( &timeNow );
 
 	//Status message
-        cout << "Memory usage: " << memoryUsage << " MB at time " << ctime( &timeNow ) << endl;
+	cout << "Memory usage: " << memoryUsage << " MB at time " << ctime( &timeNow ) << endl;
+}
+
+//Create an ATLAS style object
+TStyle * PlotStyle( string StyleName )
+{
+	TStyle * atlasStyle = new TStyle( StyleName.c_str(), "Atlas style" );
+
+	// use plain black on white colors
+	Int_t icol=0; // WHITE
+	atlasStyle->SetFrameBorderMode(icol);
+	atlasStyle->SetFrameFillColor(icol);
+	atlasStyle->SetCanvasBorderMode(icol);
+	atlasStyle->SetCanvasColor(icol);
+	atlasStyle->SetPadBorderMode(icol);
+	atlasStyle->SetPadColor(icol);
+	atlasStyle->SetStatColor(icol);
+	//atlasStyle->SetFillColor(icol); // don't use: white fill color floa *all* objects
+
+	// set the paper & margin sizes
+	atlasStyle->SetPaperSize(20,26);
+
+	// set margin sizes
+	atlasStyle->SetPadTopMargin(0.05);
+	atlasStyle->SetPadRightMargin(0.05);
+	atlasStyle->SetPadBottomMargin(0.16);
+	atlasStyle->SetPadLeftMargin(0.16);
+
+	// set title offsets (for axis label)
+	atlasStyle->SetTitleXOffset(1.4);
+	atlasStyle->SetTitleYOffset(1.4);
+
+	// use large fonts
+	//Int_t font=72; // Helvetica italics
+	Int_t font=42; // Helvetica
+	Double_t tsize=0.05;
+	atlasStyle->SetTextFont(font);
+
+	atlasStyle->SetTextSize(tsize);
+	atlasStyle->SetLabelFont(font,"x");
+	atlasStyle->SetTitleFont(font,"x");
+	atlasStyle->SetLabelFont(font,"y");
+	atlasStyle->SetTitleFont(font,"y");
+	atlasStyle->SetLabelFont(font,"z");
+	atlasStyle->SetTitleFont(font,"z");
+
+	atlasStyle->SetLabelSize(tsize,"x");
+	atlasStyle->SetTitleSize(tsize,"x");
+	atlasStyle->SetLabelSize(tsize,"y");
+	atlasStyle->SetTitleSize(tsize,"y");
+	atlasStyle->SetLabelSize(tsize,"z");
+	atlasStyle->SetTitleSize(tsize,"z");
+
+	// use bold lines and markers
+	atlasStyle->SetMarkerStyle(20);
+	atlasStyle->SetMarkerSize(1.2);
+	atlasStyle->SetHistLineWidth(2);
+	atlasStyle->SetLineStyleString(2,"[12 12]"); // postscript dashes
+
+	// get rid of X error bars and y error bar caps
+	//atlasStyle->SetErrorX(0.001);
+
+	// do not display any of the standard histogram decorations
+	atlasStyle->SetOptTitle(0);
+	//atlasStyle->SetOptStat(1111);
+	atlasStyle->SetOptStat(0);
+	//atlasStyle->SetOptFit(1111);
+	atlasStyle->SetOptFit(0);
+
+	// put tick marks on top and RHS of plots
+	atlasStyle->SetPadTickX(1);
+	atlasStyle->SetPadTickY(1);
+
+	return atlasStyle;
 }
