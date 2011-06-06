@@ -13,7 +13,7 @@ RM           = rm -f
 AR           = ar cru
 
 ##Flags
-CXXFLAGS     = -O0 -g -fPIC -funroll-loops -Wall
+CXXFLAGS     = -O0 -g -fPIC -funroll-loops -std=c++0x -Wall
 
 EXENAME		= imagiro
 SRCEXT   	= cpp

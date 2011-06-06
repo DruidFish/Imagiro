@@ -14,7 +14,6 @@
 
 #include "IFileInput.h"
 #include <string>
-#include <map>
 #include <vector>
 #include "Rtypes.h"
 

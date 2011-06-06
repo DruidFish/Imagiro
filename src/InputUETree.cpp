@@ -27,6 +27,7 @@ InputUETree::InputUETree( string FilePath, string NtuplePath, string Description
 {
 	sourceDescription = Description;
 	sourceDescriptionIndex = DescriptionIndex;
+	totalRows = 0;
 
 	//Get the Ntuple from the file
 	inputFile = new TFile( FilePath.c_str(), "READ" );
@@ -124,15 +125,17 @@ InputUETree::InputUETree( string FilePath, string NtuplePath, string Description
 		//Make maps to the event
 		if ( storeEvent )
 		{
-			eventNumberToRow[ currentEventNumber ] = rowIndex;
-			validRows.push_back( rowIndex );
+			currentRowNumber = totalRows;
+			eventNumberToExternalRow[ currentEventNumber ] = totalRows;
+			externalRowToInternalRow[ totalRows ] = rowIndex;
+			totalRows++;
 		}
 	}
 
 	//Settle on a valid row
-	if ( validRows.size() > 0 )
+	if ( totalRows > 0 )
 	{
-		 wrappedNtuple->GetEvent( validRows[ 0 ] );
+		 wrappedNtuple->GetEvent( externalRowToInternalRow[ 0 ] );
 		 currentRowNumber = 0;
 	}
 }
@@ -141,8 +144,8 @@ InputUETree::InputUETree( string FilePath, string NtuplePath, string Description
 InputUETree::~InputUETree()
 {
 	//STL
-	eventNumberToRow.clear();
-	validRows.clear();
+	eventNumberToExternalRow.clear();
+	externalRowToInternalRow.clear();
 	columnNameToIndex.clear();
 	branches.clear();
 	currentValues.clear();
@@ -171,7 +174,7 @@ bool InputUETree::ReadRow( unsigned long RowIndex, unsigned int FileIndex )
 	else
 	{
 		//Check if the row index is in range
-		if ( RowIndex >= validRows.size() )
+		if ( RowIndex >= totalRows )
 		{
 			return false;
 		}
@@ -179,7 +182,7 @@ bool InputUETree::ReadRow( unsigned long RowIndex, unsigned int FileIndex )
 		{
 			//Load the corresponding row from the file
 			currentRowNumber = RowIndex;
-			wrappedNtuple->GetEvent( validRows[ RowIndex ] );
+			wrappedNtuple->GetEvent( externalRowToInternalRow[ RowIndex ] );
 			return true;
 		}
 	}
@@ -202,27 +205,18 @@ bool InputUETree::ReadEvent( UInt_t EventNumber, unsigned int FileIndex )
 	else
 	{
 		//Look for an event with this number
-		eventIterator = eventNumberToRow.find( EventNumber );
+		eventIterator = eventNumberToExternalRow.find( EventNumber );
 
 		//Check if the event exists
-		if ( eventIterator == eventNumberToRow.end() )
+		if ( eventIterator == eventNumberToExternalRow.end() )
 		{
 			return false;
 		}
 		else
 		{
 			//Load the corresponding row from the file
-			wrappedNtuple->GetEvent( eventIterator->second );
-
-			//Find out which valid row that corresponds to
-			for ( unsigned int rowIndex = 0; rowIndex < validRows.size(); rowIndex++ )
-			{
-				if ( eventIterator->second == validRows[ rowIndex ] )
-				{
-					currentRowNumber = rowIndex;
-					break;
-				}
-			}
+			currentRowNumber = eventIterator->second;
+			wrappedNtuple->GetEvent( externalRowToInternalRow[ currentRowNumber ] );
 			return true;
 		}
 	}
@@ -269,7 +263,7 @@ double InputUETree::GetValue( string VariableName )
 //Get the number of rows and files
 unsigned long InputUETree::NumberOfRows()
 {
-	return validRows.size();
+	return totalRows;
 }
 unsigned long InputUETree::CurrentRow()
 {

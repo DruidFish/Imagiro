@@ -287,7 +287,7 @@ void MakeSmearingMatrices( IFileInput * TruthInput, IFileInput * ReconstructedIn
 	for ( unsigned int fileIndex = 0; fileIndex < TruthInput->NumberOfFiles(); fileIndex++ )
 	{
 		//Status message
-		cout << "File " << fileIndex << " ";
+		cout << "File " << fileIndex << " - ";
 		TimeAndMemory();
 
 		//Force loading the file, so that NumberOfRows is accurate

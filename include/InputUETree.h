@@ -12,7 +12,7 @@
 #define INPUT_UE_TREE_H
 
 #include "IFileInput.h"
-#include <map>
+#include <unordered_map>
 #include <vector>
 #include "TFile.h"
 #include "TTree.h"
@@ -60,11 +60,12 @@ class InputUETree : public IFileInput
 		vector< double > currentValues;
 
 		//Mapping
-		map< UInt_t, unsigned long > eventNumberToRow;
-		map< UInt_t, unsigned long >::iterator eventIterator;
-		map< string, unsigned int > columnNameToIndex;
-		map< string, unsigned int >::iterator columnIterator;
-		vector< UInt_t > validRows;
+		unsigned long totalRows;
+		unordered_map< unsigned int, unsigned long > eventNumberToExternalRow;
+		unordered_map< unsigned int, unsigned long >::iterator eventIterator;
+		unordered_map< unsigned long, unsigned long > externalRowToInternalRow;
+		unordered_map< string, unsigned int > columnNameToIndex;
+		unordered_map< string, unsigned int >::iterator columnIterator;
 
 		//IO
 		TFile * inputFile;
