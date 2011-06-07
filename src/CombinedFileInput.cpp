@@ -51,6 +51,8 @@ CombinedFileInput::CombinedFileInput( vector< string > FilePaths, vector< double
 
 CombinedFileInput::~CombinedFileInput()
 {
+	m_filePaths.clear();
+	m_fileWeights.clear();
 	delete m_currentInput;
 }
 

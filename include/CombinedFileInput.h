@@ -54,7 +54,6 @@ class CombinedFileInput : public IFileInput
 		unsigned long m_rowInCurrentFile;
 		vector< string > m_filePaths;
 		vector< double > m_fileWeights;
-		vector< long > m_eventsPerFile;
 		IFileInput * m_currentInput;
 };
 

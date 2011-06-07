@@ -9,6 +9,7 @@
 
 #include "IFileInput.h"
 #include "CombinedFileInput.h"
+#include "TriggerChoosingInput.h"
 #include "InputUETree.h"
 #include "XvsYNormalisedPlotMaker.h"
 #include "XvsYNormalisedFolding.h"
@@ -112,7 +113,7 @@ int main ( int argc, char * argv[] )
 	//                                                        //
 	////////////////////////////////////////////////////////////
 	double scaleFactor = 3.0 / ( 10.0 * M_PI );
-	int jetPtBins = 100;
+	int jetPtBins = 50;
 	double jetPtMin = 0.0;
 	double jetPtMax = 1200000.0;
 	int nChargeBins = 60;
@@ -121,10 +122,10 @@ int main ( int argc, char * argv[] )
 	int XnChargeBins = 30;
 	double XnChargeMin = 0.5;
 	double XnChargeMax = 30.5;
-	int meanPtBins = 1500;
+	int meanPtBins = 300;
 	double meanPtMin = 0.0;
 	double meanPtMax = 150000.0;
-	int sumPtBins = 5000;
+	int sumPtBins = 1000;
 	double sumPtMin = 0.0;
 	double sumPtMax = 5000000.0;
 
@@ -240,12 +241,6 @@ int main ( int argc, char * argv[] )
 	pTmeanvsNChargedTransSummary->SetAxisLabels( "N_{ch}", "<p_{T}>" );
 	allPlotMakers.push_back( pTmeanvsNChargedTransSummary );
 
-	/////////////////////////////////////////////////////////////
-	//                                                         //
-	// No further user edits required                          //
-	//                                                         //
-	/////////////////////////////////////////////////////////////
-
 	//Populate the smearing matrices
 	for ( unsigned int mcIndex = 0; mcIndex < mcInfo->NumberOfSources(); mcIndex++ )
 	{
@@ -256,8 +251,16 @@ int main ( int argc, char * argv[] )
 		delete reconstructedInput;
 	}
 
+	////////////////////////////////////////////////////////////
+	//                                                        //
+	// Load the data - Again, set this up yourself            //
+	//                                                        //
+	////////////////////////////////////////////////////////////
+	//IFileInput * dataInput = mcInfo->MakeReconstructedInput( 0 );
+	IFileInput * dataInput = new TriggerChoosingInput( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/JetTauEtmiss/PeriodGtoI/combined.TriggerName.AntiKt4TopoEM.root",
+			"benTuple", "JetTauEtmiss Data (2010)", mcInfo->NumberOfSources() );
+
 	//Unfold!
-	IFileInput * dataInput = mcInfo->MakeReconstructedInput( 0 );
 	DoTheUnfolding( dataInput );
 	delete rootPlotStyle;
 
@@ -368,6 +371,8 @@ void MakeSmearingMatrices( IFileInput * TruthInput, IFileInput * ReconstructedIn
 				}
 			}
 		}
+
+		recoMatched.clear();
 	}
 
 	//Debug
