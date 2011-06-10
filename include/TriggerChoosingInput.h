@@ -23,7 +23,7 @@ class TriggerChoosingInput : public IFileInput
 {
 	public:
 		TriggerChoosingInput();
-		TriggerChoosingInput( string FilePath, string NtuplePath, string Description, unsigned int InputIndex );
+		TriggerChoosingInput( string FilePath, string NtuplePath, string Description, unsigned int InputIndex, double JetPtMax = 1.0E20 );
 		virtual ~TriggerChoosingInput();
 
 		//Access a particular event, return false if the event is not found

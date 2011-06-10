@@ -30,7 +30,7 @@ TriggerChoosingInput::TriggerChoosingInput()
 }
 
 //Constructor taking arguments pointing to a particular Ntuple in a root file
-TriggerChoosingInput::TriggerChoosingInput( string FilePath, string NtuplePath, string Description, unsigned int DescriptionIndex )
+TriggerChoosingInput::TriggerChoosingInput( string FilePath, string NtuplePath, string Description, unsigned int DescriptionIndex, double JetPtMax )
 {
 	sourceDescription = Description;
 	sourceDescriptionIndex = DescriptionIndex;
@@ -56,24 +56,39 @@ TriggerChoosingInput::TriggerChoosingInput( string FilePath, string NtuplePath, 
 		currentRowNumber = 0;
 		for ( unsigned int triggerIndex = 0; triggerIndex < allTriggers.size(); triggerIndex++ )
 		{
-			//Find and replace the wildcard to make the input file name
-			string inputTriggerFilePath = ReplaceString( FilePath, REPLACE_FOR_TRIGGER_IN_PATH, allTriggers[ triggerIndex ] );
-
-			//Load the file for this trigger
-			IFileInput * inputTriggerFile = new InputUETree( inputTriggerFilePath, NtuplePath, Description, DescriptionIndex,
-					LEAD_JET_PT_COLUMN_NAME, triggerLowerBounds[ triggerIndex ], triggerLowerBounds[ triggerIndex + 1 ] );
-			triggerInputs.push_back( inputTriggerFile );
-
-			//Book-keeping
-			totalRows += inputTriggerFile->NumberOfRows();
-			currentFileNumber = triggerIndex;
-			if ( triggerIndex == allTriggers.size() - 1 )
+			//Check whether to make the file input at all
+			if ( triggerLowerBounds[ triggerIndex ] >= JetPtMax )
 			{
-				currentRowNumber += inputTriggerFile->CurrentRow();
+				cout << "Not opening trigger " << allTriggers[ triggerIndex ] << " since lower bound " << triggerLowerBounds[ triggerIndex ] << " >= " << JetPtMax << endl;
 			}
 			else
 			{
-				currentRowNumber += inputTriggerFile->NumberOfRows();
+				//Find and replace the wildcard to make the input file name
+				string inputTriggerFilePath = ReplaceString( FilePath, REPLACE_FOR_TRIGGER_IN_PATH, allTriggers[ triggerIndex ] );
+
+				//Pick an upper bound
+				double upperBound = triggerLowerBounds[ triggerIndex + 1 ];
+				if ( upperBound > JetPtMax )
+				{
+					upperBound = JetPtMax;
+				}
+
+				//Load the file for this trigger
+				IFileInput * inputTriggerFile = new InputUETree( inputTriggerFilePath, NtuplePath, Description, DescriptionIndex,
+						LEAD_JET_PT_COLUMN_NAME, triggerLowerBounds[ triggerIndex ], upperBound );
+				triggerInputs.push_back( inputTriggerFile );
+
+				//Book-keeping
+				totalRows += inputTriggerFile->NumberOfRows();
+				currentFileNumber = triggerIndex;
+				if ( triggerIndex == allTriggers.size() - 1 )
+				{
+					currentRowNumber += inputTriggerFile->CurrentRow();
+				}
+				else
+				{
+					currentRowNumber += inputTriggerFile->NumberOfRows();
+				}
 			}
 		}
 	}

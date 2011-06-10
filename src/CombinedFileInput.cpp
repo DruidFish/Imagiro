@@ -18,6 +18,8 @@ const string NTUPLE_TYPE_STRING = "InputNtuple";
 const string UE_TREE_TYPE_STRING = "InputUETree";
 const string TRIGGER_CHOOSING_TYPE_STRING = "TriggerChoosingInput";
 
+const double JET_PT_CUTS[] = { 30000.0, 50000.0, 100000.0, 170000.0, 320000.0, 600000.0, 1180000.0 };
+
 CombinedFileInput::CombinedFileInput()
 {
 }
@@ -32,6 +34,8 @@ CombinedFileInput::CombinedFileInput( vector< string > FilePaths, vector< double
 	m_inputType = InputType;
 	m_currentFile = 0;
 	m_rowInCurrentFile = 0;
+	m_currentInput = 0;
+	m_pTcuts = vector<double>( JET_PT_CUTS, JET_PT_CUTS + sizeof( JET_PT_CUTS ) / sizeof( double ) );
 
 	//Check the input
 	if ( FilePaths.size() < 1 )
@@ -46,7 +50,7 @@ CombinedFileInput::CombinedFileInput( vector< string > FilePaths, vector< double
 	}
 
 	//Load the first file
-	m_currentInput = InstantiateSingleInput( FilePaths[ 0 ], InternalPath, InputType );
+	ChangeInputFile( 0 );
 }
 
 CombinedFileInput::~CombinedFileInput()
@@ -66,9 +70,7 @@ bool CombinedFileInput::ReadRow( unsigned long RowNumber, unsigned int FileIndex
 		if ( FileIndex != m_currentFile )
 		{
 			//Load the new file
-			m_currentFile = FileIndex;
-			delete m_currentInput;
-			m_currentInput = InstantiateSingleInput( m_filePaths[ m_currentFile ], m_internalPath, m_inputType );
+			ChangeInputFile( FileIndex );
 		}
 
 		//Read the row in the file
@@ -91,9 +93,7 @@ bool CombinedFileInput::ReadEvent( UInt_t EventNumber, unsigned int FileIndex )
 		if ( FileIndex != m_currentFile )
 		{
 			//Load the new file
-			m_currentFile = FileIndex;
-			delete m_currentInput;
-			m_currentInput = InstantiateSingleInput( m_filePaths[ m_currentFile ], m_internalPath, m_inputType );
+			ChangeInputFile( FileIndex );
 		}
 
 		//Search for the event in the file
@@ -154,23 +154,30 @@ unsigned int CombinedFileInput::DescriptionIndex()
 	return m_sourceIndex;
 }
 
-IFileInput * CombinedFileInput::InstantiateSingleInput( string FilePath, string InternalPath, string Type )
+void CombinedFileInput::ChangeInputFile( unsigned int NewFileIndex )
 {
-	if ( Type == NTUPLE_TYPE_STRING )
+	m_currentFile = NewFileIndex;
+	if ( m_currentInput )
 	{
-		return new InputNtuple( FilePath, InternalPath, m_sourceDescription, m_sourceIndex );
+        	delete m_currentInput;
 	}
-	else if ( Type == UE_TREE_TYPE_STRING )
+
+	//Choose the type of file to open
+	if ( m_inputType == NTUPLE_TYPE_STRING )
 	{
-		return new InputUETree( FilePath, InternalPath, m_sourceDescription, m_sourceIndex );
+		m_currentInput = new InputNtuple( m_filePaths[ m_currentFile ], m_internalPath, m_sourceDescription, m_sourceIndex );
 	}
-	else if ( Type == TRIGGER_CHOOSING_TYPE_STRING )
+	else if ( m_inputType == UE_TREE_TYPE_STRING )
 	{
-		return new TriggerChoosingInput( FilePath, InternalPath, m_sourceDescription, m_sourceIndex );
+		m_currentInput = new InputUETree( m_filePaths[ m_currentFile ], m_internalPath, m_sourceDescription, m_sourceIndex );
+	}
+	else if ( m_inputType == TRIGGER_CHOOSING_TYPE_STRING )
+	{
+		m_currentInput = new TriggerChoosingInput( m_filePaths[ m_currentFile ], m_internalPath, m_sourceDescription, m_sourceIndex, m_pTcuts[ m_currentFile ] );
 	}
 	else
 	{
-		cerr << "Unrecognised input type: " << Type << endl;
+		cerr << "Unrecognised input type: " << m_inputType << endl;
 		exit(1);
 	}
 }

@@ -47,13 +47,13 @@ class CombinedFileInput : public IFileInput
 
 	private:
 		//Used to instantiate files when they are needed
-		IFileInput * InstantiateSingleInput( string FilePath, string InternalPath, string Type );
+		void ChangeInputFile( unsigned int NewFileIndex );
 
 		string m_sourceDescription, m_inputType, m_internalPath;
 		unsigned int m_currentFile, m_sourceIndex;
 		unsigned long m_rowInCurrentFile;
 		vector< string > m_filePaths;
-		vector< double > m_fileWeights;
+		vector< double > m_fileWeights, m_pTcuts;
 		IFileInput * m_currentInput;
 };
 

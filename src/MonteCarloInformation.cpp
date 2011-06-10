@@ -34,6 +34,7 @@ MonteCarloInformation::MonteCarloInformation()
 	combineFiles.push_back( true );
 
 	truthPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J0_AMBT1/combinedTruth.AntiKt4TopoEM.root" );
+	//truthPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J1_AMBT1/combinedTruth.AntiKt4TopoEM.root" );
 	vector< string > pythiaExtraTruth;
 	pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J1_AMBT1/combinedTruth.AntiKt4TopoEM.root" );
 	pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J2_AMBT1/combinedTruth.AntiKt4TopoEM.root" );
@@ -46,6 +47,7 @@ MonteCarloInformation::MonteCarloInformation()
 	extraTruthPaths.push_back( pythiaExtraTruth );
 
 	recoPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J0_AMBT1/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	//recoPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J1_AMBT1/combinedReco.TriggerName.AntiKt4TopoEM.root" );
 	vector< string > pythiaExtraReco;
 	pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J1_AMBT1/combinedReco.TriggerName.AntiKt4TopoEM.root" );
 	pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J2_AMBT1/combinedReco.TriggerName.AntiKt4TopoEM.root" );
@@ -77,9 +79,10 @@ MonteCarloInformation::MonteCarloInformation()
 	internalReco.push_back( "benTuple" );
 
 	//Herwig++
-/*	combineFiles.push_back( true );
+	combineFiles.push_back( true );
 
 	truthPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J0_Herwig/combinedTruth.AntiKt4TopoEM.root" );
+	//truthPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J1_Herwig/combinedTruth.AntiKt4TopoEM.root" );
 	vector< string > herwigExtraTruth;
 	herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J1_Herwig/combinedTruth.AntiKt4TopoEM.root" );
 	herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J2_Herwig/combinedTruth.AntiKt4TopoEM.root" );
@@ -90,6 +93,7 @@ MonteCarloInformation::MonteCarloInformation()
 	extraTruthPaths.push_back( herwigExtraTruth );
 
 	recoPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J0_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	//recoPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J1_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
 	vector< string > herwigExtraReco;
 	herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J1_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
 	herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J2_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
@@ -114,7 +118,7 @@ MonteCarloInformation::MonteCarloInformation()
 	styles.push_back( 8 );
 	inputTypes.push_back( "TriggerChoosingInput" );
 	internalTruth.push_back( "benTuple" );
-	internalReco.push_back( "benTuple" );*/
+	internalReco.push_back( "benTuple" );
 
 	//Pythia 6 Perugia 2010
 /*	combineFiles.push_back( true );
