@@ -21,12 +21,12 @@ DataIndices::DataIndices()
 }
 
 //Constructor for N-dimensional indices
-DataIndices::DataIndices( vector<int> InputBinNumbers, vector<double> InputMinima, vector<double> InputMaxima ) : Indices( InputBinNumbers, InputMinima, InputMaxima )
+DataIndices::DataIndices( vector< unsigned int > InputBinNumbers, vector< double > InputMinima, vector< double > InputMaxima ) : Indices( InputBinNumbers, InputMinima, InputMaxima )
 {
 	//Make the vectors to hold the bin central values
 	for ( unsigned int dimensionIndex = 0; dimensionIndex < InputBinNumbers.size(); dimensionIndex++ )
 	{
-		vector<double> oneDimensionDistribution( GetBinNumber( dimensionIndex ), 0.0 );
+		vector< double > oneDimensionDistribution( GetBinNumber( dimensionIndex ), 0.0 );
 
 		binValueSums.push_back( oneDimensionDistribution );
 		binValueNormalisations.push_back( oneDimensionDistribution );
@@ -39,15 +39,15 @@ DataIndices::~DataIndices()
 }
 
 //Return the central value of a given bin
-vector<double> DataIndices::GetCentralValuesFromData( vector<int> InputIndices )
+vector< double > DataIndices::GetCentralValuesFromData( vector< unsigned int > InputIndices )
 {
-	vector<double> centralValues( InputIndices.size(), 0.0 );
+	vector< double > centralValues( InputIndices.size(), 0.0 );
 
 	//Loop over dimensions
 	for ( unsigned int dimensionIndex = 0; dimensionIndex < InputIndices.size(); dimensionIndex++ )
 	{
 		//Find out the index of the bin we're returning in this dimension
-		int binIndex = InputIndices[ dimensionIndex ];
+		unsigned int binIndex = InputIndices[ dimensionIndex ];
 
 		if ( binIndex >= 0 && binIndex <= numberOfBins[ dimensionIndex ] + 1)
 		{
@@ -88,22 +88,22 @@ vector<double> DataIndices::GetCentralValuesFromData( vector<int> InputIndices )
 
 	return centralValues;
 }
-vector<double> DataIndices::GetCentralValuesFromData( int InputIndex )
+vector< double > DataIndices::GetCentralValuesFromData( unsigned int InputIndex )
 {
 	return GetCentralValuesFromData( GetNDimensionalIndex( InputIndex ) );
 }
 
 //Input the data to calculate the central values
-void DataIndices::StoreDataValue( vector<double> Data, double Weight )
+void DataIndices::StoreDataValue( vector< double > Data, double Weight )
 {
 	//Find out the bin that the event falls into in each dimension
-	vector<int> binIndices = GetNDimensionalIndex( Data );
+	vector< unsigned int > binIndices = GetNDimensionalIndex( Data );
 
 	//Loop over dimensions
 	for ( unsigned int dimensionIndex = 0; dimensionIndex < binIndices.size(); dimensionIndex++ )
 	{
 		//Find out the index of the bin the event falls into in this dimension
-		int binIndex = binIndices[dimensionIndex];
+		unsigned int binIndex = binIndices[dimensionIndex];
 
 		//Add the event to the bin in this dimension
 		binValueSums[ dimensionIndex ][ binIndex ] += Data[ dimensionIndex ] * Weight;

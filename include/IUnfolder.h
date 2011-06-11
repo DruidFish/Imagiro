@@ -35,13 +35,13 @@ class IUnfolder : public IPlotMaker
 		virtual void StoreData( IFileInput * DataInput ) = 0;
 
 		//Do the unfolding
-		virtual void Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding = false, int ErrorMode = 0, bool WithSmoothing = false ) = 0;
+		virtual void Unfold( unsigned int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding = false, unsigned int ErrorMode = 0, bool WithSmoothing = false ) = 0;
 
 		//Do a closure test
-	        virtual bool ClosureTest( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing = false ) = 0;
+	        virtual bool ClosureTest( unsigned int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing = false ) = 0;
 
 		//Make a cross-check with MC
-		virtual int MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing = false ) = 0;
+		virtual unsigned int MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing = false ) = 0;
 
 		//Return a distribution for use in the cross-checks
 		virtual Distribution * MonteCarloTruthForCrossCheck() = 0;
@@ -63,6 +63,9 @@ class IUnfolder : public IPlotMaker
 		virtual vector<double> CorrectedErrors() = 0;
 		virtual vector<double> DAgostiniErrors() = 0;
 		virtual TH2F * DAgostiniCovariance() = 0;
+
+		//Return the names of the variables involved
+		virtual vector<string> VariableNames() = 0;
 };
 
 #endif

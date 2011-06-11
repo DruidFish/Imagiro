@@ -31,22 +31,22 @@ class Distribution
 		Distribution( Distribution * InputDistribution, SmearingMatrix * Smearing );
 		~Distribution();
 
-		void StoreEvent( vector<double> Value, double Weight = 1.0 );
+		void StoreEvent( vector< double > Value, double Weight = 1.0 );
 		void StoreBadEvent( double Weight = 1.0 );
 		void SetBadBin( double Ratio );
 
-		double GetBinNumber( int BinIndex );
-		double GetBinProbability( int BinIndex );
+		double GetBinNumber( unsigned int BinIndex );
+		double GetBinProbability( unsigned int BinIndex );
 		double Integral();
 
 		TH1F * MakeRootHistogram( string Name, string Title, bool MakeNormalised = false, bool WithBadBin = false );
 
 		//Try and account for statistical fluctuations with a moving-average smearing
-		void Smooth( int SideBinNumber = 1 );
+		void Smooth( unsigned int SideBinNumber = 1 );
 
 	protected:
 		Indices * indexCalculator;
-		vector<double> binValues;
+		vector< double > binValues;
 		double integral;
 };
 

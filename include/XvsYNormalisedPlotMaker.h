@@ -24,8 +24,9 @@ class XvsYNormalisedPlotMaker : public IUnfolder
 {
 	public:
 		XvsYNormalisedPlotMaker();
-		XvsYNormalisedPlotMaker( string XVariableName, string YVariableName, string PriorName, int XBinNumber, double XMinimum, double XMaximum,
-				int YBinNumber, double YMinimum, double YMaximum, double ScaleFactor = 1.0 );
+		XvsYNormalisedPlotMaker( string XVariableName, string YVariableName, string PriorName,
+				unsigned int XBinNumber, double XMinimum, double XMaximum,
+				unsigned int YBinNumber, double YMinimum, double YMaximum, double ScaleFactor = 1.0 );
 		~XvsYNormalisedPlotMaker();
 
 		//Take input values from ntuples
@@ -36,13 +37,13 @@ class XvsYNormalisedPlotMaker : public IUnfolder
 		virtual void StoreData( IFileInput * DataInput );
 
 		//Do the unfolding
-		virtual void Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding = false, int ErrorMode = 0, bool WithSmoothing = false );
+		virtual void Unfold( unsigned int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding = false, unsigned int ErrorMode = 0, bool WithSmoothing = false );
 
 		//Do a closure test
-                virtual bool ClosureTest( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing = false );
+                virtual bool ClosureTest( unsigned int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing = false );
 
 		//Make a cross-check with MC
-		virtual int MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing = false );
+		virtual unsigned int MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing = false );
 
 		//Return a distribution for use in the cross-checks
 		virtual Distribution * MonteCarloTruthForCrossCheck();
@@ -61,16 +62,19 @@ class XvsYNormalisedPlotMaker : public IUnfolder
 		virtual string PriorName();
 
 		//Error info for corrected distribution
-		virtual vector<double> CorrectedErrors();
-		virtual vector<double> DAgostiniErrors();
+		virtual vector< double > CorrectedErrors();
+		virtual vector< double > DAgostiniErrors();
 		virtual TH2F * DAgostiniCovariance();
+
+		//Return the names of the variables involved
+		virtual vector< string > VariableNames();
 
 	private:
 		//WARNING: this method deletes the argument object
 		TH1F * Delinearise( TH1F * LinearisedDistribution );
-		vector<double> DelineariseErrors( vector<double> InputSumWeightSquares );
+		vector< double > DelineariseErrors( vector< double > InputSumWeightSquares );
 
-		int thisPlotID;
+		unsigned int thisPlotID;
 		IterativeUnfolding *XvsYUnfolder, *XUnfolder;
 		DataIndices *DistributionIndices;
 		string xName, yName, priorName;

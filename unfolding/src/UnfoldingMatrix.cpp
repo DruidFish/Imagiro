@@ -22,15 +22,15 @@ UnfoldingMatrix::UnfoldingMatrix()
 UnfoldingMatrix::UnfoldingMatrix( SmearingMatrix * InputSmearing, Distribution * InputDistribution )
 {
 	//Get the dimension of the matrix
-	int binNumber = InputSmearing->GetBinNumber();
+	unsigned int binNumber = InputSmearing->GetBinNumber();
 
 	//Calculate the probabilities of the effects
-	vector<double> effectProbabilities( binNumber, 0.0 );
-	int entryNumber = InputSmearing->GetEntryNumberAndResetIterator();
-	for ( int smearingIndex = 0; smearingIndex < entryNumber; smearingIndex++ )
+	vector< double > effectProbabilities( binNumber, 0.0 );
+	unsigned int entryNumber = InputSmearing->GetEntryNumberAndResetIterator();
+	for ( unsigned int smearingIndex = 0; smearingIndex < entryNumber; smearingIndex++ )
 	{
 		//Retrieve the smearing matrix entry
-		int causeIndex, effectIndex;
+		unsigned int causeIndex, effectIndex;
 		double smearingValue = InputSmearing->GetNextEntry( causeIndex, effectIndex );
 
 		//Add to the effect probability
@@ -39,10 +39,10 @@ UnfoldingMatrix::UnfoldingMatrix( SmearingMatrix * InputSmearing, Distribution *
 
 	//Calculate the matrix elements
 	entryNumber = InputSmearing->GetEntryNumberAndResetIterator();
-	for ( int smearingIndex = 0; smearingIndex < entryNumber; smearingIndex++ )
+	for ( unsigned int smearingIndex = 0; smearingIndex < entryNumber; smearingIndex++ )
 	{
 		//Retrieve the smearing matrix entry    
-		int causeIndex, effectIndex;            
+		unsigned int causeIndex, effectIndex;            
 		double smearingValue = InputSmearing->GetNextEntry( causeIndex, effectIndex );
 
 		//Ignore zero entries

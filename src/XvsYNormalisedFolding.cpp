@@ -25,15 +25,15 @@ XvsYNormalisedFolding::XvsYNormalisedFolding()
 
 //Constructor with the names to use for the variables
 XvsYNormalisedFolding::XvsYNormalisedFolding( string XVariableName, string YVariableName, string PriorName,
-		int XBinNumber, double XMinimum, double XMaximum,
-		int YBinNumber, double YMinimum, double YMaximum,
+		unsigned int XBinNumber, double XMinimum, double XMaximum,
+		unsigned int YBinNumber, double YMinimum, double YMaximum,
 		double ScaleFactor ) : xName( XVariableName ), yName( YVariableName ), priorName( PriorName ), finalised( false ), scaleFactor(ScaleFactor)
 {
-	vector<double> minima, maxima;
-	vector<int> binNumbers;
+	vector< double > minima, maxima;
+	vector< unsigned int > binNumbers;
 
 	//Set up a variable to keep track of the number of plots - used to prevent Root from complaining about making objects with the same names
-	static int uniqueID = 0;
+	static unsigned int uniqueID = 0;
 	uniqueID++;
 	thisPlotID = uniqueID;
 
@@ -100,7 +100,7 @@ void XvsYNormalisedFolding::StoreMatch( IFileInput * TruthInput, IFileInput * Re
 	}
 	else
 	{
-		vector<double> truthValues, reconstructedValues;
+		vector< double > truthValues, reconstructedValues;
 
 		//Find out if this is the correct prior
 		bool useInPrior = ( priorName == *( TruthInput->Description() ) );
@@ -140,7 +140,7 @@ void XvsYNormalisedFolding::StoreMiss( IFileInput * TruthInput )
 	}
 	else
 	{
-		vector<double> truthValues;
+		vector< double > truthValues;
 
 		//Find out if this is the correct prior
 		bool useInPrior = ( priorName == *( TruthInput->Description() ) );
@@ -168,7 +168,7 @@ void XvsYNormalisedFolding::StoreFake( IFileInput * ReconstructedInput )
 	}       
 	else
 	{
-		vector<double> reconstructedValues;
+		vector< double > reconstructedValues;
 
 		//Find out if this is the correct prior
 		bool useInPrior = ( priorName == *( ReconstructedInput->Description() ) );
@@ -203,7 +203,7 @@ void XvsYNormalisedFolding::StoreData( IFileInput * DataInput )
 	}       
 	else
 	{
-		vector<double> dataValues;
+		vector< double > dataValues;
 
 		//Retrieve the values from the Ntuple
 		double xDataValue = DataInput->GetValue( xName );
@@ -265,11 +265,11 @@ void XvsYNormalisedFolding::Fold()
 		TH1F * DelinearisedXvsYTruth = Delinearise(XvsYTruth);
 
 		//Get the error vectors
-		vector<double> XErrors = XFolder->SumOfInputWeightSquares();
-		vector<double> XvsYErrors = XvsYFolder->SumOfInputWeightSquares();
+		vector< double > XErrors = XFolder->SumOfInputWeightSquares();
+		vector< double > XvsYErrors = XvsYFolder->SumOfInputWeightSquares();
 
 		//Delinearise the x vs y errors
-		vector<double> delinearisedXvsYErrors = DelineariseErrors( XvsYErrors );
+		vector< double > delinearisedXvsYErrors = DelineariseErrors( XvsYErrors );
 
 		//Combine errors
 		for ( unsigned int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
@@ -456,13 +456,13 @@ TH2F * XvsYNormalisedFolding::SmearingMatrix()
 TH1F * XvsYNormalisedFolding::Delinearise( TH1F * LinearisedDistribution )
 {
 	//Find the target number of bins
-	int binNumber = DistributionIndices->GetBinNumber(0);
+	unsigned int binNumber = DistributionIndices->GetBinNumber(0);
 
 	//Make a vector of the de-linearised data
-	vector<double> delinearisedDistribution( binNumber, 0.0 );
-	vector<int> separateIndices;
-	vector<double> centralValues, dataCentralValues;
-	for ( int binIndex = 0; binIndex < DistributionIndices->GetBinNumber(); binIndex++ )
+	vector< double > delinearisedDistribution( binNumber, 0.0 );
+	vector< unsigned int > separateIndices;
+	vector< double > centralValues, dataCentralValues;
+	for ( unsigned int binIndex = 0; binIndex < DistributionIndices->GetBinNumber(); binIndex++ )
 	{
 		//Work out the delinearised bin index and central value
 		separateIndices = DistributionIndices->GetNDimensionalIndex(binIndex);
@@ -482,7 +482,7 @@ TH1F * XvsYNormalisedFolding::Delinearise( TH1F * LinearisedDistribution )
 	TH1F * delinearisedHistogram = new TH1F( name.c_str(), title.c_str(), binNumber - 2, DistributionIndices->GetMinima()[0], DistributionIndices->GetMaxima()[0] );
 
 	//Copy the data into the new distribution
-	for ( int binIndex = 0; binIndex < binNumber; binIndex++ )
+	for ( unsigned int binIndex = 0; binIndex < binNumber; binIndex++ )
 	{
 		delinearisedHistogram->SetBinContent( binIndex, delinearisedDistribution[binIndex] );
 	}
@@ -491,15 +491,15 @@ TH1F * XvsYNormalisedFolding::Delinearise( TH1F * LinearisedDistribution )
 	return delinearisedHistogram;
 }
 
-vector<double> XvsYNormalisedFolding::DelineariseErrors( vector<double> LinearisedErrors )
+vector< double > XvsYNormalisedFolding::DelineariseErrors( vector< double > LinearisedErrors )
 {
 	//Find the target number of bins
-	int binNumber = DistributionIndices->GetBinNumber(0);
+	unsigned int binNumber = DistributionIndices->GetBinNumber(0);
 
 	//Make a vector of the de-linearised data
-	vector<double> delinearisedErrors( binNumber, 0.0 );
-	vector<int> separateIndices;
-	for ( int binIndex = 0; binIndex < DistributionIndices->GetBinNumber(); binIndex++ )
+	vector< double > delinearisedErrors( binNumber, 0.0 );
+	vector< unsigned int > separateIndices;
+	for ( unsigned int binIndex = 0; binIndex < DistributionIndices->GetBinNumber(); binIndex++ )
 	{
 		//Find the delinearised bin index
 		separateIndices = DistributionIndices->GetNDimensionalIndex(binIndex);
@@ -529,7 +529,7 @@ string XvsYNormalisedFolding::PriorName()
 }
 
 //Error info for corrected distribution
-vector<double> XvsYNormalisedFolding::CorrectedErrors()
+vector< double > XvsYNormalisedFolding::CorrectedErrors()
 {
 	if ( finalised )
 	{
@@ -542,3 +542,10 @@ vector<double> XvsYNormalisedFolding::CorrectedErrors()
 	}
 }
 
+//Return the names of the variables involved
+vector< string > XvsYNormalisedFolding::VariableNames()
+{
+	vector< string > result( 1, xName );
+	result.push_back( yName );
+	return result;
+}

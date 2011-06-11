@@ -19,18 +19,18 @@ class DataIndices : public Indices
 {
 	public:
 		DataIndices();
-		DataIndices( vector<int> InputBinNumber, vector<double> InputMinima, vector<double> InputMaxima );
+		DataIndices( vector< unsigned int > InputBinNumber, vector< double > InputMinima, vector< double > InputMaxima );
 		~DataIndices();
 
 		//Return the bin central value in each dimension
-		vector<double> GetCentralValuesFromData( vector<int> InputIndices );
-		vector<double> GetCentralValuesFromData( int InputIndex );
+		vector< double > GetCentralValuesFromData( vector< unsigned int > InputIndices );
+		vector< double > GetCentralValuesFromData( unsigned int InputIndex );
 
 		//Input the data to calculate the central values
-		void StoreDataValue( vector<double> Data, double Weight = 1.0 );
+		void StoreDataValue( vector< double > Data, double Weight = 1.0 );
 
 	private:
-		vector< vector<double> > binValueSums, binValueNormalisations;
+		vector< vector< double > > binValueSums, binValueNormalisations;
 
 };
 

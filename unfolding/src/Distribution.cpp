@@ -25,7 +25,7 @@ Distribution::Distribution( Indices * InputIndices )
 	integral = 0.0;
 
 	//Initialise the bins (include a bad bin)
-	binValues = vector<double>( InputIndices->GetBinNumber() + 1, 0.0 );
+	binValues = vector< double >( InputIndices->GetBinNumber() + 1, 0.0 );
 }
 
 //Initialise by summing a bunch of TH1Fs
@@ -35,12 +35,12 @@ Distribution::Distribution( vector< TH1F* > InputDistributions, Indices * InputI
 	integral = 0.0;
 
 	//Get the number of bins in the distribution (include a bad bin)
-	int binNumber = InputIndices->GetBinNumber() + 1;
+	unsigned int binNumber = InputIndices->GetBinNumber() + 1;
 
 	//Check all inputs have the right number of bins
 	for ( unsigned int inputIndex = 0; inputIndex < InputDistributions.size(); inputIndex++ )
 	{
-		int inputBinNumber = InputDistributions[inputIndex]->GetNbinsX();
+		unsigned int inputBinNumber = InputDistributions[ inputIndex ]->GetNbinsX();
 		if ( inputBinNumber != binNumber - 2 )
 		{
 			cerr << "ERROR: input data distribution does not have the correct number of bins: " << inputBinNumber << " vs " << binNumber << endl;
@@ -49,8 +49,8 @@ Distribution::Distribution( vector< TH1F* > InputDistributions, Indices * InputI
 	}
 
 	//Initialise and populate the distribution
-	binValues = vector<double>( binNumber, 0.0 );
-	for ( int binIndex = 0; binIndex < binNumber; binIndex++ )
+	binValues = vector< double >( binNumber, 0.0 );
+	for ( unsigned int binIndex = 0; binIndex < binNumber; binIndex++ )
 	{
 		for ( unsigned int inputIndex = 0; inputIndex < InputDistributions.size(); inputIndex++ )
 		{
@@ -67,19 +67,17 @@ Distribution::Distribution( Distribution * DataDistribution, UnfoldingMatrix * B
 	integral = 0.0;
 
 	//Get the number of bins in the distribution (include a bad bin)
-	int binNumber = indexCalculator->GetBinNumber() + 1;
+	unsigned int binNumber = indexCalculator->GetBinNumber() + 1;
 
 	//Make a new, empty distribution
 	binValues = vector< double >( binNumber, 0.0 );
 
 	//Populate the distribution
-	//for ( int unfoldingIndex = 0; unfoldingIndex < BayesPosterior->NumberOfEntries(); unfoldingIndex++ )
-	int entryNumber = BayesPosterior->GetEntryNumberAndResetIterator();
-	for ( int unfoldingIndex = 0; unfoldingIndex < entryNumber; unfoldingIndex++ )
+	unsigned int entryNumber = BayesPosterior->GetEntryNumberAndResetIterator();
+	for ( unsigned int unfoldingIndex = 0; unfoldingIndex < entryNumber; unfoldingIndex++ )
 	{
 		//Retrieve the unfolding matrix entry
-		int causeIndex, effectIndex;
-		//double unfoldingValue = BayesPosterior->GetNonZeroEntry( unfoldingIndex, causeIndex, effectIndex );
+		unsigned int causeIndex, effectIndex;
 		double unfoldingValue = BayesPosterior->GetNextEntry( causeIndex, effectIndex );
 
 		//Apply the unfolding
@@ -96,19 +94,17 @@ Distribution::Distribution( Distribution * InputDistribution, SmearingMatrix * S
 	integral = 0.0;
 
 	//Get the number of bins in the distribution (include a bad bin)
-	int binNumber = indexCalculator->GetBinNumber() + 1;
+	unsigned int binNumber = indexCalculator->GetBinNumber() + 1;
 
 	//Make a new, empty distribution
 	binValues = vector< double >( binNumber, 0.0 );
 
 	//Loop over each entry in the smearing matrix
-	//for ( int smearingIndex = 0; smearingIndex < Smearing->NumberOfEntries(); smearingIndex++ )
-	int entryNumber = Smearing->GetEntryNumberAndResetIterator();
-	for ( int smearingIndex = 0; smearingIndex < entryNumber; smearingIndex++ )
+	unsigned int entryNumber = Smearing->GetEntryNumberAndResetIterator();
+	for ( unsigned int smearingIndex = 0; smearingIndex < entryNumber; smearingIndex++ )
 	{
 		//Retrieve the smearing matrix entry
-		int causeIndex, effectIndex;
-		//double smearingValue = Smearing->GetNonZeroEntry( smearingIndex, causeIndex, effectIndex );
+		unsigned int causeIndex, effectIndex;
 		double smearingValue = Smearing->GetNextEntry( causeIndex, effectIndex );
 
 		//Calculate the smearing
@@ -125,9 +121,9 @@ Distribution::~Distribution()
 }
 
 //Store an event
-void Distribution::StoreEvent( vector<double> Value, double Weight )
+void Distribution::StoreEvent( vector< double > Value, double Weight )
 {
-	int binIndex = indexCalculator->GetIndex( Value );
+	unsigned int binIndex = indexCalculator->GetIndex( Value );
 	binValues[ binIndex ] += Weight;
 	integral += Weight;
 }
@@ -153,11 +149,11 @@ void Distribution::SetBadBin( double Ratio )
 }
 
 //Return the contents of the bin with the given index
-double Distribution::GetBinNumber( int InputIndex )
+double Distribution::GetBinNumber( unsigned int InputIndex )
 {
-	if ( InputIndex >= 0 && InputIndex <= indexCalculator->GetBinNumber() )
+	if ( InputIndex <= indexCalculator->GetBinNumber() )
 	{
-		return binValues[InputIndex];
+		return binValues[ InputIndex ];
 	}
 	else
 	{
@@ -169,11 +165,11 @@ double Distribution::GetBinNumber( int InputIndex )
 }
 
 //Return the normalised contents of the bin with the given index
-double Distribution::GetBinProbability( int InputIndex )
+double Distribution::GetBinProbability( unsigned int InputIndex )
 {
 	if ( InputIndex >= 0 && InputIndex <= indexCalculator->GetBinNumber() )
 	{
-		return (double)( binValues[InputIndex] ) / (double)integral;
+		return (double)( binValues[ InputIndex ] ) / (double)integral;
 	}
 	else
 	{
@@ -188,8 +184,8 @@ double Distribution::GetBinProbability( int InputIndex )
 TH1F * Distribution::MakeRootHistogram( string Name, string Title, bool MakeNormalised, bool WithBadBin )
 {
 	//Get the correct number of bins
-	int binNumber = indexCalculator->GetBinNumber();
-	if (WithBadBin)
+	unsigned int binNumber = indexCalculator->GetBinNumber();
+	if ( WithBadBin )
 	{
 		binNumber += 1;
 	}
@@ -198,16 +194,16 @@ TH1F * Distribution::MakeRootHistogram( string Name, string Title, bool MakeNorm
 	TH1F * rootHistogram = new TH1F( Name.c_str(), Title.c_str(), binNumber - 2, indexCalculator->GetMinima()[0], indexCalculator->GetMaxima()[0] );
 
 	//Populate the bins one-by-one - note that in the TH1F, bin 0 is the underflow
-	for ( int binIndex = 0; binIndex < binNumber; binIndex++ )
+	for ( unsigned int binIndex = 0; binIndex < binNumber; binIndex++ )
 	{
 		//Normalise the distribution (or not)
 		if (MakeNormalised)
 		{
-			rootHistogram->SetBinContent( binIndex, (double)( binValues[binIndex] ) / (double)integral );
+			rootHistogram->SetBinContent( binIndex, (double)( binValues[ binIndex ] ) / (double)integral );
 		}
 		else
 		{
-			rootHistogram->SetBinContent( binIndex, binValues[binIndex] );
+			rootHistogram->SetBinContent( binIndex, binValues[ binIndex ] );
 		}
 	}
 
@@ -215,32 +211,32 @@ TH1F * Distribution::MakeRootHistogram( string Name, string Title, bool MakeNorm
 }
 
 //Smooth the distribution using moving average
-void Distribution::Smooth( int SideBinNumber )
+void Distribution::Smooth( unsigned int SideBinNumber )
 {
-	int binNumber = indexCalculator->GetBinNumber();
-	vector<double> newBinValues;
-	vector<int> separateBinIndices, separateSumIndices;
+	unsigned int binNumber = indexCalculator->GetBinNumber();
+	vector< double > newBinValues;
+	vector< unsigned int > separateBinIndices, separateSumIndices;
 	double newIntegral = 0.0;
 
 	//Operate on all bins
-	for ( int binIndex = 0; binIndex < binNumber; binIndex++ )
+	for ( unsigned int binIndex = 0; binIndex < binNumber; binIndex++ )
 	{
 		//Don't smooth the over/underflow bins of the first dimension
 		separateBinIndices = indexCalculator->GetNDimensionalIndex( binIndex );
 		if ( separateBinIndices[0] == 0 || separateBinIndices[0] == indexCalculator->GetBinNumber(0) - 1 )
 		{
 			//Just copy the original value
-			newBinValues.push_back( binValues[binIndex] );
-			newIntegral += binValues[binIndex];
+			newBinValues.push_back( binValues[ binIndex ] );
+			newIntegral += binValues[ binIndex ];
 		}
 		else
 		{
 			double binTotal = 0.0;
 
 			//Take the average of the local bins
-			for ( int localIndex = -SideBinNumber; localIndex <= SideBinNumber; localIndex++ )
+			for ( unsigned int localIndex = -SideBinNumber; localIndex <= SideBinNumber; localIndex++ )
 			{
-				int sumIndex = binIndex + localIndex;
+				unsigned int sumIndex = binIndex + localIndex;
 
 				//Can this bin be used in averaging?
 				bool useInAveraging = true;
@@ -253,7 +249,7 @@ void Distribution::Smooth( int SideBinNumber )
 				{
 					for ( unsigned int dimensionIndex = 1; dimensionIndex < separateBinIndices.size(); dimensionIndex++ )
 					{
-						if ( separateSumIndices[dimensionIndex] != separateBinIndices[dimensionIndex] )
+						if ( separateSumIndices[ dimensionIndex ] != separateBinIndices[dimensionIndex] )
 						{
 							//Bins aren't in the same part of the distribution
 							useInAveraging = false;
@@ -265,12 +261,12 @@ void Distribution::Smooth( int SideBinNumber )
 				if ( sumIndex >= 0 && sumIndex < binNumber && useInAveraging )
 				{
 					//Use this bin in the averaging
-					binTotal += binValues[sumIndex];
+					binTotal += binValues[ sumIndex ];
 				}
 				else
 				{
 					//Derive an edge-preserving value instead
-					binTotal += ( 2.0 * binValues[binIndex] ) - binValues[binIndex - localIndex];
+					binTotal += ( 2.0 * binValues[ binIndex ] ) - binValues[binIndex - localIndex];
 				}
 			}
 

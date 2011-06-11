@@ -24,39 +24,39 @@ SmearingMatrix::SmearingMatrix( Indices * InputIndices )
 	indexCalculator = InputIndices;
 
 	//Initialise the normalisation
-	normalisation = vector<double>( indexCalculator->GetBinNumber() + 1, 0.0 );
+	normalisation = vector< double >( indexCalculator->GetBinNumber() + 1, 0.0 );
 }
 
 //Populate the matrix with values from events
-void SmearingMatrix::StoreTruthRecoPair( vector<double> Truth, vector<double> Reco, double TruthWeight, double RecoWeight )
+void SmearingMatrix::StoreTruthRecoPair( vector< double > Truth, vector< double > Reco, double TruthWeight, double RecoWeight )
 {
 	//Look up the indices of the truth and reco
-	int truthIndex = indexCalculator->GetIndex(Truth);
-	int recoIndex = indexCalculator->GetIndex(Reco);
+	unsigned int truthIndex = indexCalculator->GetIndex( Truth );
+	unsigned int recoIndex = indexCalculator->GetIndex( Reco );
 
 	//Increment values
 	AddToEntry( truthIndex, recoIndex, RecoWeight );
-	normalisation[truthIndex] += TruthWeight;
+	normalisation[ truthIndex ] += TruthWeight;
 }
-void SmearingMatrix::StoreUnreconstructedTruth( vector<double> Truth, double Weight )
+void SmearingMatrix::StoreUnreconstructedTruth( vector< double > Truth, double Weight )
 {
 	//Look up the index of the truth value
-	int truthIndex = indexCalculator->GetIndex( Truth );
-	int recoIndex = indexCalculator->GetBinNumber();
+	unsigned int truthIndex = indexCalculator->GetIndex( Truth );
+	unsigned int recoIndex = indexCalculator->GetBinNumber();
 
 	//Increment values
 	AddToEntry( truthIndex, recoIndex, Weight );
-	normalisation[truthIndex] += Weight;
+	normalisation[ truthIndex ] += Weight;
 }
-void SmearingMatrix::StoreReconstructedFake( vector<double> Reco, double Weight )
+void SmearingMatrix::StoreReconstructedFake( vector< double > Reco, double Weight )
 {
 	//Look up the index of the reco value
-	int truthIndex = indexCalculator->GetBinNumber();
-	int recoIndex = indexCalculator->GetIndex( Reco );
+	unsigned int truthIndex = indexCalculator->GetBinNumber();
+	unsigned int recoIndex = indexCalculator->GetIndex( Reco );
 
 	//Increment values
 	AddToEntry( truthIndex, recoIndex, Weight );
-	normalisation[truthIndex] += Weight;
+	normalisation[ truthIndex ] += Weight;
 }
 
 //Do a bunch of extra calculations that aren't necessary if you just want the raw smearing matrix
@@ -64,17 +64,17 @@ void SmearingMatrix::Finalise()
 {
 	if ( !isFinalised )
 	{
-		int binNumber = indexCalculator->GetBinNumber() + 1;
+		unsigned int binNumber = indexCalculator->GetBinNumber() + 1;
 
 		//Prepare storage for the efficiencies and effect probabilities
-		efficiencies = vector<double>( binNumber, 0.0 );
+		efficiencies = vector< double >( binNumber, 0.0 );
 
 		//Finalise each filled element
-		map< pair< int, int >, double >::iterator matrixIterator;
+		map< pair< unsigned int, unsigned int >, double >::iterator matrixIterator;
 		for ( matrixIterator = matrix.begin(); matrixIterator != matrix.end(); matrixIterator++ )
 		{
 			//Read the cause index for this entry
-			int causeIndex = matrixIterator->first.first;
+			unsigned int causeIndex = matrixIterator->first.first;
 
 			//Normalise the entry
 			double value = matrixIterator->second / normalisation[ causeIndex ];
@@ -100,7 +100,7 @@ SmearingMatrix::~SmearingMatrix()
 }
 
 //Return efficiency of a given cause
-double SmearingMatrix::GetEfficiency( int CauseIndex )
+double SmearingMatrix::GetEfficiency( unsigned int CauseIndex )
 {
 	//Check if efficiencies are already calculated
 	if ( !isFinalised )
@@ -112,7 +112,7 @@ double SmearingMatrix::GetEfficiency( int CauseIndex )
 }
 
 //Return total number of truth events in a given bin
-double SmearingMatrix::GetTruthTotal( int CauseIndex )
+double SmearingMatrix::GetTruthTotal( unsigned int CauseIndex )
 {
 	return normalisation[ CauseIndex ];
 }

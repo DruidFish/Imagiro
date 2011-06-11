@@ -25,14 +25,14 @@ class SmearingMatrix : public SparseMatrix
 		SmearingMatrix( Indices * InputIndices );
 		~SmearingMatrix();
 
-		void StoreTruthRecoPair( vector<double> Truth, vector<double> Reco, double TruthWeight = 1.0, double RecoWeight = 1.0 );
-		void StoreUnreconstructedTruth( vector<double> Truth, double Weight = 1.0 );
-		void StoreReconstructedFake( vector<double> Reco, double Weight = 1.0 );
+		void StoreTruthRecoPair( vector< double > Truth, vector< double > Reco, double TruthWeight = 1.0, double RecoWeight = 1.0 );
+		void StoreUnreconstructedTruth( vector< double > Truth, double Weight = 1.0 );
+		void StoreReconstructedFake( vector< double > Reco, double Weight = 1.0 );
 
 		void Finalise();
 
-                double GetEfficiency( int CauseIndex );
-		double GetTruthTotal( int CauseIndex );
+                double GetEfficiency( unsigned int CauseIndex );
+		double GetTruthTotal( unsigned int CauseIndex );
 
 	private:
 		vector< double > normalisation, efficiencies;

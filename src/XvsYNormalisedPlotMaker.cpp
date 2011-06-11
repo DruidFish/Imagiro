@@ -24,15 +24,15 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker()
 
 //Constructor with the names to use for the variables
 XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string YVariableName, string PriorName,
-		int XBinNumber, double XMinimum, double XMaximum,
-		int YBinNumber, double YMinimum, double YMaximum,
+		unsigned int XBinNumber, double XMinimum, double XMaximum,
+		unsigned int YBinNumber, double YMinimum, double YMaximum,
 		double ScaleFactor ) : xName( XVariableName ), yName( YVariableName ), priorName( PriorName ), finalised( false ), scaleFactor(ScaleFactor)
 {
-	vector<double> minima, maxima;
-	vector<int> binNumbers;
+	vector< double > minima, maxima;
+	vector< unsigned int > binNumbers;
 
 	//Set up a variable to keep track of the number of plots - used to prevent Root from complaining about making objects with the same names
-	static int uniqueID = 0;
+	static unsigned int uniqueID = 0;
 	uniqueID++;
 	thisPlotID = uniqueID;
 
@@ -239,7 +239,7 @@ void XvsYNormalisedPlotMaker::StoreData( IFileInput * DataInput )
 }
 
 //Do the unfolding
-void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding, int ErrorMode, bool WithSmoothing )
+void XvsYNormalisedPlotMaker::Unfold( unsigned int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding, unsigned int ErrorMode, bool WithSmoothing )
 {
 	if ( finalised )
 	{
@@ -454,7 +454,7 @@ void XvsYNormalisedPlotMaker::Unfold( int MostIterations, double ChiSquaredThres
 }
 
 //Do a closure test
-bool XvsYNormalisedPlotMaker::ClosureTest( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing )
+bool XvsYNormalisedPlotMaker::ClosureTest( unsigned int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing )
 {
 	bool result = XvsYUnfolder->ClosureTest( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
 	result &= XUnfolder->ClosureTest( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
@@ -462,7 +462,7 @@ bool XvsYNormalisedPlotMaker::ClosureTest( int MostIterations, double ChiSquared
 }
 
 //Make a cross-check with MC
-int XvsYNormalisedPlotMaker::MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing )
+unsigned int XvsYNormalisedPlotMaker::MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing )
 {
 	return XvsYUnfolder->MonteCarloCrossCheck( ReferenceDistribution, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
 }
@@ -537,13 +537,13 @@ TH2F * XvsYNormalisedPlotMaker::SmearingMatrix()
 TH1F * XvsYNormalisedPlotMaker::Delinearise( TH1F * LinearisedDistribution )
 {
 	//Find the target number of bins
-	int binNumber = DistributionIndices->GetBinNumber(0);
+	unsigned int binNumber = DistributionIndices->GetBinNumber(0);
 
 	//Make a vector of the de-linearised data
-	vector<double> delinearisedDistribution( binNumber, 0.0 );
-	vector<int> separateIndices;
-	vector<double> centralValues, dataCentralValues;
-	for ( int binIndex = 0; binIndex < DistributionIndices->GetBinNumber(); binIndex++ )
+	vector< double > delinearisedDistribution( binNumber, 0.0 );
+	vector< unsigned int > separateIndices;
+	vector< double > centralValues, dataCentralValues;
+	for ( unsigned int binIndex = 0; binIndex < DistributionIndices->GetBinNumber(); binIndex++ )
 	{
 		//Work out the delinearised bin index and central value
 		separateIndices = DistributionIndices->GetNDimensionalIndex(binIndex);
@@ -563,7 +563,7 @@ TH1F * XvsYNormalisedPlotMaker::Delinearise( TH1F * LinearisedDistribution )
 	TH1F * delinearisedHistogram = new TH1F( name.c_str(), title.c_str(), binNumber - 2, DistributionIndices->GetMinima()[0], DistributionIndices->GetMaxima()[0] );
 
 	//Copy the data into the new distribution
-	for ( int binIndex = 0; binIndex < binNumber; binIndex++ )
+	for ( unsigned int binIndex = 0; binIndex < binNumber; binIndex++ )
 	{
 		delinearisedHistogram->SetBinContent( binIndex, delinearisedDistribution[binIndex] );
 	}
@@ -572,15 +572,15 @@ TH1F * XvsYNormalisedPlotMaker::Delinearise( TH1F * LinearisedDistribution )
 	return delinearisedHistogram;
 }
 
-vector<double> XvsYNormalisedPlotMaker::DelineariseErrors( vector<double> LinearisedErrors )
+vector< double > XvsYNormalisedPlotMaker::DelineariseErrors( vector< double > LinearisedErrors )
 {
 	//Find the target number of bins
-	int binNumber = DistributionIndices->GetBinNumber(0);
+	unsigned int binNumber = DistributionIndices->GetBinNumber(0);
 
 	//Make a vector of the de-linearised data
-	vector<double> delinearisedErrors( binNumber, 0.0 );
-	vector<int> separateIndices;
-	for ( int binIndex = 0; binIndex < DistributionIndices->GetBinNumber(); binIndex++ )
+	vector< double > delinearisedErrors( binNumber, 0.0 );
+	vector< unsigned int > separateIndices;
+	for ( unsigned int binIndex = 0; binIndex < DistributionIndices->GetBinNumber(); binIndex++ )
 	{
 		//Find the delinearised bin index
 		separateIndices = DistributionIndices->GetNDimensionalIndex(binIndex);
@@ -610,7 +610,7 @@ string XvsYNormalisedPlotMaker::PriorName()
 }
 
 //Error info for corrected distribution
-vector<double> XvsYNormalisedPlotMaker::CorrectedErrors()
+vector< double > XvsYNormalisedPlotMaker::CorrectedErrors()
 {
 	if ( finalised )
 	{
@@ -622,7 +622,7 @@ vector<double> XvsYNormalisedPlotMaker::CorrectedErrors()
 		exit(1);
 	}
 }
-vector<double> XvsYNormalisedPlotMaker::DAgostiniErrors()
+vector< double > XvsYNormalisedPlotMaker::DAgostiniErrors()
 {
 	if ( finalised )
 	{
@@ -645,4 +645,12 @@ TH2F * XvsYNormalisedPlotMaker::DAgostiniCovariance()
 		cerr << "Trying to retrieve D'Agostini covariance matrix from unfinalised XvsYNormalisedPlotMaker" << endl;
 		exit(1);
 	}
+}
+
+//Return the names of the variables involved
+vector< string > XvsYNormalisedPlotMaker::VariableNames()
+{
+	vector< string > result( 1, xName );
+	result.push_back( yName );
+	return result;
 }

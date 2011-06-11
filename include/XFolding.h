@@ -21,7 +21,7 @@ class XFolding : public IFolder
 {
 	public:
 		XFolding();
-		XFolding( string XVariableName, string PriorName, int XBinNumber, double XMinimum, double XMaximum, double ScaleFactor = 1.0, bool Normalise = false );
+		XFolding( string XVariableName, string PriorName, unsigned int XBinNumber, double XMinimum, double XMaximum, double ScaleFactor = 1.0, bool Normalise = false );
 		~XFolding();
 
 		//Take input values from ntuples
@@ -51,16 +51,19 @@ class XFolding : public IFolder
 		virtual string PriorName();
 
 		//Error info for corrected distribution
-		virtual vector<double> CorrectedErrors();
+		virtual vector< double > CorrectedErrors();
+
+		//Return the names of the variables involved
+		virtual vector<string> VariableNames();
 
 	private:
-		int thisPlotID;
+		unsigned int thisPlotID;
 		Folding * XFolder;
 		Indices * DistributionIndices;
 		string xName, priorName;
 		bool finalised, normalise;
 		double scaleFactor;
-		vector<double> correctedInputErrors;
+		vector< double > correctedInputErrors;
 		TH1F *foldedDistribution, *inputDistribution, *reconstructedDistribution;
 		TH2F *smearingMatrix;
 };

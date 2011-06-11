@@ -21,7 +21,7 @@ Folding::Folding()
 //minimum and maximum of the output distribution as arguments
 //NB: the unfolding scales roughly with bin number ^ 2, the
 //error calculation scales roughly with bin number ^ 3.
-Folding::Folding( int BinNumber, double Minimum, double Maximum, string Name, int UniqueID )
+Folding::Folding( unsigned int BinNumber, double Minimum, double Maximum, string Name, unsigned int UniqueID )
 {
 	//Initialisations
 	name = Name;
@@ -31,17 +31,17 @@ Folding::Folding( int BinNumber, double Minimum, double Maximum, string Name, in
 	totalFake = 0.0;
 
 	//Make new vectors just with the one entry
-	indexCalculator = new Indices( vector<int>( 1, BinNumber ), vector<double>( 1, Minimum ), vector<double>( 1, Maximum ) );
-	inputSmearing = new SmearingMatrix(indexCalculator);
-	truthDistribution = new Distribution(indexCalculator);
-	inputDistribution = new Distribution(indexCalculator);
-	reconstructedDistribution = new Distribution(indexCalculator);
-	sumOfInputWeightSquares = vector<double>( indexCalculator->GetBinNumber(), 0.0 );
+	indexCalculator = new Indices( vector< unsigned int >( 1, BinNumber ), vector< double >( 1, Minimum ), vector< double >( 1, Maximum ) );
+	inputSmearing = new SmearingMatrix( indexCalculator );
+	truthDistribution = new Distribution( indexCalculator );
+	inputDistribution = new Distribution( indexCalculator );
+	reconstructedDistribution = new Distribution( indexCalculator );
+	sumOfInputWeightSquares = vector< double >( indexCalculator->GetBinNumber(), 0.0 );
 	distributionComparison = new Comparison( Name, UniqueID );
 }
 
 //N-Dimensional version
-Folding::Folding( vector<int> BinNumbers, vector<double> Minima, vector<double> Maxima, string Name, int UniqueID )
+Folding::Folding( vector< unsigned int > BinNumbers, vector< double > Minima, vector< double > Maxima, string Name, unsigned int UniqueID )
 {
 	//Initialisations
 	name = Name;
@@ -51,11 +51,11 @@ Folding::Folding( vector<int> BinNumbers, vector<double> Minima, vector<double> 
 	totalFake = 0.0;
 
 	indexCalculator = new Indices( BinNumbers, Minima, Maxima );
-	inputSmearing = new SmearingMatrix(indexCalculator);
-	truthDistribution = new Distribution(indexCalculator);
-	inputDistribution = new Distribution(indexCalculator);
-	reconstructedDistribution = new Distribution(indexCalculator);
-	sumOfInputWeightSquares = vector<double>( indexCalculator->GetBinNumber(), 0.0 );
+	inputSmearing = new SmearingMatrix( indexCalculator );
+	truthDistribution = new Distribution( indexCalculator );
+	inputDistribution = new Distribution( indexCalculator );
+	reconstructedDistribution = new Distribution( indexCalculator );
+	sumOfInputWeightSquares = vector< double >( indexCalculator->GetBinNumber(), 0.0 );
 	distributionComparison = new Comparison( Name, UniqueID );
 }
 
@@ -80,16 +80,16 @@ void Folding::StoreTruthRecoPair( double Truth, double Reco, double TruthWeight,
 {
 	if (UseInPrior)
 	{
-		truthDistribution->StoreEvent( vector<double>( 1, Truth ), TruthWeight );
-		reconstructedDistribution->StoreEvent( vector<double>( 1, Reco ), RecoWeight );
+		truthDistribution->StoreEvent( vector< double >( 1, Truth ), TruthWeight );
+		reconstructedDistribution->StoreEvent( vector< double >( 1, Reco ), RecoWeight );
 	}
 
 	totalPaired += TruthWeight;
-	inputSmearing->StoreTruthRecoPair( vector<double>( 1, Truth ), vector<double>( 1, Reco ), TruthWeight, RecoWeight );
+	inputSmearing->StoreTruthRecoPair( vector< double >( 1, Truth ), vector< double >( 1, Reco ), TruthWeight, RecoWeight );
 }
 
 //N-Dimensional version
-void Folding::StoreTruthRecoPair( vector<double> Truth, vector<double> Reco, double TruthWeight, double RecoWeight, bool UseInPrior )
+void Folding::StoreTruthRecoPair( vector< double > Truth, vector< double > Reco, double TruthWeight, double RecoWeight, bool UseInPrior )
 {
 	if (UseInPrior)
 	{
@@ -107,16 +107,16 @@ void Folding::StoreUnreconstructedTruth( double Truth, double Weight, bool UseIn
 {
 	if (UseInPrior)
 	{
-		truthDistribution->StoreEvent( vector<double>( 1, Truth ), Weight );
+		truthDistribution->StoreEvent( vector< double >( 1, Truth ), Weight );
 		reconstructedDistribution->StoreBadEvent( Weight );
 	}
 
 	totalMissed += Weight;
-	inputSmearing->StoreUnreconstructedTruth( vector<double>( 1, Truth ), Weight );
+	inputSmearing->StoreUnreconstructedTruth( vector< double >( 1, Truth ), Weight );
 }
 
 //N-Dimensional version
-void Folding::StoreUnreconstructedTruth( vector<double> Truth, double Weight, bool UseInPrior )
+void Folding::StoreUnreconstructedTruth( vector< double > Truth, double Weight, bool UseInPrior )
 {
 	if (UseInPrior)
 	{
@@ -135,15 +135,15 @@ void Folding::StoreReconstructedFake( double Reco, double Weight, bool UseInPrio
 	if (UseInPrior)
 	{
 		truthDistribution->StoreBadEvent( Weight );
-		reconstructedDistribution->StoreEvent( vector<double>( 1, Reco ), Weight );
+		reconstructedDistribution->StoreEvent( vector< double >( 1, Reco ), Weight );
 	}
 
 	totalFake += Weight;
-	inputSmearing->StoreReconstructedFake( vector<double>( 1, Reco ), Weight );
+	inputSmearing->StoreReconstructedFake( vector< double >( 1, Reco ), Weight );
 }
 
 //N-Dimensional version
-void Folding::StoreReconstructedFake( vector<double> Reco, double Weight, bool UseInPrior )
+void Folding::StoreReconstructedFake( vector< double > Reco, double Weight, bool UseInPrior )
 {
 	if (UseInPrior)
 	{
@@ -158,13 +158,13 @@ void Folding::StoreReconstructedFake( vector<double> Reco, double Weight, bool U
 //Store a value from the uncorrected data distribution
 void Folding::StoreValueToFold( double Input, double Weight )
 {
-	vector<double> inputVector( 1, Input );
+	vector< double > inputVector( 1, Input );
 	inputDistribution->StoreEvent( inputVector, Weight );
 	sumOfInputWeightSquares[ indexCalculator->GetIndex( inputVector ) ] += ( Weight * Weight );
 }
 
 //N-Dimensional version
-void Folding::StoreValueToFold( vector<double> Input, double Weight )
+void Folding::StoreValueToFold( vector< double > Input, double Weight )
 {
 	inputDistribution->StoreEvent( Input, Weight );
 	sumOfInputWeightSquares[ indexCalculator->GetIndex( Input ) ] += ( Weight * Weight );
@@ -241,7 +241,7 @@ TH1F * Folding::GetInputHistogram( string Name, string Title, bool Normalise )
 }
 
 //Handy for error calculation
-vector<double> Folding::SumOfInputWeightSquares()
+vector< double > Folding::SumOfInputWeightSquares()
 {
 	return sumOfInputWeightSquares;
 }

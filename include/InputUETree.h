@@ -12,6 +12,7 @@
 #define INPUT_UE_TREE_H
 
 #include "IFileInput.h"
+#include "ObservableList.h"
 #include <unordered_map>
 #include <vector>
 #include "TFile.h"
@@ -25,7 +26,7 @@ class InputUETree : public IFileInput
 {
 	public:
 		InputUETree();
-		InputUETree( string FilePath, string NtuplePath, string Description, unsigned int InputIndex,
+		InputUETree( string FilePath, string NtuplePath, string Description, unsigned int InputIndex, ObservableList * RelevanceChecker,
 				string CutName = "NoCut", double CutMinimum = 0.0, double CutMaximum = 0.0 );
 		virtual ~InputUETree();
 
@@ -39,6 +40,7 @@ class InputUETree : public IFileInput
 
 		//Get any other column value by name
 		virtual double GetValue( string VariableName );
+		virtual vector< double > * GetVector( string VectorName );
 
 		//Get the number of rows
 		virtual unsigned long NumberOfRows();
@@ -56,8 +58,9 @@ class InputUETree : public IFileInput
 		UInt_t currentEventNumber;
 		double currentEventWeight;
 		TBranch *eventNumberBranch, *eventWeightBranch;
-		vector< TBranch* > branches;
+		vector< TBranch* > valueBranches, vectorBranches;
 		vector< double > currentValues;
+		vector< vector< double >* > currentVectors;
 
 		//Mapping
 		unsigned long totalRows;
@@ -65,6 +68,7 @@ class InputUETree : public IFileInput
 		unordered_map< unsigned int, unsigned long >::iterator eventIterator;
 		unordered_map< unsigned long, unsigned long > externalRowToInternalRow;
 		unordered_map< string, unsigned int > columnNameToIndex;
+		unordered_map< string, unsigned int > vectorNameToIndex;
 		unordered_map< string, unsigned int >::iterator columnIterator;
 
 		//IO

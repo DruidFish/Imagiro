@@ -29,7 +29,7 @@ SparseMatrix::~SparseMatrix()
 }
 
 //Add to the existing entry at these indices, or create a new entry if one does not exist
-void SparseMatrix::AddToEntry( int FirstIndex, int SecondIndex, double Value )
+void SparseMatrix::AddToEntry( unsigned int FirstIndex, unsigned int SecondIndex, double Value )
 {
 	if ( vectorsMade )
 	{
@@ -38,9 +38,8 @@ void SparseMatrix::AddToEntry( int FirstIndex, int SecondIndex, double Value )
 	}
 
 	//Find if this matrix element already exists
-	//const pair< int, int > searchPair = make_pair( FirstIndex, SecondIndex );
-	const pair< int, int > searchPair( FirstIndex, SecondIndex );
-	const map< pair< int, int >, double >::iterator searchResult = matrix.find( searchPair );
+	const pair< unsigned int, unsigned int > searchPair( FirstIndex, SecondIndex );
+	const map< pair< unsigned int, unsigned int >, double >::iterator searchResult = matrix.find( searchPair );
 
 	//Either create a new element or add to the existing one
 	if ( searchResult == matrix.end() )
@@ -52,12 +51,10 @@ void SparseMatrix::AddToEntry( int FirstIndex, int SecondIndex, double Value )
 	{
 		matrix[ searchPair ] += Value;
 	}
-
-	assert( entryNumber == (int)matrix.size() );
 }
 
 //Get the next non-zero entry in an iteration through them
-double SparseMatrix::GetNextEntry( int & FirstIndex, int & SecondIndex, bool UseSecondIterator )
+double SparseMatrix::GetNextEntry( unsigned int & FirstIndex, unsigned int & SecondIndex, bool UseSecondIterator )
 {
 	if ( UseSecondIterator )
 	{
@@ -92,11 +89,11 @@ double SparseMatrix::GetNextEntry( int & FirstIndex, int & SecondIndex, bool Use
 }
 
 //Get any element of the matrix
-double SparseMatrix::GetElement( int FirstIndex, int SecondIndex )
+double SparseMatrix::GetElement( unsigned int FirstIndex, unsigned int SecondIndex )
 {
 	//Find if this matrix element already exists
-	pair< int, int > searchPair( FirstIndex, SecondIndex );
-	map< pair< int, int >, double >::iterator searchResult;
+	pair< unsigned int, unsigned int > searchPair( FirstIndex, SecondIndex );
+	map< pair< unsigned int, unsigned int >, double >::iterator searchResult;
 	searchResult = matrix.find( searchPair );
 
 	if ( searchResult == matrix.end() )
@@ -109,14 +106,14 @@ double SparseMatrix::GetElement( int FirstIndex, int SecondIndex )
 	}
 }
 
-void SparseMatrix::VectorsFromMap( int BinNumber )
+void SparseMatrix::VectorsFromMap( unsigned int BinNumber )
 {
 	//Set up the data structures
 	matrixValues = vector< vector< double > >( BinNumber, vector< double >() );
-	secondIndices = vector< vector< int > >( BinNumber, vector< int >() );
+	secondIndices = vector< vector< unsigned int > >( BinNumber, vector< unsigned int >() );
 
 	//Read out the map
-	map< pair< int, int >, double >::iterator matrixIterator;
+	map< pair< unsigned int, unsigned int >, double >::iterator matrixIterator;
 	for ( matrixIterator = matrix.begin(); matrixIterator != matrix.end(); matrixIterator++ )
 	{
 		secondIndices[ matrixIterator->first.first ].push_back( matrixIterator->first.second );
@@ -131,7 +128,7 @@ void SparseMatrix::VectorsFromMap( int BinNumber )
 //Return a root 2D histogram containing the smearing matrix
 TH2F * SparseMatrix::MakeRootHistogram( string Name, string Title )
 {
-	int binNumber = matrixValues.size();
+	unsigned int binNumber = matrixValues.size();
 
 	//Create the histogram object
 	TH2F * outputHistogram = new TH2F( Name.c_str(), Title.c_str(), binNumber, 0.0, (double)binNumber, binNumber, 0.0, (double)binNumber );
@@ -141,7 +138,7 @@ TH2F * SparseMatrix::MakeRootHistogram( string Name, string Title )
 	{
 		for ( unsigned int entryIndex = 0; entryIndex < matrixValues[ firstIndex ].size(); entryIndex++ )
 		{
-			int outputBin = outputHistogram->GetBin( firstIndex + 1, secondIndices[ firstIndex ][ entryIndex ] + 1, 0 );
+			unsigned int outputBin = outputHistogram->GetBin( firstIndex + 1, secondIndices[ firstIndex ][ entryIndex ] + 1, 0 );
 
 			outputHistogram->SetBinContent( outputBin, matrixValues[ firstIndex ][ entryIndex ] );
 		}
@@ -150,12 +147,12 @@ TH2F * SparseMatrix::MakeRootHistogram( string Name, string Title )
 	return outputHistogram;
 }
 
-int SparseMatrix::GetBinNumber()
+unsigned int SparseMatrix::GetBinNumber()
 {
 	return matrixValues.size();
 }
 
-int SparseMatrix::GetEntryNumberAndResetIterator( bool UseSecondIterator )
+unsigned int SparseMatrix::GetEntryNumberAndResetIterator( bool UseSecondIterator )
 {
 	if ( UseSecondIterator )
 	{
@@ -169,11 +166,11 @@ int SparseMatrix::GetEntryNumberAndResetIterator( bool UseSecondIterator )
 }
 
 //Get all non-zero entries of the matrix with the given FirstIndex
-vector< double > * SparseMatrix::GetEntriesWithFirstIndex( int FirstIndex )
+vector< double > * SparseMatrix::GetEntriesWithFirstIndex( unsigned int FirstIndex )
 {
 	return &( matrixValues[ FirstIndex ] );
 }
-vector< int > * SparseMatrix::GetIndicesWithFirstIndex( int FirstIndex )
+vector< unsigned int > * SparseMatrix::GetIndicesWithFirstIndex( unsigned int FirstIndex )
 {
 	return &( secondIndices[ FirstIndex ] );
 }

@@ -39,6 +39,7 @@ MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker( IUnfolder * TemplatePlot
 	combineMode = CombineMCMode;
 	mcInfo = PlotInformation;
 	dataDescription = "";
+	variableNames = TemplatePlotMaker->VariableNames();
 
 	//Make a separate plot for each MC source
 	bool usedTheTemplate = false;
@@ -766,4 +767,10 @@ void MonteCarloSummaryPlotMaker::SaveResult( TFile * OutputFile )
 	}
 
 	OutputFile->Flush();
+}
+
+//Return the names of the variables
+vector< string > MonteCarloSummaryPlotMaker::VariableNames()
+{
+	return variableNames;
 }

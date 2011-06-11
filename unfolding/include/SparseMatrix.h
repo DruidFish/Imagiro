@@ -25,40 +25,40 @@ class SparseMatrix
 		~SparseMatrix();
 
 		//Get the number of non-zero entries
-		int GetEntryNumberAndResetIterator( bool UseSecondIterator = false );
+		unsigned int GetEntryNumberAndResetIterator( bool UseSecondIterator = false );
 
 		//Get any element of the matrix
-		double GetElement( int FirstIndex, int SecondIndex );
+		double GetElement( unsigned int FirstIndex, unsigned int SecondIndex );
 
 		//Get the next non-zero entry in an iteration through them
-		double GetNextEntry( int & FirstIndex, int & SecondIndex, bool UseSecondIterator = false );
+		double GetNextEntry( unsigned int & FirstIndex, unsigned int & SecondIndex, bool UseSecondIterator = false );
 
 		//Get all non-zero entries of the matrix with the given FirstIndex
-		vector< double > * GetEntriesWithFirstIndex( int FirstIndex );
-		vector< int > * GetIndicesWithFirstIndex( int FirstIndex );
+		vector< double > * GetEntriesWithFirstIndex( unsigned int FirstIndex );
+		vector< unsigned int > * GetIndicesWithFirstIndex( unsigned int FirstIndex );
 
 		//Return a root histogram containing the matrix
 		TH2F * MakeRootHistogram( string Name, string Title );
 
 		//Get the number of bins along one side of the matrix
-		int GetBinNumber();
+		unsigned int GetBinNumber();
 
 	protected:
 		//Add to the existing entry at these indices, or create a new entry if one does not exist
-		void AddToEntry( int FirstIndex, int SecondIndex, double Value );
+		void AddToEntry( unsigned int FirstIndex, unsigned int SecondIndex, double Value );
 
 		//Make the vectors from the map
-		void VectorsFromMap( int BinNumber );
+		void VectorsFromMap( unsigned int BinNumber );
 
-		map< pair< int, int >, double > matrix;
-		map< pair< int, int >, double >::iterator nextEntry;
-		map< pair< int, int >, double >::iterator otherNextEntry;
+		map< pair< unsigned int, unsigned int >, double > matrix;
+		map< pair< unsigned int, unsigned int >, double >::iterator nextEntry;
+		map< pair< unsigned int, unsigned int >, double >::iterator otherNextEntry;
 		vector< vector< double > > matrixValues;
-		vector< vector< int > > secondIndices;
+		vector< vector< unsigned int > > secondIndices;
 
 	private:
 		bool vectorsMade;
-		int entryNumber;
+		unsigned int entryNumber;
 };
 
 #endif

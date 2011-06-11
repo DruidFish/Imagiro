@@ -34,6 +34,7 @@ class IFileInput
 
 		//Get any other column value by name
 		virtual double GetValue( string VariableName ) = 0;
+		virtual vector< double > * GetVector( string VectorName ) = 0;
 
 		//Get the number of rows and files
 		virtual unsigned long NumberOfRows() = 0;

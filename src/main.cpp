@@ -15,6 +15,7 @@
 #include "XvsYNormalisedFolding.h"
 #include "MonteCarloSummaryPlotMaker.h"
 #include "MonteCarloInformation.h"
+#include "ObservableList.h"
 #include "XPlotMaker.h"
 #include "XFolding.h"
 #include "TFile.h"
@@ -55,7 +56,7 @@ const bool COMBINE_MC = true;
 // 2) Full D'Agositini moethd covariance matrix (slow)    //
 //                                                        //
 ////////////////////////////////////////////////////////////
-const int ERROR_MODE = 0;
+const unsigned int ERROR_MODE = 0;
 
 ////////////////////////////////////////////////////////////
 //                                                        //
@@ -88,14 +89,6 @@ int main ( int argc, char * argv[] )
 
 	////////////////////////////////////////////////////////////
 	//                                                        //
-	// Load the data - Again, set this up yourself            //
-	//                                                        //
-	////////////////////////////////////////////////////////////
-	//IFileInput * dataInput = new InputUETree( "/Disk/speyside7/Grid/grid-files/bwynne/L1_J5.v2/JetTauEtmiss/combined.root", "benTuple", "JetTauEtmiss Data (2010)", mcInfo->NumberOfSources() );
-	//IFileInput * dataInput = mcInfo->MakeReconstructedInput( 0 );
-
-	////////////////////////////////////////////////////////////
-	//                                                        //
 	// Set the plot style - customise this below              //
 	//                                                        //
 	////////////////////////////////////////////////////////////
@@ -113,19 +106,19 @@ int main ( int argc, char * argv[] )
 	//                                                        //
 	////////////////////////////////////////////////////////////
 	double scaleFactor = 3.0 / ( 10.0 * M_PI );
-	int jetPtBins = 30;
+	unsigned int jetPtBins = 100;
 	double jetPtMin = 0.0;
-	double jetPtMax = 1200000.0;
-	int nChargeBins = 100;
+	double jetPtMax = 200000.0;
+	unsigned int nChargeBins = 100;
 	double nChargeMin = 0.5;
 	double nChargeMax = 100.5;
-	int XnChargeBins = 30;
+	unsigned int XnChargeBins = 30;
 	double XnChargeMin = 0.5;
 	double XnChargeMax = 30.5;
-	int meanPtBins = 1500;
+	unsigned int meanPtBins = 1500;
 	double meanPtMin = 0.0;
 	double meanPtMax = 150000.0;
-	int sumPtBins = 5000;
+	unsigned int sumPtBins = 5000;
 	double sumPtMin = 0.0;
 	double sumPtMax = 5000000.0;
 
@@ -241,11 +234,20 @@ int main ( int argc, char * argv[] )
 	pTmeanvsNChargedTransSummary->SetAxisLabels( "N_{ch}", "<p_{T}> [MeV]" );
 	allPlotMakers.push_back( pTmeanvsNChargedTransSummary );
 
+	///////////////////////////////////////////////////////////
+	//                                                       //
+	//  End of plot area                                     //
+	//                                                       //
+	///////////////////////////////////////////////////////////
+
+	//Make an object to keep track of which observables we actually need
+	ObservableList * relevanceChecker = new ObservableList( allPlotMakers );
+
 	//Populate the smearing matrices
 	for ( unsigned int mcIndex = 0; mcIndex < mcInfo->NumberOfSources(); mcIndex++ )
 	{
-		IFileInput * truthInput = mcInfo->MakeTruthInput( mcIndex );
-		IFileInput * reconstructedInput = mcInfo->MakeReconstructedInput( mcIndex );
+		IFileInput * truthInput = mcInfo->MakeTruthInput( mcIndex, relevanceChecker );
+		IFileInput * reconstructedInput = mcInfo->MakeReconstructedInput( mcIndex, relevanceChecker );
 		MakeSmearingMatrices( truthInput, reconstructedInput );
 		delete truthInput;
 		delete reconstructedInput;
@@ -256,9 +258,9 @@ int main ( int argc, char * argv[] )
 	// Load the data - Again, set this up yourself            //
 	//                                                        //
 	////////////////////////////////////////////////////////////
-	IFileInput * dataInput = mcInfo->MakeReconstructedInput( 0 );
+	IFileInput * dataInput = mcInfo->MakeReconstructedInput( 0, relevanceChecker );
 	//IFileInput * dataInput = new TriggerChoosingInput( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/JetTauEtmiss/PeriodGtoI/combined.TriggerName.AntiKt4TopoEM.root",
-	//		"benTuple", "JetTauEtmiss Data (2010 G-I)", mcInfo->NumberOfSources() );
+	//		"benTuple", "JetTauEtmiss Data (2010)", mcInfo->NumberOfSources(), relevanceChecker );
 
 	//Unfold!
 	DoTheUnfolding( dataInput );

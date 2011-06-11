@@ -28,7 +28,7 @@ class CovarianceMatrix : public SparseMatrix
 		~CovarianceMatrix();
 
 	private:
-		void CovarianceCalculation( int I, int J, int K, int L, double unfoldingProductTimesDataI, double dataI, double dataJ );
+		void CovarianceCalculation( unsigned int I, unsigned int J, unsigned int K, unsigned int L, double unfoldingProductTimesDataI, double dataI, double dataJ );
 
 		time_t timeNow;
 		double correctedSum;

@@ -11,6 +11,7 @@
 #ifndef INPUT_NTUPLE_H
 #define INPUT_NTUPLE_H
 
+#include "ObservableList.h"
 #include <map>
 #include <vector>
 #include "TFile.h"
@@ -24,7 +25,7 @@ class InputNtuple : public IFileInput
 {
 	public:
 		InputNtuple();
-		InputNtuple( string FilePath, string NtuplePath, string Description, unsigned int InputIndex );
+		InputNtuple( string FilePath, string NtuplePath, string Description, unsigned int InputIndex, ObservableList * RelevanceChecker );
 		~InputNtuple();
 
 		//Change the Ntuple row being examined
@@ -37,6 +38,7 @@ class InputNtuple : public IFileInput
 
 		//Get any other column value by name
 		virtual double GetValue( string VariableName );
+		virtual vector< double > * GetVector( string VectorName );
 
 		//Get the number of rows
 		virtual unsigned long NumberOfRows();

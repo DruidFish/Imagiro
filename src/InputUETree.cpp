@@ -22,12 +22,15 @@ InputUETree::InputUETree()
 }
 
 //Constructor taking arguments pointing to a particular Ntuple in a root file
-InputUETree::InputUETree( string FilePath, string NtuplePath, string Description, unsigned int DescriptionIndex,
-	       string CutName, double CutMinimum, double CutMaximum )
+InputUETree::InputUETree( string FilePath, string NtuplePath, string Description, unsigned int DescriptionIndex, ObservableList * RelevanceChecker,
+		string CutName, double CutMinimum, double CutMaximum )
 {
 	sourceDescription = Description;
 	sourceDescriptionIndex = DescriptionIndex;
 	totalRows = 0;
+	currentRowNumber = 0;
+	currentEventNumber = 0;
+	bool calculateCut = !( CutMaximum == 0.0 && CutMinimum == 0.0 && CutName == "NoCut" );
 
 	//Get the Ntuple from the file
 	inputFile = new TFile( FilePath.c_str(), "READ" );
@@ -48,7 +51,9 @@ InputUETree::InputUETree( string FilePath, string NtuplePath, string Description
 	TLeaf * nextLeaf;
 	bool eventNumberFound = false;
 	bool eventWeightFound = false;
-	vector<string> otherColumnNames;
+	bool cutColumnFound = false;
+	vector< string > otherColumnNames, vectorNames;
+	unsigned int cutColumnIndex = 0;
 	while ( ( nextLeaf = ( TLeaf* )branchIterator() ) )
 	{
 		string leafName = nextLeaf->GetName();
@@ -62,18 +67,32 @@ InputUETree::InputUETree( string FilePath, string NtuplePath, string Description
 		}
 		else if ( leafType == "Double_t" )
 		{
-			//Hack at the moment to remove other formats
-
+			//Check the name
 			if ( leafName == EVENT_WEIGHT_COLUMN_NAME )
 			{
 				//Event weight
 				wrappedNtuple->SetBranchAddress( EVENT_WEIGHT_COLUMN_NAME.c_str(), &currentEventWeight, &eventWeightBranch );
 				eventWeightFound = true;
 			}
-			else
+			else if ( calculateCut && leafName == CutName )
 			{
-				//All other readable columns
-				otherColumnNames.push_back(leafName);
+				//The column with the cut variable
+				cutColumnFound = true;
+				cutColumnIndex = otherColumnNames.size();
+				otherColumnNames.push_back( leafName );
+			}
+			else if ( RelevanceChecker->IsInList( leafName ) )
+			{
+				//All other relevant columns
+				otherColumnNames.push_back( leafName );
+			}
+		}
+		else if ( leafType == "vector<double>" )
+		{
+			if ( RelevanceChecker->IsInList( leafName ) )
+			{
+				//All relevant vectors
+				vectorNames.push_back( leafName );
 			}
 		}
 	}
@@ -90,25 +109,25 @@ InputUETree::InputUETree( string FilePath, string NtuplePath, string Description
 		exit(1);
 	}
 
-	//Set up access to the other columns
+	//Set up the column with the cut variable (if there is one)
 	//You mustn't edit the lengths of these two vectors once you start using SetBranchAddress with them
-	currentValues = vector< double >( otherColumnNames.size() );
-	branches = vector< TBranch* >( otherColumnNames.size() );
-	for ( unsigned int columnIndex = 0; columnIndex < otherColumnNames.size(); columnIndex++ )
+	currentValues = vector< double >( otherColumnNames.size(), 0 );
+	valueBranches = vector< TBranch* >( otherColumnNames.size(), 0 );
+	if ( calculateCut )
 	{
-		string leafName = otherColumnNames[columnIndex];
-
-		//Map the column name
-		columnNameToIndex[ leafName ] = columnIndex;
-
-		//Do the nasty root Ntuple access thing
-		wrappedNtuple->SetBranchAddress( leafName.c_str(), &( currentValues[ columnIndex ] ), &( branches[ columnIndex ] ) );
+		if ( cutColumnFound )
+		{
+			columnNameToIndex[ CutName ] = cutColumnIndex;
+			wrappedNtuple->SetBranchAddress( CutName.c_str(), &( currentValues[ cutColumnIndex ] ), &( valueBranches[ cutColumnIndex ] ) );
+		}
+		else
+		{
+			cerr << "Ntuple contains no column called \"" << CutName << "\"" << endl;
+			exit(1);
+		}
 	}
 
 	//Loop over all rows to map event number to row index
-	bool calculateCut = !( CutMaximum == 0.0 && CutMinimum == 0.0 && CutName == "NoCut" );
-	currentRowNumber = 0;
-	currentEventNumber = 0;
 	for ( unsigned long rowIndex = 0; rowIndex < wrappedNtuple->GetEntries(); rowIndex++ )
 	{
 		//Load the row
@@ -132,11 +151,38 @@ InputUETree::InputUETree( string FilePath, string NtuplePath, string Description
 		}
 	}
 
-	//Settle on a valid row
+	//Set up access to the other columns
+	for ( unsigned int columnIndex = 0; columnIndex < otherColumnNames.size(); columnIndex++ )
+	{
+		if ( !calculateCut || columnIndex != cutColumnIndex )
+		{
+			string leafName = otherColumnNames[columnIndex];
+
+			//Map the column name
+			columnNameToIndex[ leafName ] = columnIndex;
+
+			//Do the nasty root Ntuple access thing
+			wrappedNtuple->SetBranchAddress( leafName.c_str(), &( currentValues[ columnIndex ] ), &( valueBranches[ columnIndex ] ) );
+		}
+	}
+	currentVectors = vector< vector< double >* >( vectorNames.size(), 0 );
+	vectorBranches = vector< TBranch* >( vectorNames.size(), 0 );
+	for ( unsigned int columnIndex = 0; columnIndex < vectorNames.size(); columnIndex++ )
+	{
+		string leafName = vectorNames[columnIndex];
+
+		//Map the column name
+		vectorNameToIndex[ leafName ] = columnIndex;
+
+		//Do the nasty root Ntuple access thing
+		wrappedNtuple->SetBranchAddress( leafName.c_str(), &( currentVectors[ columnIndex ] ), &( vectorBranches[ columnIndex ] ) );
+	}
+
+	//Load a valid row
 	if ( totalRows > 0 )
 	{
-		 wrappedNtuple->GetEvent( externalRowToInternalRow[ 0 ] );
-		 currentRowNumber = 0;
+		wrappedNtuple->GetEvent( externalRowToInternalRow[ 0 ] );
+		currentRowNumber = 0;
 	}
 }
 
@@ -147,8 +193,11 @@ InputUETree::~InputUETree()
 	eventNumberToExternalRow.clear();
 	externalRowToInternalRow.clear();
 	columnNameToIndex.clear();
-	branches.clear();
+	valueBranches.clear();
 	currentValues.clear();
+	vectorBranches.clear();
+	vectorNameToIndex.clear();
+	currentVectors.clear();
 
 	//IO
 	delete wrappedNtuple;
@@ -259,6 +308,24 @@ double InputUETree::GetValue( string VariableName )
 		return storedValue;
 	}
 }
+vector< double > * InputUETree::GetVector( string VectorName )
+{
+	//Look for the vector
+	columnIterator = vectorNameToIndex.find( VectorName );
+
+	//Check if the column exists
+	if ( columnIterator == vectorNameToIndex.end() )
+	{
+		//Not found
+		cerr << "Vector named \"" << VectorName << "\" not found in Ntuple" << endl;
+		exit(1);
+	}
+	else
+	{
+		//Found - return pointer to vector
+		return currentVectors[ columnIterator->second ];
+	}
+}
 
 //Get the number of rows and files
 unsigned long InputUETree::NumberOfRows()
@@ -275,7 +342,7 @@ unsigned int InputUETree::NumberOfFiles()
 }
 unsigned int InputUETree::CurrentFile()
 {
-        return 0;
+	return 0;
 }
 
 //Get the description of the source

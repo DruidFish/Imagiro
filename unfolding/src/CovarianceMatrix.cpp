@@ -43,15 +43,15 @@ CovarianceMatrix::CovarianceMatrix( UnfoldingMatrix * InputUnfolding, SmearingMa
 
 	//The covariance matrix will have zero entries unless there is a product of two non-zero unfolding matrix entries
 	//Apologies for lack of better index labels, but probably best just to stick with the notation in D'Agostini's paper
-	int firstEntryNumber = InputUnfolding->GetEntryNumberAndResetIterator();
-	int percentIncrement = ceil( (double)firstEntryNumber / (double)PERCENT_PROGRESS_INCREMENT );
-	int currentPercentTarget = PERCENT_PROGRESS_INCREMENT;
-	int currentEntryTarget = percentIncrement;
+	unsigned int firstEntryNumber = InputUnfolding->GetEntryNumberAndResetIterator();
+	unsigned int percentIncrement = ceil( (double)firstEntryNumber / (double)PERCENT_PROGRESS_INCREMENT );
+	unsigned int currentPercentTarget = PERCENT_PROGRESS_INCREMENT;
+	unsigned int currentEntryTarget = percentIncrement;
 	cout << "PROGRESS:";
-	for ( int firstEntryIndex = 0; firstEntryIndex < firstEntryNumber; firstEntryIndex++ )
+	for ( unsigned int firstEntryIndex = 0; firstEntryIndex < firstEntryNumber; firstEntryIndex++ )
 	{
 		///Get a non-zero unfolding matrix entry
-		int k, i;
+		unsigned int k, i;
 		double firstEntryValue = InputUnfolding->GetNextEntry( k, i );
 
 		//Check that the corresponding data bin is non-zero
@@ -65,13 +65,13 @@ CovarianceMatrix::CovarianceMatrix( UnfoldingMatrix * InputUnfolding, SmearingMa
 			if ( JustVariance )
 			{
 				//Get all entries with the same cause index
-				vector< int > * jIndices = InputUnfolding->GetIndicesWithFirstIndex( k );
+				vector< unsigned int > * jIndices = InputUnfolding->GetIndicesWithFirstIndex( k );
 				vector< double > * secondEntryValues = InputUnfolding->GetEntriesWithFirstIndex( k );
 
 				//Loop over these entries
 				for ( unsigned int secondEntryIndex = 0; secondEntryIndex < jIndices->size(); secondEntryIndex++ )
 				{
-					int j = ( *jIndices )[ secondEntryIndex ];
+					unsigned int j = ( *jIndices )[ secondEntryIndex ];
 
 					//Check that the corresponding data bin is non-zero
 					double dataJ = DataDistribution->GetBinNumber( j );
@@ -86,10 +86,10 @@ CovarianceMatrix::CovarianceMatrix( UnfoldingMatrix * InputUnfolding, SmearingMa
 			else
 			{
 				//Loop over all non-zero entries
-				int secondEntryNumber = InputUnfolding->GetEntryNumberAndResetIterator( true );
-				for ( int secondEntryIndex = 0; secondEntryIndex < secondEntryNumber; secondEntryIndex++ )
+				unsigned int secondEntryNumber = InputUnfolding->GetEntryNumberAndResetIterator( true );
+				for ( unsigned int secondEntryIndex = 0; secondEntryIndex < secondEntryNumber; secondEntryIndex++ )
 				{
-					int l, j;
+					unsigned int l, j;
 					double secondEntryValue = InputUnfolding->GetNextEntry( l, j, true );
 
 					//Check that the corresponding data bin is non-zero
@@ -119,7 +119,7 @@ CovarianceMatrix::CovarianceMatrix( UnfoldingMatrix * InputUnfolding, SmearingMa
 	cout << endl << endl << "Finished calculating covariance: " << ctime( &timeNow ) << endl;
 }
 
-void CovarianceMatrix::CovarianceCalculation( int I, int J, int K, int L, double unfoldingProductTimesDataI, double dataI, double dataJ )
+void CovarianceMatrix::CovarianceCalculation( unsigned int I, unsigned int J, unsigned int K, unsigned int L, double unfoldingProductTimesDataI, double dataI, double dataJ )
 {
 	double covarianceContribution = 0.0;
 	double mostOfIt = unfoldingProductTimesDataI * dataJ;

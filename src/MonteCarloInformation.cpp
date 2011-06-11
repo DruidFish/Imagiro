@@ -33,40 +33,38 @@ MonteCarloInformation::MonteCarloInformation()
 	//Pythia 6 AMBT1
 	combineFiles.push_back( true );
 
-	truthPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J0_AMBT1/combinedTruth.AntiKt4TopoEM.root" );
-	//truthPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J1_AMBT1/combinedTruth.AntiKt4TopoEM.root" );
+	truthPaths.push_back( "/media/My Book/UEdata/Version4/J0_AMBT1/combinedTruth.AntiKt4TopoEM.root" );
 	vector< string > pythiaExtraTruth;
-	pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J1_AMBT1/combinedTruth.AntiKt4TopoEM.root" );
-	pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J2_AMBT1/combinedTruth.AntiKt4TopoEM.root" );
-	pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J3_AMBT1/combinedTruth.AntiKt4TopoEM.root" );
-	pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J4_AMBT1/combinedTruth.AntiKt4TopoEM.root" );
-	pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J5_AMBT1/combinedTruth.AntiKt4TopoEM.root" );
-	pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J6_AMBT1/combinedTruth.AntiKt4TopoEM.root" );
-	//pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J7_AMBT1/combinedTruth.AntiKt4TopoEM.root" );
-	//pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J8_AMBT1/combinedTruth.AntiKt4TopoEM.root" );
+	pythiaExtraTruth.push_back( "/media/My Book/UEdata/Version4/J1_AMBT1/combinedTruth.AntiKt4TopoEM.root" );
+	//pythiaExtraTruth.push_back( "/media/My Book/UEdata/Version4/J2_AMBT1/combinedTruth.AntiKt4TopoEM.root" );
+	//pythiaExtraTruth.push_back( "/media/My Book/UEdata/Version4/J3_AMBT1/combinedTruth.AntiKt4TopoEM.root" );
+	//pythiaExtraTruth.push_back( "/media/My Book/UEdata/Version4/J4_AMBT1/combinedTruth.AntiKt4TopoEM.root" );
+	//pythiaExtraTruth.push_back( "/media/My Book/UEdata/Version4/J5_AMBT1/combinedTruth.AntiKt4TopoEM.root" );
+	//pythiaExtraTruth.push_back( "/media/My Book/UEdata/Version4/J6_AMBT1/combinedTruth.AntiKt4TopoEM.root" );
+	//pythiaExtraTruth.push_back( "/media/My Book/UEdata/Version4/J7_AMBT1/combinedTruth.AntiKt4TopoEM.root" );
+	//pythiaExtraTruth.push_back( "/media/My Book/UEdata/Version4/J8_AMBT1/combinedTruth.AntiKt4TopoEM.root" );
 	extraTruthPaths.push_back( pythiaExtraTruth );
 
-	recoPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J0_AMBT1/combinedReco.TriggerName.AntiKt4TopoEM.root" );
-	//recoPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J1_AMBT1/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	recoPaths.push_back( "/media/My Book/UEdata/Version4/J0_AMBT1/combinedReco.TriggerName.AntiKt4TopoEM.root" );
 	vector< string > pythiaExtraReco;
-	pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J1_AMBT1/combinedReco.TriggerName.AntiKt4TopoEM.root" );
-	pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J2_AMBT1/combinedReco.TriggerName.AntiKt4TopoEM.root" );
-	pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J3_AMBT1/combinedReco.TriggerName.AntiKt4TopoEM.root" );
-	pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J4_AMBT1/combinedReco.TriggerName.AntiKt4TopoEM.root" );
-	pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J5_AMBT1/combinedReco.TriggerName.AntiKt4TopoEM.root" );
-	pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J6_AMBT1/combinedReco.TriggerName.AntiKt4TopoEM.root" );
-	//pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J7_AMBT1/combinedReco.TriggerName.AntiKt4TopoEM.root" );
-	//pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J8_AMBT1/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	pythiaExtraReco.push_back( "/media/My Book/UEdata/Version4/J1_AMBT1/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	//pythiaExtraReco.push_back( "/media/My Book/UEdata/Version4/J2_AMBT1/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	//pythiaExtraReco.push_back( "/media/My Book/UEdata/Version4/J3_AMBT1/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	//pythiaExtraReco.push_back( "/media/My Book/UEdata/Version4/J4_AMBT1/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	//pythiaExtraReco.push_back( "/media/My Book/UEdata/Version4/J5_AMBT1/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	//pythiaExtraReco.push_back( "/media/My Book/UEdata/Version4/J6_AMBT1/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	//pythiaExtraReco.push_back( "/media/My Book/UEdata/Version4/J7_AMBT1/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	//pythiaExtraReco.push_back( "/media/My Book/UEdata/Version4/J8_AMBT1/combinedReco.TriggerName.AntiKt4TopoEM.root" );
 	extraRecoPaths.push_back( pythiaExtraReco );
 
 	vector< double > pythiaWeights;
 	pythiaWeights.push_back( 9.8608E+06 / 199973.0 );
 	pythiaWeights.push_back( 6.7818E+05 / 199968.0 );
-	pythiaWeights.push_back( 4.0982E+04 / 199940.0 );
-	pythiaWeights.push_back( 2.1929E+03 / 199929.0 );
-	pythiaWeights.push_back( 87.701 / 199837.0 );
-	pythiaWeights.push_back( 2.3501 / 199640.0 );
-	pythiaWeights.push_back( 0.033614 / 199206.0 );
+	//pythiaWeights.push_back( 4.0982E+04 / 199940.0 );
+	//pythiaWeights.push_back( 2.1929E+03 / 199929.0 );
+	//pythiaWeights.push_back( 87.701 / 199837.0 );
+	//pythiaWeights.push_back( 2.3501 / 199640.0 );
+	//pythiaWeights.push_back( 0.033614 / 199206.0 );
 	//pythiaWeights.push_back( 1.3744E-04 / 198767.0 );
 	//pythiaWeights.push_back( 6.2099E-09 / 197077.0 );
 	inputWeights.push_back( pythiaWeights );
@@ -79,28 +77,26 @@ MonteCarloInformation::MonteCarloInformation()
 	internalReco.push_back( "benTuple" );
 
 	//Herwig++
-	combineFiles.push_back( true );
+/*	combineFiles.push_back( true );
 
-	truthPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J0_Herwig/combinedTruth.AntiKt4TopoEM.root" );
-	//truthPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J1_Herwig/combinedTruth.AntiKt4TopoEM.root" );
+	truthPaths.push_back( "/media/My Book/UEdata/Version4/J0_Herwig/combinedTruth.AntiKt4TopoEM.root" );
 	vector< string > herwigExtraTruth;
-	herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J1_Herwig/combinedTruth.AntiKt4TopoEM.root" );
-	herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J2_Herwig/combinedTruth.AntiKt4TopoEM.root" );
-	herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J3_Herwig/combinedTruth.AntiKt4TopoEM.root" );
-	herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J4_Herwig/combinedTruth.AntiKt4TopoEM.root" );
-	herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J5_Herwig/combinedTruth.AntiKt4TopoEM.root" );
-	herwigExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J6_Herwig/combinedTruth.AntiKt4TopoEM.root" );
+	herwigExtraTruth.push_back( "/media/My Book/UEdata/Version4/J1_Herwig/combinedTruth.AntiKt4TopoEM.root" );
+	herwigExtraTruth.push_back( "/media/My Book/UEdata/Version4/J2_Herwig/combinedTruth.AntiKt4TopoEM.root" );
+	herwigExtraTruth.push_back( "/media/My Book/UEdata/Version4/J3_Herwig/combinedTruth.AntiKt4TopoEM.root" );
+	herwigExtraTruth.push_back( "/media/My Book/UEdata/Version4/J4_Herwig/combinedTruth.AntiKt4TopoEM.root" );
+	herwigExtraTruth.push_back( "/media/My Book/UEdata/Version4/J5_Herwig/combinedTruth.AntiKt4TopoEM.root" );
+	herwigExtraTruth.push_back( "/media/My Book/UEdata/Version4/J6_Herwig/combinedTruth.AntiKt4TopoEM.root" );
 	extraTruthPaths.push_back( herwigExtraTruth );
 
-	recoPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J0_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
-	//recoPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J1_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	recoPaths.push_back( "/media/My Book/UEdata/Version4/J0_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
 	vector< string > herwigExtraReco;
-	herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J1_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
-	herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J2_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
-	herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J3_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
-	herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J4_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
-	herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J5_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
-	herwigExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J6_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	herwigExtraReco.push_back( "/media/My Book/UEdata/Version4/J1_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	herwigExtraReco.push_back( "/media/My Book/UEdata/Version4/J2_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	herwigExtraReco.push_back( "/media/My Book/UEdata/Version4/J3_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	herwigExtraReco.push_back( "/media/My Book/UEdata/Version4/J4_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	herwigExtraReco.push_back( "/media/My Book/UEdata/Version4/J5_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	herwigExtraReco.push_back( "/media/My Book/UEdata/Version4/J6_Herwig/combinedReco.TriggerName.AntiKt4TopoEM.root" );
 	extraRecoPaths.push_back( herwigExtraReco );
 
 	vector< double > herwigWeights;
@@ -118,33 +114,33 @@ MonteCarloInformation::MonteCarloInformation()
 	styles.push_back( 8 );
 	inputTypes.push_back( "TriggerChoosingInput" );
 	internalTruth.push_back( "benTuple" );
-	internalReco.push_back( "benTuple" );
+	internalReco.push_back( "benTuple" );*/
 
 	//Pythia 6 Perugia 2010
 /*	combineFiles.push_back( true );
 
-	truthPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J0_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
+	truthPaths.push_back( "/media/My Book/UEdata/Version4/J0_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
 	vector< string > perugiaExtraTruth;
-	perugiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J1_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
-	perugiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J2_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
-	perugiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J3_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
-	perugiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J4_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
-	perugiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J5_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
-	perugiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J6_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
-	//perugiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J7_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
-	//perugiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J8_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
+	perugiaExtraTruth.push_back( "/media/My Book/UEdata/Version4/J1_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
+	perugiaExtraTruth.push_back( "/media/My Book/UEdata/Version4/J2_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
+	perugiaExtraTruth.push_back( "/media/My Book/UEdata/Version4/J3_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
+	perugiaExtraTruth.push_back( "/media/My Book/UEdata/Version4/J4_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
+	perugiaExtraTruth.push_back( "/media/My Book/UEdata/Version4/J5_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
+	perugiaExtraTruth.push_back( "/media/My Book/UEdata/Version4/J6_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
+	perugiaExtraTruth.push_back( "/media/My Book/UEdata/Version4/J7_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
+	perugiaExtraTruth.push_back( "/media/My Book/UEdata/Version4/J8_Perugia2010/combinedTruth.AntiKt4TopoEM.root" );
 	extraTruthPaths.push_back( perugiaExtraTruth );
 
-	recoPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J0_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	recoPaths.push_back( "/media/My Book/UEdata/Version4/J0_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
 	vector< string > perugiaExtraReco;
-	perugiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J1_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
-	perugiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J2_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
-	perugiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J3_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
-	perugiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J4_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
-	perugiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J5_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
-	perugiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J6_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
-	//perugiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J7_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
-	//perugiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/J8_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	perugiaExtraReco.push_back( "/media/My Book/UEdata/Version4/J1_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	perugiaExtraReco.push_back( "/media/My Book/UEdata/Version4/J2_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	perugiaExtraReco.push_back( "/media/My Book/UEdata/Version4/J3_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	perugiaExtraReco.push_back( "/media/My Book/UEdata/Version4/J4_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	perugiaExtraReco.push_back( "/media/My Book/UEdata/Version4/J5_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	perugiaExtraReco.push_back( "/media/My Book/UEdata/Version4/J6_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	perugiaExtraReco.push_back( "/media/My Book/UEdata/Version4/J7_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
+	perugiaExtraReco.push_back( "/media/My Book/UEdata/Version4/J8_Perugia2010/combinedReco.TriggerName.AntiKt4TopoEM.root" );
 	extraRecoPaths.push_back( perugiaExtraReco );
 
 	vector< double > perugiaWeights;
@@ -155,8 +151,8 @@ MonteCarloInformation::MonteCarloInformation()
 	perugiaWeights.push_back( 64.393 / 398199.0 );
 	perugiaWeights.push_back( 1.8764 / 398046.0 );
 	perugiaWeights.push_back( 3.0412E-02 / 397900.0 );
-	//perugiaWeights.push_back( 1.3212E-04 / 399145.0 );
-	//perugiaWeights.push_back( 4.9978E-09 / 396886.0 );
+	perugiaWeights.push_back( 1.3212E-04 / 399145.0 );
+	perugiaWeights.push_back( 4.9978E-09 / 396886.0 );
 	inputWeights.push_back( perugiaWeights );
 
 	descriptions.push_back( "PYTHIA6 Perugia2010" );
@@ -178,7 +174,7 @@ unsigned int MonteCarloInformation::NumberOfSources()
 
 string MonteCarloInformation::Description( unsigned int Index )
 {
-	if ( Index < 0 || Index >= descriptions.size() )
+	if ( Index >= descriptions.size() )
 	{
 		cerr << "Index out of range" << endl;
 		exit(1);
@@ -191,7 +187,7 @@ string MonteCarloInformation::Description( unsigned int Index )
 
 Color_t MonteCarloInformation::LineColour( unsigned int Index )
 {
-	if ( Index < 0 || Index >= colours.size() )
+	if ( Index >= colours.size() )
 	{
 		cerr << "Index out of range" << endl;
 		exit(1);
@@ -204,7 +200,7 @@ Color_t MonteCarloInformation::LineColour( unsigned int Index )
 
 Style_t MonteCarloInformation::LineStyle( unsigned int Index )
 {
-	if ( Index < 0 || Index >= styles.size() )
+	if ( Index >= styles.size() )
 	{
 		cerr << "Index out of range" << endl;
 		exit(1);
@@ -239,9 +235,9 @@ int MonteCarloInformation::FindExtraIndex( unsigned int RegularIndex )
 	}
 }
 
-IFileInput * MonteCarloInformation::MakeTruthInput( unsigned int Index )
+IFileInput * MonteCarloInformation::MakeTruthInput( unsigned int Index, ObservableList * RelevanceChecker )
 {
-	if (Index < 0 || Index >= styles.size() )
+	if ( Index >= styles.size() )
 	{
 		cerr << "Index out of range" << endl;
 		exit(1);
@@ -264,18 +260,17 @@ IFileInput * MonteCarloInformation::MakeTruthInput( unsigned int Index )
 			}
 
 			//return new CombinedFileInput( inputs, inputWeights[ extraIndex ], descriptions[ Index ], Index );
-			return new CombinedFileInput( allTruthPaths, inputWeights[ extraIndex ], internalTruth[ Index ], inputTypes[ Index ], descriptions[ Index ], Index );
+			return new CombinedFileInput( allTruthPaths, inputWeights[ extraIndex ], internalTruth[ Index ], inputTypes[ Index ], descriptions[ Index ], Index, RelevanceChecker );
 		}
 		else
 		{
 			//Just a single file input
-			//return inputs[0];
-			return InstantiateSingleInput( recoPaths[ Index ], internalReco[ Index ], Index );
+			return InstantiateSingleInput( recoPaths[ Index ], internalReco[ Index ], Index, RelevanceChecker );
 		}
 	}
 }
 
-IFileInput * MonteCarloInformation::MakeReconstructedInput( unsigned int Index )
+IFileInput * MonteCarloInformation::MakeReconstructedInput( unsigned int Index, ObservableList * RelevanceChecker )
 {
 	if ( Index >= styles.size() )
 	{
@@ -299,29 +294,29 @@ IFileInput * MonteCarloInformation::MakeReconstructedInput( unsigned int Index )
 				exit(1);
 			}
 
-			return new CombinedFileInput( allRecoPaths, inputWeights[ extraIndex ], internalReco[ Index ], inputTypes[ Index ], descriptions[ Index ], Index );
+			return new CombinedFileInput( allRecoPaths, inputWeights[ extraIndex ], internalReco[ Index ], inputTypes[ Index ], descriptions[ Index ], Index, RelevanceChecker );
 		}
 		else
 		{
 			//Just a single file input
-			return InstantiateSingleInput( recoPaths[ Index ], internalReco[ Index ], Index );
+			return InstantiateSingleInput( recoPaths[ Index ], internalReco[ Index ], Index, RelevanceChecker );
 		}
 	}
 }
 
-IFileInput * MonteCarloInformation::InstantiateSingleInput( string FilePath, string InternalPath, unsigned int Index )
+IFileInput * MonteCarloInformation::InstantiateSingleInput( string FilePath, string InternalPath, unsigned int Index, ObservableList * RelevanceChecker )
 {
 	if ( inputTypes[ Index ] == NTUPLE_TYPE_STRING )
 	{
-		return new InputNtuple( FilePath, InternalPath, descriptions[ Index ], Index );
+		return new InputNtuple( FilePath, InternalPath, descriptions[ Index ], Index, RelevanceChecker );
 	}
 	else if ( inputTypes[ Index ] == UE_TREE_TYPE_STRING )
 	{
-		return new InputUETree( FilePath, InternalPath, descriptions[ Index ], Index );
+		return new InputUETree( FilePath, InternalPath, descriptions[ Index ], Index, RelevanceChecker );
 	}
 	else if ( inputTypes[ Index ] == TRIGGER_CHOOSING_TYPE_STRING )
 	{
-		return new TriggerChoosingInput( FilePath, InternalPath, descriptions[ Index ], Index );
+		return new TriggerChoosingInput( FilePath, InternalPath, descriptions[ Index ], Index, RelevanceChecker );
 	}
 	else
 	{

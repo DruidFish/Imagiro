@@ -24,7 +24,8 @@ CombinedFileInput::CombinedFileInput()
 {
 }
 
-CombinedFileInput::CombinedFileInput( vector< string > FilePaths, vector< double > FileWeights, string InternalPath, string InputType, string Description, unsigned int DescriptionIndex )
+CombinedFileInput::CombinedFileInput( vector< string > FilePaths, vector< double > FileWeights, string InternalPath, string InputType, string Description,
+		unsigned int DescriptionIndex, ObservableList * RelevanceChecker )
 {
 	m_sourceDescription = Description;
 	m_sourceIndex = DescriptionIndex;
@@ -36,6 +37,7 @@ CombinedFileInput::CombinedFileInput( vector< string > FilePaths, vector< double
 	m_rowInCurrentFile = 0;
 	m_currentInput = 0;
 	m_pTcuts = vector<double>( JET_PT_CUTS, JET_PT_CUTS + sizeof( JET_PT_CUTS ) / sizeof( double ) );
+	m_relevanceChecker = RelevanceChecker;
 
 	//Check the input
 	if ( FilePaths.size() < 1 )
@@ -123,6 +125,10 @@ double CombinedFileInput::GetValue( string VariableName )
 {
 	return m_currentInput->GetValue( VariableName );
 }
+vector< double > * CombinedFileInput::GetVector( string VectorName )
+{
+	return m_currentInput->GetVector( VectorName );
+}
 
 //Get the number of rows
 unsigned long CombinedFileInput::NumberOfRows()
@@ -165,15 +171,15 @@ void CombinedFileInput::ChangeInputFile( unsigned int NewFileIndex )
 	//Choose the type of file to open
 	if ( m_inputType == NTUPLE_TYPE_STRING )
 	{
-		m_currentInput = new InputNtuple( m_filePaths[ m_currentFile ], m_internalPath, m_sourceDescription, m_sourceIndex );
+		m_currentInput = new InputNtuple( m_filePaths[ m_currentFile ], m_internalPath, m_sourceDescription, m_sourceIndex, m_relevanceChecker );
 	}
 	else if ( m_inputType == UE_TREE_TYPE_STRING )
 	{
-		m_currentInput = new InputUETree( m_filePaths[ m_currentFile ], m_internalPath, m_sourceDescription, m_sourceIndex );
+		m_currentInput = new InputUETree( m_filePaths[ m_currentFile ], m_internalPath, m_sourceDescription, m_sourceIndex, m_relevanceChecker );
 	}
 	else if ( m_inputType == TRIGGER_CHOOSING_TYPE_STRING )
 	{
-		m_currentInput = new TriggerChoosingInput( m_filePaths[ m_currentFile ], m_internalPath, m_sourceDescription, m_sourceIndex, m_pTcuts[ m_currentFile ] );
+		m_currentInput = new TriggerChoosingInput( m_filePaths[ m_currentFile ], m_internalPath, m_sourceDescription, m_sourceIndex, m_relevanceChecker, m_pTcuts[ m_currentFile ] );
 	}
 	else
 	{

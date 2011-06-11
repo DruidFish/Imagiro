@@ -22,7 +22,7 @@ InputNtuple::InputNtuple()
 }
 
 //Constructor taking arguments pointing to a particular Ntuple in a root file
-InputNtuple::InputNtuple( string FilePath, string NtuplePath, string Description, unsigned int DescriptionIndex )
+InputNtuple::InputNtuple( string FilePath, string NtuplePath, string Description, unsigned int DescriptionIndex, ObservableList * RelevanceChecker )
 {
 	sourceDescription = Description;
 	sourceDescriptionIndex = DescriptionIndex;
@@ -57,8 +57,9 @@ InputNtuple::InputNtuple( string FilePath, string NtuplePath, string Description
 		}
 		else
 		{
-			if ( leafName != "DeltaPhi" )
+			if ( RelevanceChecker->IsInList( leafName ) )
 			{
+				//Store all other relevant branches
 				otherColumnNames.push_back(leafName);
 			}
 		}
@@ -205,6 +206,11 @@ double InputNtuple::GetValue( string VariableName )
 		//Found - return corresponding value
 		return ( double )currentValues[ columnIterator->second ];
 	}
+}
+vector< double > * InputNtuple::GetVector( string VectorName )
+{
+	cerr << "Trying to retrieve vector (" << VectorName << ") from an nTuple, which cannot contain vectors" << endl;
+	exit(1);
 }
 
 //Get the number of rows

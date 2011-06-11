@@ -13,6 +13,7 @@
 #define TRIGGER_CHOOSING_INPUT_H
 
 #include "IFileInput.h"
+#include "ObservableList.h"
 #include <string>
 #include <vector>
 #include "Rtypes.h"
@@ -23,7 +24,7 @@ class TriggerChoosingInput : public IFileInput
 {
 	public:
 		TriggerChoosingInput();
-		TriggerChoosingInput( string FilePath, string NtuplePath, string Description, unsigned int InputIndex, double JetPtMax = 1.0E20 );
+		TriggerChoosingInput( string FilePath, string NtuplePath, string Description, unsigned int InputIndex, ObservableList * RelevanceChecker, double JetPtMax = 1.0E20 );
 		virtual ~TriggerChoosingInput();
 
 		//Access a particular event, return false if the event is not found
@@ -36,6 +37,7 @@ class TriggerChoosingInput : public IFileInput
 
 		//Get any other column value by name
 		virtual double GetValue( string VariableName );
+		virtual vector< double > * GetVector( string VectorName );
 
 		//Get the number of rows
 		virtual unsigned long NumberOfRows();

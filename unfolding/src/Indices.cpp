@@ -21,80 +21,86 @@ Indices::Indices()
 }
 
 //Constructor for N-dimensional indices
-Indices::Indices( vector<int> InputBinNumber, vector<double> InputMinima, vector<double> InputMaxima ) : numberOfBins(InputBinNumber)
+Indices::Indices( const vector< unsigned int > & InputBinNumber, const vector< double > & InputMinima, const vector< double > & InputMaxima )
 {
+	numberOfBins = InputBinNumber;
+
 	//Check for stupidity
-	if ( InputMinima.size() != InputMaxima.size() || InputMaxima.size() != InputBinNumber.size() )
+	if ( InputMinima.size() != InputMaxima.size() || InputMinima.size() != InputBinNumber.size() )
 	{
 		cerr << "Different numbers of minima(" << InputMinima.size() << "), maxima(" << InputMaxima.size() << ") or bin numbers(" << InputBinNumber.size() << ") are provided" << endl;
 		exit(1);
 	}
+	else
+	{
+		numberOfDimensions = InputMinima.size();
+	}
 
 	//Loop over dimensions
-	for ( unsigned int dimensionIndex = 0; dimensionIndex < InputMinima.size(); dimensionIndex++ )
+	for ( unsigned int dimensionIndex = 0; dimensionIndex < numberOfDimensions; dimensionIndex++ )
 	{
-		//Check for sensible bin number
-		if ( numberOfBins[dimensionIndex] <= 0 )
-		{
-			cerr << "Impossible number of bins (" << numberOfBins[dimensionIndex] << ")" << endl;
-			exit(1);
-		}
-
 		//Check max and min are the right way round
-		if ( InputMaxima[dimensionIndex] > InputMinima[dimensionIndex] )
+		if ( InputMaxima[ dimensionIndex ] > InputMinima[ dimensionIndex ] )
 		{
-			minima.push_back( InputMinima[dimensionIndex] );
-			maxima.push_back( InputMaxima[dimensionIndex] );
+			minima.push_back( InputMinima[ dimensionIndex ] );
+			maxima.push_back( InputMaxima[ dimensionIndex ] );
 		}
 		else
 		{
-			minima.push_back( InputMaxima[dimensionIndex] );
-			maxima.push_back( InputMinima[dimensionIndex] );
+			minima.push_back( InputMaxima[ dimensionIndex ] );
+			maxima.push_back( InputMinima[ dimensionIndex ] );
 		}
 
 		//Calculate the bin width
-		binWidths.push_back( ( maxima[dimensionIndex] - minima[dimensionIndex] ) / (double)numberOfBins[dimensionIndex] );
+		binWidths.push_back( ( maxima[ dimensionIndex ] - minima[ dimensionIndex ] ) / (double)numberOfBins[ dimensionIndex ] );
 	}
 }
 
 //Destructor
 Indices::~Indices()
 {
+	minima.clear();
+	maxima.clear();
+	binWidths.clear();
+	numberOfBins.clear();
 }
 
 //Return the bin number / index corresponding to a given value
-int Indices::GetIndex( vector<double> InputValues )
+unsigned int Indices::GetIndex( const vector< double > & InputValues )
 {
-	if ( minima.size() != InputValues.size() )
+	//Stupidity check
+	if ( numberOfDimensions != InputValues.size() )
 	{
-		cerr << "Using a " << InputValues.size() << "D index lookup for a " << minima.size() << "D unfolding" << endl;
+		cerr << "Using a " << InputValues.size() << "D index lookup for a " << numberOfDimensions << "D unfolding" << endl;
 		exit(1);
 	}
 	else
 	{
 		//Loop over all dimensions
-		int totalIndex = 0;
+		unsigned int totalIndex = 0;
 		int binMultiplier = 1;
-		for ( unsigned int dimensionIndex = 0; dimensionIndex < minima.size(); dimensionIndex++ )
+		for ( unsigned int dimensionIndex = 0; dimensionIndex < numberOfDimensions; dimensionIndex++ )
 		{
-			int thisIndex;
-			if ( InputValues[dimensionIndex] < minima[dimensionIndex] )
+			unsigned int thisIndex;
+			if ( InputValues[ dimensionIndex ] < minima[ dimensionIndex ] )
 			{
 				//Underflow bin
 				thisIndex = 0;
 			}
-			else if ( InputValues[dimensionIndex] > maxima[dimensionIndex] )
+			else if ( InputValues[ dimensionIndex ] > maxima[ dimensionIndex ] )
 			{
 				//Overflow bin
-				thisIndex = numberOfBins[dimensionIndex] + 1;
+				thisIndex = numberOfBins[ dimensionIndex ] + 1;
 			}
 			else
 			{
-				thisIndex = ceil( ( InputValues[dimensionIndex] - minima[dimensionIndex] ) / binWidths[dimensionIndex] );
+				//Regular bin
+				thisIndex = ceil( ( InputValues[ dimensionIndex ] - minima[ dimensionIndex ] ) / binWidths[ dimensionIndex ] );
 			}
 
+			//Add to the total index
 			totalIndex += thisIndex * (double)binMultiplier;
-			binMultiplier *= ( numberOfBins[dimensionIndex] + 2 );
+			binMultiplier *= ( numberOfBins[ dimensionIndex ] + 2 );
 		}
 
 		return totalIndex;
@@ -102,35 +108,38 @@ int Indices::GetIndex( vector<double> InputValues )
 }
 
 //Return the bin number in each dimension
-vector<int> Indices::GetNDimensionalIndex( vector<double> InputValues )
+vector< unsigned int > Indices::GetNDimensionalIndex( const vector< double > & InputValues )
 {
-	if ( minima.size() != InputValues.size() )
+	//Stupidity check
+	if ( numberOfDimensions != InputValues.size() )
 	{
-		cerr << "Using a " << InputValues.size() << "D index lookup for a " << minima.size() << "D unfolding" << endl;
+		cerr << "Using a " << InputValues.size() << "D index lookup for a " << numberOfDimensions << "D unfolding" << endl;
 		exit(1);
 	}
 	else
 	{
 		//Loop over all dimensions
-		vector<int> overallIndex( minima.size(), 0 );
-		for ( unsigned int dimensionIndex = 0; dimensionIndex < minima.size(); dimensionIndex++ )
+		vector< unsigned int > overallIndex( numberOfDimensions, 0 );
+		for ( unsigned int dimensionIndex = 0; dimensionIndex < numberOfDimensions; dimensionIndex++ )
 		{
-			int thisIndex;
-			if ( InputValues[dimensionIndex] < minima[dimensionIndex] )
+			unsigned int thisIndex;
+			if ( InputValues[ dimensionIndex ] < minima[ dimensionIndex ] )
 			{
 				//Underflow bin
 				thisIndex = 0;
 			}
-			else if ( InputValues[dimensionIndex] > maxima[dimensionIndex] )
+			else if ( InputValues[ dimensionIndex ] > maxima[ dimensionIndex ] )
 			{
 				//Overflow bin
-				thisIndex = numberOfBins[dimensionIndex] + 1;
+				thisIndex = numberOfBins[ dimensionIndex ] + 1;
 			}
 			else
 			{
-				thisIndex = ceil( ( InputValues[dimensionIndex] - minima[dimensionIndex] ) / binWidths[dimensionIndex] );
+				//Regular bin
+				thisIndex = ceil( ( InputValues[ dimensionIndex ] - minima[ dimensionIndex ] ) / binWidths[ dimensionIndex ] );
 			}
 
+			//Store the index
 			overallIndex[ dimensionIndex ] = thisIndex;
 		}
 
@@ -139,15 +148,18 @@ vector<int> Indices::GetNDimensionalIndex( vector<double> InputValues )
 }
 
 //Return the bin number in each dimension
-vector<int> Indices::GetNDimensionalIndex( int InputIndex )
+vector< unsigned int > Indices::GetNDimensionalIndex( const unsigned int InputIndex )
 {
 	//Loop over all dimensions
-	vector<int> overallIndex( minima.size(), 0 );
-	int remainingIndexBits = InputIndex;
-	for ( unsigned int dimensionIndex = 0; dimensionIndex < minima.size(); dimensionIndex++ )
+	vector< unsigned int > overallIndex( numberOfDimensions, 0 );
+	unsigned int remainingIndexBits = InputIndex;
+	for ( unsigned int dimensionIndex = 0; dimensionIndex < numberOfDimensions; dimensionIndex++ )
 	{
-		int thisIndex = remainingIndexBits % ( numberOfBins[ dimensionIndex ] + 2 );
+		//Get the index in  this dimension
+		unsigned int thisIndex = remainingIndexBits % ( numberOfBins[ dimensionIndex ] + 2 );
 		overallIndex[ dimensionIndex ] = thisIndex;
+
+		//Work out the remainder for the next dimension
 		remainingIndexBits -= thisIndex;
 		remainingIndexBits /= ( numberOfBins[ dimensionIndex ] + 2 );
 	}
@@ -156,33 +168,35 @@ vector<int> Indices::GetNDimensionalIndex( int InputIndex )
 }
 
 //Return the central value of a given bin
-vector<double> Indices::GetCentralValues( vector<int> InputIndices )
+vector< double > Indices::GetCentralValues( const vector< unsigned int > & InputIndices )
 {
-	if ( minima.size() != InputIndices.size() )
+	if ( numberOfDimensions != InputIndices.size() )
 	{
-		cerr << "Using a " << InputIndices.size() << "D index lookup for a " << minima.size() << "D unfolding" << endl;
+		cerr << "Using a " << InputIndices.size() << "D index lookup for a " << numberOfDimensions << "D unfolding" << endl;
 		exit(1);
 	}
 	else
 	{
-		vector<double> centralValues( minima.size(), 0.0 );
-		for ( unsigned int dimension = 0; dimension < minima.size(); dimension++ )
+		//Loop over all dimensions
+		vector< double > centralValues( numberOfDimensions, 0.0 );
+		for ( unsigned int dimension = 0; dimension < numberOfDimensions; dimension++ )
 		{
-			int inputIndex = InputIndices[ dimension ];
+			unsigned int inputIndex = InputIndices[ dimension ];
 
 			if ( inputIndex == 0 )
 			{
 				//Underflow bin
-				centralValues[ dimension ] =  minima[dimension] - ( 0.5 * binWidths[dimension] );
+				centralValues[ dimension ] =  minima[ dimension ] - ( 0.5 * binWidths[ dimension ] );
 			}
-			else if ( inputIndex == numberOfBins[dimension] + 1 )
+			else if ( inputIndex == numberOfBins[ dimension ] + 1 )
 			{
 				//Overflow bin
-				centralValues[ dimension ] = maxima[dimension] + ( 0.5 * binWidths[dimension] );
+				centralValues[ dimension ] = maxima[ dimension ] + ( 0.5 * binWidths[ dimension ] );
 			}
-			else if ( inputIndex > 0 && inputIndex <= numberOfBins[dimension] )
+			else if ( inputIndex <= numberOfBins[ dimension ] )
 			{
-				centralValues[ dimension ] = ( ( (double)inputIndex - 0.5 ) * binWidths[dimension] ) + minima[dimension];
+				//Regular bin
+				centralValues[ dimension ] = ( ( (double)inputIndex - 0.5 ) * binWidths[ dimension ] ) + minima[ dimension ];
 			}
 			else
 			{
@@ -193,38 +207,39 @@ vector<double> Indices::GetCentralValues( vector<int> InputIndices )
 		return centralValues;
 	}
 }
-vector<double> Indices::GetCentralValues( int InputIndex )
+vector< double > Indices::GetCentralValues( unsigned int InputIndex )
 {
+	//Work out the N-dim index first
 	return GetCentralValues( GetNDimensionalIndex( InputIndex ) );
 }
 
 //Return the defining values
-vector<double> Indices::GetMinima()
+vector< double > Indices::GetMinima()
 {
 	return minima;
 }
-vector<double> Indices::GetMaxima()
+vector< double > Indices::GetMaxima()
 {
 	return maxima;
 }
-int Indices::GetBinNumber()
+unsigned int Indices::GetBinNumber()
 {
-	int binNumber = 1;
-	for ( unsigned int dimensionIndex = 0; dimensionIndex < numberOfBins.size(); dimensionIndex++ )
+	unsigned int binNumber = 1;
+	for ( unsigned int dimensionIndex = 0; dimensionIndex < numberOfDimensions; dimensionIndex++ )
 	{
-		binNumber *= ( numberOfBins[dimensionIndex] + 2 );
+		binNumber *= ( numberOfBins[ dimensionIndex ] + 2 );
 	}
 	return binNumber;
 }
-int Indices::GetBinNumber( unsigned int DimensionIndex )
+unsigned int Indices::GetBinNumber( unsigned int DimensionIndex )
 {
-	if ( DimensionIndex < 0 || DimensionIndex >= numberOfBins.size() )
+	if ( DimensionIndex >= numberOfDimensions )
 	{
-		cerr << "Specified invalid dimension index (" << DimensionIndex << ") - not in range 0 to " << numberOfBins.size() - 1 << endl;
+		cerr << "Specified invalid dimension index (" << DimensionIndex << ") - not in range 0 to " << numberOfDimensions - 1 << endl;
 		exit(1);
 	}
 	else
 	{
-		return numberOfBins[DimensionIndex] + 2;
+		return numberOfBins[ DimensionIndex ] + 2;
 	}
 }

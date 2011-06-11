@@ -30,10 +30,10 @@ class Folding
 		//minimum and maximum of the output distribution as arguments
 		//NB: the unfolding scales roughly with bin number ^ 2, the
 		//error calculation scales roughly with bin number ^ 3.
-		Folding( int BinNumber, double Minimum, double Maximum, string Name = "", int UniqueID = 0 );
+		Folding( unsigned int BinNumber, double Minimum, double Maximum, string Name = "", unsigned int UniqueID = 0 );
 
 		//N-Dimensional version
-		Folding( vector<int> BinNumbers, vector<double> Minima, vector<double> Maxima, string Name = "", int UniqueID = 0 );
+		Folding( vector< unsigned int > BinNumbers, vector< double > Minima, vector< double > Maxima, string Name = "", unsigned int UniqueID = 0 );
 
 		//Destructor
 		~Folding();
@@ -47,7 +47,7 @@ class Folding
 		void StoreTruthRecoPair( double Truth, double Reco, double TruthWeight = 1.0, double RecoWeight = 1.0, bool UseInPrior = true );
 
 		//N-Dimensional version
-		void StoreTruthRecoPair( vector<double> Truth, vector<double> Reco, double TruthWeight = 1.0, double RecoWeight = 1.0, bool UseInPrior = true );
+		void StoreTruthRecoPair( vector< double > Truth, vector< double > Reco, double TruthWeight = 1.0, double RecoWeight = 1.0, bool UseInPrior = true );
 
 
 		//If an MC event is not reconstructed at all, use this
@@ -55,7 +55,7 @@ class Folding
 		void StoreUnreconstructedTruth( double Truth, double Weight = 1.0, bool UseInPrior = true );
 
 		//N-Dimensional version
-		void StoreUnreconstructedTruth( vector<double> Truth, double Weight = 1.0, bool UseInPrior = true );
+		void StoreUnreconstructedTruth( vector< double > Truth, double Weight = 1.0, bool UseInPrior = true );
 
 
 		//If there is a fake reconstructed event with no
@@ -63,14 +63,14 @@ class Folding
 		void StoreReconstructedFake( double Reco, double Weight = 1.0, bool UseInPrior = true );
 
 		//N-Dimensional version
-		void StoreReconstructedFake( vector<double> Reco, double Weight = 1.0, bool UseInPrior = true );
+		void StoreReconstructedFake( vector< double > Reco, double Weight = 1.0, bool UseInPrior = true );
 
 
 		//Store a value from the distribution to be smeared
 		void StoreValueToFold( double ToFold, double Weight = 1.0 );
 
 		//N-Dimensional version
-		void StoreValueToFold( vector<double> ToFold, double Weight = 1.0 );
+		void StoreValueToFold( vector< double > ToFold, double Weight = 1.0 );
 
 		//Smear the input distribution
 		void Fold();
@@ -100,7 +100,7 @@ class Folding
 
 	private:
 		Comparison * distributionComparison;
-		int uniqueID;
+		unsigned int uniqueID;
 		string name;
 		vector< double > sumOfInputWeightSquares;
 		Indices * indexCalculator;

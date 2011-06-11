@@ -11,6 +11,7 @@
 #ifndef MONTE_CARLO_INFORMATION_H
 #define MONTE_CARLO_INFORMATION_H
 
+#include "ObservableList.h"
 #include "Rtypes.h"
 #include <string>
 #include <vector>
@@ -28,8 +29,8 @@ class MonteCarloInformation
 		unsigned int NumberOfSources();
 
 		//Make an object that will read the truth or reconstructed files(s) for this MC sample
-		IFileInput * MakeTruthInput( unsigned int Index );
-		IFileInput * MakeReconstructedInput( unsigned int Index );
+		IFileInput * MakeTruthInput( unsigned int Index, ObservableList * RelevanceChecker );
+		IFileInput * MakeReconstructedInput( unsigned int Index, ObservableList * RelevanceChecker );
 
 		//Return the colour and style of the line to plot for this MC sample
 		Color_t LineColour( unsigned int Index );
@@ -40,7 +41,7 @@ class MonteCarloInformation
 
 	private:
 		//Make a file reader of the correct type
-		IFileInput * InstantiateSingleInput( string FilePath, string InternalPath, unsigned int Index );
+		IFileInput * InstantiateSingleInput( string FilePath, string InternalPath, unsigned int Index, ObservableList * RelevanceChecker );
 
 		//Return the index of the additional files to combine for this MC sample
 		int FindExtraIndex( unsigned int RegularIndex );
@@ -51,7 +52,6 @@ class MonteCarloInformation
 		vector<string> descriptions, truthPaths, recoPaths, inputTypes, internalTruth, internalReco;
 		vector< Color_t > colours;
 		vector< Style_t > styles;
-
 };
 
 #endif

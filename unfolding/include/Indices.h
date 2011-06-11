@@ -19,29 +19,30 @@ class Indices
 {
 	public:
 		Indices();
-		Indices( vector<int> InputBinNumber, vector<double> InputMinima, vector<double> InputMaxima );
+		Indices( const vector< unsigned int > & InputBinNumber, const vector< double > & InputMinima, const vector< double > & InputMaxima );
 		~Indices();
 
 		//Return the bin index corresponding to a particular value (or set of values)
-		int GetIndex( vector<double> InputValues );
+		unsigned int GetIndex( const vector< double > & InputValues );
 
 		//Return the index in each dimension
-		vector<int> GetNDimensionalIndex( vector<double> InputValues );
-		vector<int> GetNDimensionalIndex( int InputIndex );
+		vector< unsigned int > GetNDimensionalIndex( const vector< double > & InputValues );
+		vector< unsigned int > GetNDimensionalIndex( const unsigned int InputIndex );
 
 		//Return the bin central value in each dimension
-		vector<double> GetCentralValues( vector<int> InputIndices );
-		vector<double> GetCentralValues( int InputIndex );
+		vector< double > GetCentralValues( const vector< unsigned int > & InputIndices );
+		vector< double > GetCentralValues( const unsigned int InputIndex );
 
 		//Definitions for the indices
-		int GetBinNumber();
-		int GetBinNumber( unsigned int DimensionIndex );
-		vector<double> GetMinima();
-		vector<double> GetMaxima();
+		unsigned int GetBinNumber();
+		unsigned int GetBinNumber( const unsigned int DimensionIndex );
+		vector< double > GetMinima();
+		vector< double > GetMaxima();
 
 	protected:
-		vector<double> minima, maxima, binWidths;
-		vector<int> numberOfBins;
+		vector< double > minima, maxima, binWidths;
+		vector< unsigned int > numberOfBins;
+		unsigned int numberOfDimensions;
 
 };
 

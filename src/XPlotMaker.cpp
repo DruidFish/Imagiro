@@ -23,7 +23,7 @@ XPlotMaker::XPlotMaker()
 
 //Constructor with the names to use for the variables
 XPlotMaker::XPlotMaker( string XVariableName, string PriorName,
-		int XBinNumber, double XMinimum, double XMaximum,
+		unsigned int XBinNumber, double XMinimum, double XMaximum,
 		double ScaleFactor, bool Normalise )
 {
 	xName = XVariableName;
@@ -31,11 +31,11 @@ XPlotMaker::XPlotMaker( string XVariableName, string PriorName,
 	finalised = false;
 	scaleFactor = ScaleFactor;
 	normalise = Normalise;
-	vector<double> minima, maxima;
-	vector<int> binNumbers;
+	vector< double > minima, maxima;
+	vector< unsigned int > binNumbers;
 
 	//Set up a variable to keep track of the number of plots - used to prevent Root from complaining about making objects with the same names
-	static int uniqueID = 0;
+	static unsigned int uniqueID = 0;
 	uniqueID++;
 	thisPlotID = uniqueID;
 
@@ -84,7 +84,7 @@ void XPlotMaker::StoreMatch( IFileInput * TruthInput, IFileInput * Reconstructed
 	}
 	else
 	{
-		vector<double> truthValues, reconstructedValues;
+		vector< double > truthValues, reconstructedValues;
 
 		//Find out if this is the correct prior
 		bool useInPrior = ( priorName == *( TruthInput->Description() ) );
@@ -110,7 +110,7 @@ void XPlotMaker::StoreMiss( IFileInput * TruthInput )
 	}
 	else
 	{
-		vector<double> truthValues;
+		vector< double > truthValues;
 
 		//Find out if this is the correct prior
 		bool useInPrior = ( priorName == *( TruthInput->Description() ) );
@@ -133,7 +133,7 @@ void XPlotMaker::StoreFake( IFileInput * ReconstructedInput )
 	}       
 	else
 	{
-		vector<double> reconstructedValues;
+		vector< double > reconstructedValues;
 
 		//Find out if this is the correct prior
 		bool useInPrior = ( priorName == *( ReconstructedInput->Description() ) );
@@ -156,7 +156,7 @@ void XPlotMaker::StoreData( IFileInput * DataInput )
 	}       
 	else
 	{
-		vector<double> dataValues;
+		vector< double > dataValues;
 
 		//Retrieve the values from the Ntuple
 		double xDataValue = DataInput->GetValue( xName );
@@ -169,7 +169,7 @@ void XPlotMaker::StoreData( IFileInput * DataInput )
 }
 
 //Do the unfolding
-void XPlotMaker::Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding, int ErrorMode, bool WithSmoothing )
+void XPlotMaker::Unfold( unsigned int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding, unsigned int ErrorMode, bool WithSmoothing )
 {
 	if ( finalised )
 	{
@@ -208,8 +208,8 @@ void XPlotMaker::Unfold( int MostIterations, double ChiSquaredThreshold, double 
 		XUncorrected->Scale( scaleFactor );
 
 		//Get the error vectors
-		vector<double> XErrors = XUnfolder->SumOfDataWeightSquares();
-		vector<double> XVariance;
+		vector< double > XErrors = XUnfolder->SumOfDataWeightSquares();
+		vector< double > XVariance;
 		if ( ErrorMode > 0 && !SkipUnfolding )
 		{
 			XVariance = XUnfolder->DAgostiniVariance();
@@ -316,13 +316,13 @@ void XPlotMaker::Unfold( int MostIterations, double ChiSquaredThreshold, double 
 }
 
 //Do a closure test
-bool XPlotMaker::ClosureTest( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing )
+bool XPlotMaker::ClosureTest( unsigned int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing )
 {
 	return XUnfolder->ClosureTest( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
 }
 
 //Make a cross-check with MC
-int XPlotMaker::MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing )
+unsigned int XPlotMaker::MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing )
 {
 	return XUnfolder->MonteCarloCrossCheck( ReferenceDistribution, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
 }
@@ -394,7 +394,7 @@ string XPlotMaker::PriorName()
 }
 
 //Error info for corrected distribution
-vector<double> XPlotMaker::CorrectedErrors()
+vector< double > XPlotMaker::CorrectedErrors()
 {
 	if ( finalised )
 	{
@@ -406,7 +406,7 @@ vector<double> XPlotMaker::CorrectedErrors()
 		exit(1);
 	}
 }
-vector<double> XPlotMaker::DAgostiniErrors()
+vector< double > XPlotMaker::DAgostiniErrors()
 {
 	if ( finalised )
 	{
@@ -429,4 +429,10 @@ TH2F * XPlotMaker::DAgostiniCovariance()
 		cerr << "Trying to retrieve D'Agostini covariance matrix from unfinalised XPlotMaker" << endl;
 		exit(1);
 	}
+}
+
+//Return the names of the variables involved
+vector< string > XPlotMaker::VariableNames()
+{
+	return vector< string >( 1, xName );
 }

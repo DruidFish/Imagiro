@@ -21,7 +21,7 @@ class XPlotMaker : public IUnfolder
 {
 	public:
 		XPlotMaker();
-		XPlotMaker( string XVariableName, string PriorName, int XBinNumber, double XMinimum, double XMaximum, double ScaleFactor = 1.0, bool Normalise = false );
+		XPlotMaker( string XVariableName, string PriorName, unsigned int XBinNumber, double XMinimum, double XMaximum, double ScaleFactor = 1.0, bool Normalise = false );
 		~XPlotMaker();
 
 		//Take input values from ntuples
@@ -32,13 +32,13 @@ class XPlotMaker : public IUnfolder
 		virtual void StoreData( IFileInput * DataInput );
 
 		//Do the unfolding
-		virtual void Unfold( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding = false, int ErrorMode = 0, bool WithSmoothing = false );
+		virtual void Unfold( unsigned int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding = false, unsigned int ErrorMode = 0, bool WithSmoothing = false );
 
 		//Do a closure test
-		virtual bool ClosureTest( int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing = false );
+		virtual bool ClosureTest( unsigned int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing = false );
 
 		//Make a cross-check with MC
-		virtual int MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing = false );
+		virtual unsigned int MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing = false );
 
 		//Return a distribution for use in the cross-checks
 		virtual Distribution * MonteCarloTruthForCrossCheck();
@@ -57,18 +57,21 @@ class XPlotMaker : public IUnfolder
 		virtual string PriorName();
 
 		//Error info for corrected distribution
-		virtual vector<double> CorrectedErrors();
-		virtual vector<double> DAgostiniErrors();
+		virtual vector< double > CorrectedErrors();
+		virtual vector< double > DAgostiniErrors();
 		virtual TH2F * DAgostiniCovariance();
 
+		//Return the names of the variables involved
+		virtual vector<string> VariableNames();
+
 	private:
-		int thisPlotID;
+		unsigned int thisPlotID;
 		IterativeUnfolding * XUnfolder;
 		Indices * DistributionIndices;
 		string xName, priorName;
 		bool finalised, normalise;
 		double scaleFactor;
-		vector<double> correctedDataErrors, dagostiniErrors;
+		vector< double > correctedDataErrors, dagostiniErrors;
 		TH1F *correctedDistribution, *uncorrectedDistribution, *mcTruthDistribution;
 		TH2F *smearingMatrix, *covarianceMatrix;
 };

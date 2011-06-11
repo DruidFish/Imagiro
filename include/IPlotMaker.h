@@ -45,6 +45,9 @@ class IPlotMaker
 
 		//Error info for corrected distribution
 		virtual vector<double> CorrectedErrors() = 0;
+
+		//Return the names of the variables involved
+		virtual vector<string> VariableNames() = 0;
 };
 
 #endif

@@ -30,7 +30,7 @@ TriggerChoosingInput::TriggerChoosingInput()
 }
 
 //Constructor taking arguments pointing to a particular Ntuple in a root file
-TriggerChoosingInput::TriggerChoosingInput( string FilePath, string NtuplePath, string Description, unsigned int DescriptionIndex, double JetPtMax )
+TriggerChoosingInput::TriggerChoosingInput( string FilePath, string NtuplePath, string Description, unsigned int DescriptionIndex, ObservableList * RelevanceChecker, double JetPtMax )
 {
 	sourceDescription = Description;
 	sourceDescriptionIndex = DescriptionIndex;
@@ -40,7 +40,7 @@ TriggerChoosingInput::TriggerChoosingInput( string FilePath, string NtuplePath, 
 	if ( FilePath.find( REPLACE_FOR_TRIGGER_IN_PATH ) == string::npos )
 	{
 		//Can't find and replace - only one input file
-		IFileInput * inputFile = new InputUETree( FilePath, NtuplePath, Description, DescriptionIndex );
+		IFileInput * inputFile = new InputUETree( FilePath, NtuplePath, Description, DescriptionIndex, RelevanceChecker );
 		triggerInputs.push_back( inputFile );
 
 		//Book-keeping
@@ -74,7 +74,7 @@ TriggerChoosingInput::TriggerChoosingInput( string FilePath, string NtuplePath, 
 				}
 
 				//Load the file for this trigger
-				IFileInput * inputTriggerFile = new InputUETree( inputTriggerFilePath, NtuplePath, Description, DescriptionIndex,
+				IFileInput * inputTriggerFile = new InputUETree( inputTriggerFilePath, NtuplePath, Description, DescriptionIndex, RelevanceChecker,
 						LEAD_JET_PT_COLUMN_NAME, triggerLowerBounds[ triggerIndex ], upperBound );
 				triggerInputs.push_back( inputTriggerFile );
 
@@ -191,6 +191,10 @@ double TriggerChoosingInput::EventWeight()
 double TriggerChoosingInput::GetValue( string VariableName )
 {
 	return triggerInputs[ currentFileNumber ]->GetValue( VariableName );
+}
+vector< double > * TriggerChoosingInput::GetVector( string VectorName )
+{
+	return triggerInputs[ currentFileNumber ]->GetVector( VectorName );
 }
 
 //Get the number of rows

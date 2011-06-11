@@ -54,6 +54,9 @@ class MonteCarloSummaryPlotMaker
 		//Create an ATLAS style object
 		TStyle * AtlasStyle( string Name );
 
+		//Return the names of the variables
+		vector< string > VariableNames();
+
 	private:
 		bool isUnfolding;
 		vector< Distribution* > allTruthDistributions;
@@ -67,6 +70,7 @@ class MonteCarloSummaryPlotMaker
 		vector< IPlotMaker* > allPlots;
 		double yRangeMinimum, yRangeMaximum;
 		string dataDescription, xAxisLabel, yAxisLabel;
+		vector< string > variableNames;
 };
 
 #endif

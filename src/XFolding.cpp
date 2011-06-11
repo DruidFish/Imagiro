@@ -24,7 +24,7 @@ XFolding::XFolding()
 
 //Constructor with the names to use for the variables
 XFolding::XFolding( string XVariableName, string PriorName,
-		int XBinNumber, double XMinimum, double XMaximum,
+		unsigned int XBinNumber, double XMinimum, double XMaximum,
 		double ScaleFactor, bool Normalise )
 {
 	xName = XVariableName;
@@ -32,11 +32,11 @@ XFolding::XFolding( string XVariableName, string PriorName,
 	finalised = false;
 	scaleFactor = ScaleFactor;
 	normalise = Normalise;
-	vector<double> minima, maxima;
-	vector<int> binNumbers;
+	vector< double > minima, maxima;
+	vector< unsigned int> binNumbers;
 
 	//Set up a variable to keep track of the number of plots - used to prevent Root from complaining about making objects with the same names
-	static int uniqueID = 0;
+	static unsigned int uniqueID = 0;
 	uniqueID++;
 	thisPlotID = uniqueID;
 
@@ -346,7 +346,7 @@ string XFolding::PriorName()
 }
 
 //Error info for corrected distribution
-vector<double> XFolding::CorrectedErrors()
+vector< double > XFolding::CorrectedErrors()
 {
 	if ( finalised )
 	{
@@ -357,5 +357,11 @@ vector<double> XFolding::CorrectedErrors()
 		cerr << "Trying to retrieve corrected data errors from unfinalised XFolding" << endl;
 		exit(1);
 	}
+}
+
+//Return the names of the variables involved
+vector< string > XFolding::VariableNames()
+{
+	return vector< string >( 1, xName );
 }
 

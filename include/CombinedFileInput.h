@@ -11,6 +11,7 @@
 #ifndef COMBINED_FILE_INPUT_H
 #define COMBINED_FILE_INPUT_H
 
+#include "ObservableList.h"
 #include <vector>
 #include <string>
 #include "IFileInput.h"
@@ -21,7 +22,7 @@ class CombinedFileInput : public IFileInput
 {
 	public:
 		CombinedFileInput();
-		CombinedFileInput( vector< string > FilePaths, vector< double > FileWeights, string InternalPath, string InputType, string Description, unsigned int DescriptionIndex );
+		CombinedFileInput( vector< string > FilePaths, vector< double > FileWeights, string InternalPath, string InputType, string Description, unsigned int DescriptionIndex, ObservableList * RelevanceChecker );
 		virtual ~CombinedFileInput();
 
 		//Access a particular event, return false if the event is not found
@@ -34,6 +35,7 @@ class CombinedFileInput : public IFileInput
 
 		//Get any other column value by name
 		virtual double GetValue( string VariableName );
+		virtual vector< double > * GetVector( string VectorName );
 
 		//Get the number of rows
 		virtual unsigned long NumberOfRows();
@@ -55,6 +57,7 @@ class CombinedFileInput : public IFileInput
 		vector< string > m_filePaths;
 		vector< double > m_fileWeights, m_pTcuts;
 		IFileInput * m_currentInput;
+		ObservableList * m_relevanceChecker;
 };
 
 #endif

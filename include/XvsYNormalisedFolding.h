@@ -24,8 +24,9 @@ class XvsYNormalisedFolding : public IFolder
 {
 	public:
 		XvsYNormalisedFolding();
-		XvsYNormalisedFolding( string XVariableName, string YVariableName, string PriorName, int XBinNumber, double XMinimum, double XMaximum,
-				int YBinNumber, double YMinimum, double YMaximum, double ScaleFactor = 1.0 );
+		XvsYNormalisedFolding( string XVariableName, string YVariableName, string PriorName,
+				unsigned int XBinNumber, double XMinimum, double XMaximum,
+				unsigned int YBinNumber, double YMinimum, double YMaximum, double ScaleFactor = 1.0 );
 		~XvsYNormalisedFolding();
 
 		//Take input values from ntuples
@@ -55,20 +56,23 @@ class XvsYNormalisedFolding : public IFolder
 		virtual string PriorName();
 
 		//Error info for corrected distribution
-		virtual vector<double> CorrectedErrors();
+		virtual vector< double > CorrectedErrors();
+
+		//Return the names of the variables involved
+		virtual vector< string > VariableNames();
 
 	private:
 		//WARNING: this method deletes the argument object
 		TH1F * Delinearise( TH1F * LinearisedDistribution );
-		vector<double> DelineariseErrors( vector<double> InputSumWeightSquares );
+		vector< double > DelineariseErrors( vector< double > InputSumWeightSquares );
 
-		int thisPlotID;
+		unsigned int thisPlotID;
 		Folding *XvsYFolder, *XFolder;
 		DataIndices *DistributionIndices;
 		string xName, yName, priorName;
 		bool finalised;
 		double scaleFactor;
-		vector<double> correctedInputErrors;
+		vector< double > correctedInputErrors;
 		StatisticsSummary * yValueSummary;
 		TH1F *foldedDistribution, *inputDistribution, *reconstructedDistribution, *xvsyReconstructionCheck, *xReconstructionCheck;
 		TH2F *smearingMatrix;
