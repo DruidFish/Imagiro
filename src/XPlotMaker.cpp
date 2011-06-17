@@ -8,6 +8,7 @@
  */
 
 #include "XPlotMaker.h"
+#include "UniformIndices.h"
 #include "TFile.h"
 #include <iostream>
 #include <cstdlib>
@@ -22,9 +23,7 @@ XPlotMaker::XPlotMaker()
 }
 
 //Constructor with the names to use for the variables
-XPlotMaker::XPlotMaker( string XVariableName, string PriorName,
-		unsigned int XBinNumber, double XMinimum, double XMaximum,
-		double ScaleFactor, bool Normalise )
+XPlotMaker::XPlotMaker( string XVariableName, string PriorName, unsigned int XBinNumber, double XMinimum, double XMaximum, double ScaleFactor, bool Normalise )
 {
 	xName = XVariableName;
 	priorName = PriorName;
@@ -45,16 +44,34 @@ XPlotMaker::XPlotMaker( string XVariableName, string PriorName,
 	binNumbers.push_back( XBinNumber );
 
 	//Make the x unfolder
-	XUnfolder = new IterativeUnfolding( binNumbers, minima, maxima, xName + priorName, thisPlotID );
+	distributionIndices = new UniformIndices( binNumbers, minima, maxima );
+	XUnfolder = new IterativeUnfolding( distributionIndices, xName + priorName, thisPlotID );
+}
 
-	//Set up the indices for the distributions
-	DistributionIndices = new Indices( binNumbers, minima, maxima );
+//For use with Clone
+XPlotMaker::XPlotMaker( string XVariableName, string PriorName, IIndexCalculator * DistributionIndices,
+		unsigned int OriginalID, double ScaleFactor, bool Normalise )
+{
+	xName = XVariableName;
+	priorName = PriorName;
+	finalised = false;
+	scaleFactor = ScaleFactor;
+	normalise = Normalise;
+
+	//Set up a variable to keep track of the number of plots - used to prevent Root from complaining about making objects with the same names
+	static unsigned int uniqueID = 0;
+	uniqueID++;
+	thisPlotID = uniqueID + OriginalID;
+
+	//Make the x unfolder
+	distributionIndices = DistributionIndices;
+	XUnfolder = new IterativeUnfolding( distributionIndices, xName + priorName, thisPlotID );
 }
 
 //Destructor
 XPlotMaker::~XPlotMaker()
 {
-	delete DistributionIndices;
+	delete distributionIndices;
 	delete XUnfolder;
 	if ( finalised )
 	{
@@ -68,9 +85,7 @@ XPlotMaker::~XPlotMaker()
 //Copy the object
 IUnfolder * XPlotMaker::Clone( string NewPriorName )
 {
-	return new XPlotMaker( xName, NewPriorName,
-			DistributionIndices->GetBinNumber(0) - 2, DistributionIndices->GetMinima()[0], DistributionIndices->GetMaxima()[0],
-			scaleFactor, normalise );
+	return new XPlotMaker( xName, NewPriorName, distributionIndices->Clone(), thisPlotID, scaleFactor, normalise );
 }
 
 //Take input values from ntuples

@@ -14,6 +14,7 @@
 #include "IFileInput.h"
 #include "ObservableList.h"
 #include <unordered_map>
+#include <map>
 #include <vector>
 #include "TFile.h"
 #include "TTree.h"
@@ -67,9 +68,9 @@ class InputUETree : public IFileInput
 		unordered_map< unsigned int, unsigned long > eventNumberToExternalRow;
 		unordered_map< unsigned int, unsigned long >::iterator eventIterator;
 		unordered_map< unsigned long, unsigned long > externalRowToInternalRow;
-		unordered_map< string, unsigned int > columnNameToIndex;
-		unordered_map< string, unsigned int > vectorNameToIndex;
-		unordered_map< string, unsigned int >::iterator columnIterator;
+		map< string, unsigned int > columnNameToIndex;
+		map< string, unsigned int > vectorNameToIndex;
+		map< string, unsigned int >::iterator columnIterator;
 
 		//IO
 		TFile * inputFile;

@@ -9,6 +9,7 @@
  */
 
 #include "XvsYNormalisedPlotMaker.h"
+#include "UniformIndices.h"
 #include "TFile.h"
 #include <iostream>
 #include <cstdlib>
@@ -25,9 +26,13 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker()
 //Constructor with the names to use for the variables
 XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string YVariableName, string PriorName,
 		unsigned int XBinNumber, double XMinimum, double XMaximum,
-		unsigned int YBinNumber, double YMinimum, double YMaximum,
-		double ScaleFactor ) : xName( XVariableName ), yName( YVariableName ), priorName( PriorName ), finalised( false ), scaleFactor(ScaleFactor)
+		unsigned int YBinNumber, double YMinimum, double YMaximum, double ScaleFactor )
 {
+	xName = XVariableName;
+	yName = YVariableName;
+	priorName = PriorName;
+	finalised = false;
+	scaleFactor = ScaleFactor;
 	vector< double > minima, maxima;
 	vector< unsigned int > binNumbers;
 
@@ -42,7 +47,8 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	binNumbers.push_back( XBinNumber );
 
 	//Make the x unfolder
-	XUnfolder = new IterativeUnfolding( binNumbers, minima, maxima, xName + priorName, thisPlotID );
+	xIndices = new UniformIndices( binNumbers, minima, maxima );
+	XUnfolder = new IterativeUnfolding( xIndices, xName + priorName, thisPlotID );
 
 	//Store the y range
 	minima.push_back( YMinimum );
@@ -50,16 +56,14 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	binNumbers.push_back( YBinNumber );
 
 	//Make the x vs y unfolder
-	XvsYUnfolder = new IterativeUnfolding( binNumbers, minima, maxima, xName + "vs" + yName + priorName, thisPlotID );
-
-	//Set up the indices for the distributions
-	DistributionIndices = new DataIndices( binNumbers, minima, maxima );
+	distributionIndices = new UniformIndices( binNumbers, minima, maxima );
+	XvsYUnfolder = new IterativeUnfolding( distributionIndices, xName + "vs" + yName + priorName, thisPlotID );
 
 	//Set up the cross-check for data loss in delinearisation
 	stringstream idString;
 	idString << thisPlotID;
 	string xvsyTruthName = xName + yName + priorName + "TruthCheck" + idString.str();
-	string xTruthName = xName + priorName + "TruthCheck" + idString.str();
+	string xTruthName = xName + "ButNot" + yName + priorName + "TruthCheck" + idString.str();
 	xvsyTruthCheck = new TH1F( xvsyTruthName.c_str(), xvsyTruthName.c_str(), XBinNumber, XMinimum, XMaximum );
 	xTruthCheck = new TH1F( xTruthName.c_str(), xTruthName.c_str(), XBinNumber, XMinimum, XMaximum );
 
@@ -70,12 +74,51 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	doPlotSmearing = ( XBinNumber * YBinNumber < 1000 );
 }
 
+//To be used only with Clone
+XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string YVariableName, string PriorName,
+		IIndexCalculator * XIndices, IIndexCalculator * DistributionIndices, unsigned int OriginalID, double ScaleFactor )
+{
+	xName = XVariableName;
+	yName = YVariableName;
+	priorName = PriorName;
+	finalised = false;
+	scaleFactor = ScaleFactor;
+
+	//Set up a variable to keep track of the number of plots - used to prevent Root from complaining about making objects with the same names
+	static unsigned int uniqueID = 0;
+	uniqueID++;
+	thisPlotID = uniqueID + OriginalID;
+
+	//Make the x unfolder
+	xIndices = XIndices;
+	XUnfolder = new IterativeUnfolding( xIndices, xName + priorName, thisPlotID );
+
+	//Make the x vs y unfolder
+	distributionIndices = DistributionIndices;
+	XvsYUnfolder = new IterativeUnfolding( distributionIndices, xName + "vs" + yName + priorName, thisPlotID );
+
+	//Set up the cross-check for data loss in delinearisation
+	stringstream idString;
+	idString << thisPlotID;
+	string xvsyTruthName = xName + yName + priorName + "TruthCheck" + idString.str();
+	string xTruthName = xName + priorName + "TruthCheck" + idString.str();
+	xvsyTruthCheck = new TH1F( xvsyTruthName.c_str(), xvsyTruthName.c_str(), distributionIndices->GetBinNumber(0) - 2, distributionIndices->GetBinLowEdgesForRoot(0) );
+	xTruthCheck = new TH1F( xTruthName.c_str(), xTruthName.c_str(), xIndices->GetBinNumber(0) - 2, xIndices->GetBinLowEdgesForRoot(0) );
+
+	//Make a summary for the y data values
+	yValueSummary = new StatisticsSummary();
+
+	//Avoid killing ROOT
+	doPlotSmearing = ( distributionIndices->GetBinNumber(0) * distributionIndices->GetBinNumber(1) < 1000 );
+}
+
 //Destructor
 XvsYNormalisedPlotMaker::~XvsYNormalisedPlotMaker()
 {
 	delete xvsyTruthCheck;
 	delete xTruthCheck;
-	delete DistributionIndices;
+	delete xIndices;
+	delete distributionIndices;
 	delete XUnfolder;
 	delete XvsYUnfolder;
 	if ( finalised )
@@ -97,10 +140,7 @@ XvsYNormalisedPlotMaker::~XvsYNormalisedPlotMaker()
 //Copy the object
 IUnfolder * XvsYNormalisedPlotMaker::Clone( string NewPriorName )
 {
-	return new XvsYNormalisedPlotMaker( xName, yName, NewPriorName,
-			DistributionIndices->GetBinNumber(0) - 2, DistributionIndices->GetMinima()[0], DistributionIndices->GetMaxima()[0],
-			DistributionIndices->GetBinNumber(1) - 2, DistributionIndices->GetMinima()[1], DistributionIndices->GetMaxima()[1],
-			scaleFactor );
+	return new XvsYNormalisedPlotMaker( xName, yName, NewPriorName, xIndices->Clone(), distributionIndices->Clone(), thisPlotID, scaleFactor );
 }
 
 //Take input values from ntuples
@@ -234,7 +274,7 @@ void XvsYNormalisedPlotMaker::StoreData( IFileInput * DataInput )
 		yValueSummary->StoreEvent( yDataValue, dataWeight );
 
 		//Store values for performing the delinearisation
-		DistributionIndices->StoreDataValue( dataValues, dataWeight );
+		distributionIndices->StoreDataValue( dataValues, dataWeight );
 	} 
 }
 
@@ -383,8 +423,8 @@ void XvsYNormalisedPlotMaker::Unfold( unsigned int MostIterations, double ChiSqu
 		delete yValueSummary;
 
 		//Get the y range to plot
-		double yMinimum = DistributionIndices->GetMinima()[1] * scaleFactor;
-		double yMaximum = DistributionIndices->GetMaxima()[1] * scaleFactor;
+		double yMinimum = distributionIndices->GetBinLowEdgesForRoot(1)[0] * scaleFactor;
+		double yMaximum = distributionIndices->GetBinLowEdgesForRoot(1)[ distributionIndices->GetBinNumber(1) - 1 ] * scaleFactor;
 
 		//Format and save the corrected distribution
 		correctedDistribution = DelinearisedXvsYCorrected;
@@ -537,17 +577,17 @@ TH2F * XvsYNormalisedPlotMaker::SmearingMatrix()
 TH1F * XvsYNormalisedPlotMaker::Delinearise( TH1F * LinearisedDistribution )
 {
 	//Find the target number of bins
-	unsigned int binNumber = DistributionIndices->GetBinNumber(0);
+	unsigned int binNumber = distributionIndices->GetBinNumber(0);
 
 	//Make a vector of the de-linearised data
 	vector< double > delinearisedDistribution( binNumber, 0.0 );
 	vector< unsigned int > separateIndices;
 	vector< double > centralValues, dataCentralValues;
-	for ( unsigned int binIndex = 0; binIndex < DistributionIndices->GetBinNumber(); binIndex++ )
+	for ( unsigned int binIndex = 0; binIndex < distributionIndices->GetBinNumber(); binIndex++ )
 	{
 		//Work out the delinearised bin index and central value
-		separateIndices = DistributionIndices->GetNDimensionalIndex(binIndex);
-		centralValues = DistributionIndices->GetCentralValues(separateIndices);
+		separateIndices = distributionIndices->GetNDimensionalIndex( binIndex );
+		centralValues = distributionIndices->GetCentralValues( separateIndices );
 
 		//Increment the bin in the delinearised distribution
 		double thisBinValue = LinearisedDistribution->GetBinContent(binIndex) * centralValues[1];
@@ -560,7 +600,7 @@ TH1F * XvsYNormalisedPlotMaker::Delinearise( TH1F * LinearisedDistribution )
 	delete LinearisedDistribution;
 
 	//Make the new distribution
-	TH1F * delinearisedHistogram = new TH1F( name.c_str(), title.c_str(), binNumber - 2, DistributionIndices->GetMinima()[0], DistributionIndices->GetMaxima()[0] );
+	TH1F * delinearisedHistogram = new TH1F( name.c_str(), title.c_str(), binNumber - 2, distributionIndices->GetBinLowEdgesForRoot( 0 ) );
 
 	//Copy the data into the new distribution
 	for ( unsigned int binIndex = 0; binIndex < binNumber; binIndex++ )
@@ -575,15 +615,15 @@ TH1F * XvsYNormalisedPlotMaker::Delinearise( TH1F * LinearisedDistribution )
 vector< double > XvsYNormalisedPlotMaker::DelineariseErrors( vector< double > LinearisedErrors )
 {
 	//Find the target number of bins
-	unsigned int binNumber = DistributionIndices->GetBinNumber(0);
+	unsigned int binNumber = distributionIndices->GetBinNumber(0);
 
 	//Make a vector of the de-linearised data
 	vector< double > delinearisedErrors( binNumber, 0.0 );
 	vector< unsigned int > separateIndices;
-	for ( unsigned int binIndex = 0; binIndex < DistributionIndices->GetBinNumber(); binIndex++ )
+	for ( unsigned int binIndex = 0; binIndex < distributionIndices->GetBinNumber(); binIndex++ )
 	{
 		//Find the delinearised bin index
-		separateIndices = DistributionIndices->GetNDimensionalIndex(binIndex);
+		separateIndices = distributionIndices->GetNDimensionalIndex(binIndex);
 
 		//Increment the bin error
 		double thisBinValue = LinearisedErrors[binIndex];

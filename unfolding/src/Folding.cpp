@@ -17,11 +17,8 @@ Folding::Folding()
 {
 }
 
-//Constructor taking the required bin number,
-//minimum and maximum of the output distribution as arguments
-//NB: the unfolding scales roughly with bin number ^ 2, the
-//error calculation scales roughly with bin number ^ 3.
-Folding::Folding( unsigned int BinNumber, double Minimum, double Maximum, string Name, unsigned int UniqueID )
+//Constructor taking an IIndexCalculator to define the bins
+Folding::Folding( IIndexCalculator * DistributionIndices, string Name, unsigned int UniqueID )
 {
 	//Initialisations
 	name = Name;
@@ -31,26 +28,7 @@ Folding::Folding( unsigned int BinNumber, double Minimum, double Maximum, string
 	totalFake = 0.0;
 
 	//Make new vectors just with the one entry
-	indexCalculator = new Indices( vector< unsigned int >( 1, BinNumber ), vector< double >( 1, Minimum ), vector< double >( 1, Maximum ) );
-	inputSmearing = new SmearingMatrix( indexCalculator );
-	truthDistribution = new Distribution( indexCalculator );
-	inputDistribution = new Distribution( indexCalculator );
-	reconstructedDistribution = new Distribution( indexCalculator );
-	sumOfInputWeightSquares = vector< double >( indexCalculator->GetBinNumber(), 0.0 );
-	distributionComparison = new Comparison( Name, UniqueID );
-}
-
-//N-Dimensional version
-Folding::Folding( vector< unsigned int > BinNumbers, vector< double > Minima, vector< double > Maxima, string Name, unsigned int UniqueID )
-{
-	//Initialisations
-	name = Name;
-	uniqueID = UniqueID;
-	totalPaired = 0.0;
-	totalMissed = 0.0;
-	totalFake = 0.0;
-
-	indexCalculator = new Indices( BinNumbers, Minima, Maxima );
+	indexCalculator = DistributionIndices;
 	inputSmearing = new SmearingMatrix( indexCalculator );
 	truthDistribution = new Distribution( indexCalculator );
 	inputDistribution = new Distribution( indexCalculator );
@@ -62,7 +40,6 @@ Folding::Folding( vector< unsigned int > BinNumbers, vector< double > Minima, ve
 //Destructor
 Folding::~Folding()
 {
-	delete indexCalculator;
 	delete inputSmearing;
 	delete truthDistribution;
 	delete inputDistribution;

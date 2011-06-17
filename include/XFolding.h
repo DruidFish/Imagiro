@@ -12,7 +12,7 @@
 
 #include "IFolder.h"
 #include "Folding.h"
-#include "Indices.h"
+#include "IIndexCalculator.h"
 #include <string>
 
 using namespace std;
@@ -57,9 +57,12 @@ class XFolding : public IFolder
 		virtual vector<string> VariableNames();
 
 	private:
+		//To be used with Clone
+		XFolding( string XVariableName, string PriorName, IIndexCalculator * DistributionIndices, double ScaleFactor = 1.0, bool Normalise = false );
+
 		unsigned int thisPlotID;
 		Folding * XFolder;
-		Indices * DistributionIndices;
+		IIndexCalculator * distributionIndices;
 		string xName, priorName;
 		bool finalised, normalise;
 		double scaleFactor;

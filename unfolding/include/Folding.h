@@ -11,7 +11,7 @@
 #define FOLDING_H
 
 #include "SmearingMatrix.h"
-#include "Indices.h"
+#include "IIndexCalculator.h"
 #include "Distribution.h"
 #include "Comparison.h"
 #include <vector>
@@ -26,14 +26,8 @@ class Folding
 		//Default constructor - useless
 		Folding();
 
-		//Constructor taking the required bin number,
-		//minimum and maximum of the output distribution as arguments
-		//NB: the unfolding scales roughly with bin number ^ 2, the
-		//error calculation scales roughly with bin number ^ 3.
-		Folding( unsigned int BinNumber, double Minimum, double Maximum, string Name = "", unsigned int UniqueID = 0 );
-
-		//N-Dimensional version
-		Folding( vector< unsigned int > BinNumbers, vector< double > Minima, vector< double > Maxima, string Name = "", unsigned int UniqueID = 0 );
+		//Constructor taking an IIndexCalculator to define the bins
+		Folding( IIndexCalculator * DistributionIndices, string Name, unsigned int UniqueID );
 
 		//Destructor
 		~Folding();
@@ -103,7 +97,7 @@ class Folding
 		unsigned int uniqueID;
 		string name;
 		vector< double > sumOfInputWeightSquares;
-		Indices * indexCalculator;
+		IIndexCalculator * indexCalculator;
 		Distribution *inputDistribution, *smearedDistribution, *truthDistribution, *reconstructedDistribution;
 		double totalPaired, totalFake, totalMissed;
 		SmearingMatrix * inputSmearing;

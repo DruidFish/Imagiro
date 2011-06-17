@@ -10,6 +10,7 @@
 
 
 #include "XvsYNormalisedFolding.h"
+#include "UniformIndices.h"
 #include "TFile.h"
 #include <iostream>
 #include <cstdlib>
@@ -26,9 +27,13 @@ XvsYNormalisedFolding::XvsYNormalisedFolding()
 //Constructor with the names to use for the variables
 XvsYNormalisedFolding::XvsYNormalisedFolding( string XVariableName, string YVariableName, string PriorName,
 		unsigned int XBinNumber, double XMinimum, double XMaximum,
-		unsigned int YBinNumber, double YMinimum, double YMaximum,
-		double ScaleFactor ) : xName( XVariableName ), yName( YVariableName ), priorName( PriorName ), finalised( false ), scaleFactor(ScaleFactor)
+		unsigned int YBinNumber, double YMinimum, double YMaximum, double ScaleFactor )
 {
+	xName = XVariableName;
+	yName = YVariableName;
+	priorName = PriorName;
+	finalised = false;
+	scaleFactor = ScaleFactor;
 	vector< double > minima, maxima;
 	vector< unsigned int > binNumbers;
 
@@ -43,18 +48,19 @@ XvsYNormalisedFolding::XvsYNormalisedFolding( string XVariableName, string YVari
 	binNumbers.push_back( XBinNumber );
 
 	//Make the x unfolder
-	XFolder = new Folding( binNumbers, minima, maxima, xName + priorName, thisPlotID );
+	xIndices = new UniformIndices( binNumbers, minima, maxima );
+	XFolder = new Folding( xIndices, xName + priorName, thisPlotID );
 
 	//Store the y range
 	minima.push_back( YMinimum );
 	maxima.push_back( YMaximum );
 	binNumbers.push_back( YBinNumber );
 
-	//Make the x vs y unfolder
-	XvsYFolder = new Folding( binNumbers, minima, maxima, xName + "vs" + yName + priorName, thisPlotID );
-
 	//Set up the indices for the distributions
-	DistributionIndices = new DataIndices( binNumbers, minima, maxima );
+	distributionIndices = new UniformIndices( binNumbers, minima, maxima );
+
+	//Make the x vs y unfolder
+	XvsYFolder = new Folding( distributionIndices, xName + "vs" + yName + priorName, thisPlotID );
 
 	//Set up the cross-check for data loss in delinearisation
 	stringstream idString;
@@ -68,10 +74,46 @@ XvsYNormalisedFolding::XvsYNormalisedFolding( string XVariableName, string YVari
 	yValueSummary = new StatisticsSummary();
 }
 
+XvsYNormalisedFolding::XvsYNormalisedFolding( string XVariableName, string YVariableName, string PriorName, IIndexCalculator * XIndices, IIndexCalculator * DistributionIndices, double ScaleFactor )
+{
+	xName = XVariableName;
+	yName = YVariableName;
+	priorName = PriorName;
+	finalised = false;
+	scaleFactor = ScaleFactor;
+
+	//Set up a variable to keep track of the number of plots - used to prevent Root from complaining about making objects with the same names
+	static unsigned int uniqueID = 0;
+	uniqueID++;
+	thisPlotID = uniqueID;
+
+	//Set up the indices for the distributions
+	xIndices = XIndices;
+	distributionIndices = DistributionIndices;
+
+	//Make the x unfolder
+	XFolder = new Folding( xIndices, xName + priorName, thisPlotID );
+
+	//Make the x vs y unfolder
+	XvsYFolder = new Folding( distributionIndices, xName + "vs" + yName + priorName, thisPlotID );
+
+	//Set up the cross-check for data loss in delinearisation
+	stringstream idString;
+	idString << thisPlotID;
+	string xvsyReconstructionName = xName + yName + priorName + "ReconstructionCheck" + idString.str();
+	string xReconstructionName = xName + priorName + "ReconstructionCheck" + idString.str();
+	xvsyReconstructionCheck = new TH1F( xvsyReconstructionName.c_str(), xvsyReconstructionName.c_str(), distributionIndices->GetBinNumber(0) - 2, distributionIndices->GetBinLowEdgesForRoot(0) );
+	xReconstructionCheck = new TH1F( xReconstructionName.c_str(), xReconstructionName.c_str(), xIndices->GetBinNumber(0) - 2, xIndices->GetBinLowEdgesForRoot(0) );
+
+	//Make a summary of the y input values
+	yValueSummary = new StatisticsSummary();
+}
+
 //Destructor
 XvsYNormalisedFolding::~XvsYNormalisedFolding()
 {
-	delete DistributionIndices;
+	delete xIndices;
+	delete distributionIndices;
 	delete XFolder;
 	delete XvsYFolder;
 	delete foldedDistribution;
@@ -83,10 +125,7 @@ XvsYNormalisedFolding::~XvsYNormalisedFolding()
 //Copy the object
 IFolder * XvsYNormalisedFolding::Clone( string NewPriorName )
 {
-	return new XvsYNormalisedFolding( xName, yName, NewPriorName,
-			DistributionIndices->GetBinNumber(0) - 2, DistributionIndices->GetMinima()[0], DistributionIndices->GetMaxima()[0],
-			DistributionIndices->GetBinNumber(1) - 2, DistributionIndices->GetMinima()[1], DistributionIndices->GetMaxima()[1],
-			scaleFactor );
+	return new XvsYNormalisedFolding( xName, yName, NewPriorName, xIndices->Clone(), distributionIndices->Clone(), scaleFactor );
 }
 
 //Take input values from ntuples
@@ -220,7 +259,7 @@ void XvsYNormalisedFolding::StoreData( IFileInput * DataInput )
 		yValueSummary->StoreEvent( yDataValue, dataWeight );
 
 		//Store values for performing the delinearisation
-		DistributionIndices->StoreDataValue( dataValues, dataWeight );
+		distributionIndices->StoreDataValue( dataValues, dataWeight );
 	} 
 }
 
@@ -340,26 +379,26 @@ void XvsYNormalisedFolding::Fold()
 		delete yValueSummary;
 
 		//Get the y range to plot
-		double yMinimum = DistributionIndices->GetMinima()[1] * scaleFactor;
-		double yMaximum = DistributionIndices->GetMaxima()[1] * scaleFactor;
+		//double yMinimum = distributionIndices->GetMinima()[1] * scaleFactor;
+		//double yMaximum = distributionIndices->GetMaxima()[1] * scaleFactor;
 
 		//Format and save the corrected distribution
 		foldedDistribution = DelinearisedXvsYSmeared;
 		foldedDistribution->SetXTitle( xName.c_str() );
 		foldedDistribution->SetYTitle( yName.c_str() );
-		foldedDistribution->GetYaxis()->SetRangeUser( yMinimum, yMaximum );
+		//foldedDistribution->GetYaxis()->SetRangeUser( yMinimum, yMaximum );
 
 		//Format and save the uncorrected distribution
 		inputDistribution = DelinearisedXvsYNotSmeared;
 		inputDistribution->SetXTitle( xName.c_str() );
 		inputDistribution->SetYTitle( yName.c_str() );
-		inputDistribution->GetYaxis()->SetRangeUser( yMinimum, yMaximum );
+		//inputDistribution->GetYaxis()->SetRangeUser( yMinimum, yMaximum );
 
 		//Format and save the truth distribution
 		reconstructedDistribution = DelinearisedXvsYTruth;
 		reconstructedDistribution->SetXTitle( xName.c_str() );
 		reconstructedDistribution->SetYTitle( yName.c_str() );
-		reconstructedDistribution->GetYaxis()->SetRangeUser( yMinimum, yMaximum );
+		//reconstructedDistribution->GetYaxis()->SetRangeUser( yMinimum, yMaximum );
 
 		//Format and save the smearing matrix
 		smearingMatrix = XvsYSmearing;
@@ -395,7 +434,7 @@ void XvsYNormalisedFolding::Fold()
 bool XvsYNormalisedFolding::ClosureTest()
 {
 	bool result = XvsYFolder->ClosureTest();
-        result &= XFolder->ClosureTest();
+	result &= XFolder->ClosureTest();
 	return result;
 }
 
@@ -456,17 +495,17 @@ TH2F * XvsYNormalisedFolding::SmearingMatrix()
 TH1F * XvsYNormalisedFolding::Delinearise( TH1F * LinearisedDistribution )
 {
 	//Find the target number of bins
-	unsigned int binNumber = DistributionIndices->GetBinNumber(0);
+	unsigned int binNumber = distributionIndices->GetBinNumber(0);
 
 	//Make a vector of the de-linearised data
 	vector< double > delinearisedDistribution( binNumber, 0.0 );
 	vector< unsigned int > separateIndices;
 	vector< double > centralValues, dataCentralValues;
-	for ( unsigned int binIndex = 0; binIndex < DistributionIndices->GetBinNumber(); binIndex++ )
+	for ( unsigned int binIndex = 0; binIndex < distributionIndices->GetBinNumber(); binIndex++ )
 	{
 		//Work out the delinearised bin index and central value
-		separateIndices = DistributionIndices->GetNDimensionalIndex(binIndex);
-		centralValues = DistributionIndices->GetCentralValues(separateIndices);
+		separateIndices = distributionIndices->GetNDimensionalIndex(binIndex);
+		centralValues = distributionIndices->GetCentralValues(separateIndices);
 
 		//Increment the bin in the delinearised distribution
 		double thisBinValue = LinearisedDistribution->GetBinContent(binIndex) * centralValues[1];
@@ -479,7 +518,7 @@ TH1F * XvsYNormalisedFolding::Delinearise( TH1F * LinearisedDistribution )
 	delete LinearisedDistribution;
 
 	//Make the new distribution
-	TH1F * delinearisedHistogram = new TH1F( name.c_str(), title.c_str(), binNumber - 2, DistributionIndices->GetMinima()[0], DistributionIndices->GetMaxima()[0] );
+	TH1F * delinearisedHistogram = new TH1F( name.c_str(), title.c_str(), binNumber - 2, distributionIndices->GetBinLowEdgesForRoot(0) );
 
 	//Copy the data into the new distribution
 	for ( unsigned int binIndex = 0; binIndex < binNumber; binIndex++ )
@@ -494,15 +533,15 @@ TH1F * XvsYNormalisedFolding::Delinearise( TH1F * LinearisedDistribution )
 vector< double > XvsYNormalisedFolding::DelineariseErrors( vector< double > LinearisedErrors )
 {
 	//Find the target number of bins
-	unsigned int binNumber = DistributionIndices->GetBinNumber(0);
+	unsigned int binNumber = distributionIndices->GetBinNumber(0);
 
 	//Make a vector of the de-linearised data
 	vector< double > delinearisedErrors( binNumber, 0.0 );
 	vector< unsigned int > separateIndices;
-	for ( unsigned int binIndex = 0; binIndex < DistributionIndices->GetBinNumber(); binIndex++ )
+	for ( unsigned int binIndex = 0; binIndex < distributionIndices->GetBinNumber(); binIndex++ )
 	{
 		//Find the delinearised bin index
-		separateIndices = DistributionIndices->GetNDimensionalIndex(binIndex);
+		separateIndices = distributionIndices->GetNDimensionalIndex(binIndex);
 
 		//Increment the bin error
 		double thisBinValue = LinearisedErrors[binIndex];

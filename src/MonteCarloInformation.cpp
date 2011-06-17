@@ -265,7 +265,7 @@ IFileInput * MonteCarloInformation::MakeTruthInput( unsigned int Index, Observab
 		else
 		{
 			//Just a single file input
-			return InstantiateSingleInput( recoPaths[ Index ], internalReco[ Index ], Index, RelevanceChecker );
+			return InstantiateSingleInput( truthPaths[ Index ], internalTruth[ Index ], Index, RelevanceChecker );
 		}
 	}
 }

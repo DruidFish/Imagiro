@@ -13,7 +13,7 @@
 #include "CovarianceMatrix.h"
 #include "Comparison.h"
 #include "SmearingMatrix.h"
-#include "Indices.h"
+#include "IIndexCalculator.h"
 #include "Distribution.h"
 #include <vector>
 #include <string>
@@ -27,14 +27,8 @@ class IterativeUnfolding
 		//Default constructor - useless
 		IterativeUnfolding();
 
-		//Constructor taking the required bin number,
-		//minimum and maximum of the output distribution as arguments
-		//NB: the unfolding scales roughly with bin number ^ 2, the
-		//error calculation scales roughly with bin number ^ 3.
-		IterativeUnfolding( unsigned int BinNumber, double Minimum, double Maximum, string Name = "", unsigned int UniqueID = 0, bool DebugMode = false );
-
-		//N-Dimensional version
-		IterativeUnfolding( vector< unsigned int > BinNumbers, vector< double > Minima, vector< double > Maxima, string Name = "", unsigned int UniqueID = 0, bool DebugMode = false );
+		//Constructor taking an IIndexCalculator to define the bins
+                IterativeUnfolding( IIndexCalculator * DistributionIndices, string Name, unsigned int UniqueID );
 
 		//Destructor
 		~IterativeUnfolding();
@@ -124,7 +118,7 @@ class IterativeUnfolding
 		unsigned int uniqueID;
 		string name;
 		vector< double > sumOfDataWeightSquares, dagostiniVariance;
-		Indices * indexCalculator;
+		IIndexCalculator * indexCalculator;
 		Distribution *dataDistribution, *unfoldedDistribution, *truthDistribution, *reconstructedDistribution;
 		CovarianceMatrix * fullErrors;
 		SmearingMatrix * inputSmearing;

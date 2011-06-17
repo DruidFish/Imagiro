@@ -12,7 +12,7 @@
 
 #include "IUnfolder.h"
 #include "IterativeUnfolding.h"
-#include "Indices.h"
+#include "IIndexCalculator.h"
 #include <string>
 
 using namespace std;
@@ -65,9 +65,13 @@ class XPlotMaker : public IUnfolder
 		virtual vector<string> VariableNames();
 
 	private:
+		//To be used with Clone
+		XPlotMaker( string XVariableName, string PriorName, IIndexCalculator * DistributionIndices,
+				unsigned int OriginalID, double ScaleFactor = 1.0, bool Normalise = false );
+
 		unsigned int thisPlotID;
 		IterativeUnfolding * XUnfolder;
-		Indices * DistributionIndices;
+		IIndexCalculator * distributionIndices;
 		string xName, priorName;
 		bool finalised, normalise;
 		double scaleFactor;

@@ -57,11 +57,7 @@ TriggerChoosingInput::TriggerChoosingInput( string FilePath, string NtuplePath, 
 		for ( unsigned int triggerIndex = 0; triggerIndex < allTriggers.size(); triggerIndex++ )
 		{
 			//Check whether to make the file input at all
-			if ( triggerLowerBounds[ triggerIndex ] >= JetPtMax )
-			{
-				cout << "Not opening trigger " << allTriggers[ triggerIndex ] << " since lower bound " << triggerLowerBounds[ triggerIndex ] << " >= " << JetPtMax << endl;
-			}
-			else
+			if ( triggerLowerBounds[ triggerIndex ] < JetPtMax )
 			{
 				//Find and replace the wildcard to make the input file name
 				string inputTriggerFilePath = ReplaceString( FilePath, REPLACE_FOR_TRIGGER_IN_PATH, allTriggers[ triggerIndex ] );

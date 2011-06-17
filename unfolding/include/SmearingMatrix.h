@@ -13,7 +13,7 @@
 
 #include <vector>
 #include <map>
-#include "Indices.h"
+#include "IIndexCalculator.h"
 #include "SparseMatrix.h"
 
 using namespace std;
@@ -22,7 +22,7 @@ class SmearingMatrix : public SparseMatrix
 {
 	public:
 		SmearingMatrix();
-		SmearingMatrix( Indices * InputIndices );
+		SmearingMatrix( IIndexCalculator * InputIndices );
 		~SmearingMatrix();
 
 		void StoreTruthRecoPair( vector< double > Truth, vector< double > Reco, double TruthWeight = 1.0, double RecoWeight = 1.0 );
@@ -36,7 +36,7 @@ class SmearingMatrix : public SparseMatrix
 
 	private:
 		vector< double > normalisation, efficiencies;
-		Indices * indexCalculator;
+		IIndexCalculator * indexCalculator;
 		bool isFinalised;
 };
 

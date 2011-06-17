@@ -12,7 +12,7 @@
 
 #include <vector>
 #include <string>
-#include "Indices.h"
+#include "IIndexCalculator.h"
 #include "SmearingMatrix.h"
 #include "TH1F.h"
 
@@ -25,8 +25,8 @@ class Distribution
 {
 	public:
 		Distribution();
-		Distribution( Indices * InputIndices );
-		Distribution( vector< TH1F* > InputDistributions, Indices * InputIndices );
+		Distribution( IIndexCalculator * InputIndices );
+		Distribution( vector< TH1F* > InputDistributions, IIndexCalculator * InputIndices );
 		Distribution( Distribution * DataDistribution, UnfoldingMatrix * BayesPosterior );
 		Distribution( Distribution * InputDistribution, SmearingMatrix * Smearing );
 		~Distribution();
@@ -45,7 +45,7 @@ class Distribution
 		void Smooth( unsigned int SideBinNumber = 1 );
 
 	protected:
-		Indices * indexCalculator;
+		IIndexCalculator * indexCalculator;
 		vector< double > binValues;
 		double integral;
 };

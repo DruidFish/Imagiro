@@ -8,6 +8,7 @@
  */
 
 #include "IterativeUnfolding.h"
+#include "UniformIndices.h"
 #include "TFile.h"
 #include <iostream>
 #include <cstdlib>
@@ -20,69 +21,33 @@ IterativeUnfolding::IterativeUnfolding()
 {
 }
 
-//Constructor taking the required bin number,
-//minimum and maximum of the output distribution as arguments
-//NB: the unfolding scales roughly with bin number ^ 2, the
-//error calculation scales roughly with bin number ^ 3.
-IterativeUnfolding::IterativeUnfolding( unsigned int BinNumber, double Minimum, double Maximum, string Name, unsigned int UniqueID, bool DebugMode )
-{
-	debug = DebugMode;
-	name = Name;
-	uniqueID = UniqueID;
-	totalPaired = 0.0;
-	totalFake = 0.0;
-	totalMissed = 0.0;
-
-	indexCalculator = new Indices( vector< unsigned int >( 1, BinNumber ), vector< double >( 1, Minimum ), vector< double >( 1, Maximum ) );
-
-	inputSmearing = new SmearingMatrix( indexCalculator );
-
-	dataDistribution = new Distribution( indexCalculator );
-	unfoldedDistribution = new Distribution( indexCalculator );
-	truthDistribution = new Distribution( indexCalculator );
-	reconstructedDistribution = new Distribution( indexCalculator );
-
-	sumOfDataWeightSquares = vector< double >( indexCalculator->GetBinNumber(), 0.0 );
-
-	distributionComparison = new Comparison( Name, UniqueID );
-}
-
 //N-Dimensional version
-IterativeUnfolding::IterativeUnfolding( vector< unsigned int > BinNumbers, vector< double > Minima, vector< double > Maxima, string Name, unsigned int UniqueID, bool DebugMode )
+IterativeUnfolding::IterativeUnfolding( IIndexCalculator * DistributionIndices, string Name, unsigned int UniqueID )
 {
-	debug = DebugMode;
 	name = Name;
 	uniqueID = UniqueID;
 	totalPaired = 0.0;
 	totalFake = 0.0;
 	totalMissed = 0.0;
 
-	indexCalculator = new Indices( BinNumbers, Minima, Maxima );
-
+	indexCalculator = DistributionIndices;
 	inputSmearing = new SmearingMatrix( indexCalculator );
-
 	dataDistribution = new Distribution( indexCalculator );
 	unfoldedDistribution = new Distribution( indexCalculator );
 	truthDistribution = new Distribution( indexCalculator );
 	reconstructedDistribution = new Distribution( indexCalculator );
-
 	sumOfDataWeightSquares = vector< double >( indexCalculator->GetBinNumber(), 0.0 );
-
 	distributionComparison = new Comparison( Name, UniqueID );
 }
 
 //Destructor
 IterativeUnfolding::~IterativeUnfolding()
 {
-	delete indexCalculator;
-
 	delete inputSmearing;
-
 	delete dataDistribution;
 	delete unfoldedDistribution;
 	delete truthDistribution;
 	delete reconstructedDistribution;
-
 	delete distributionComparison;
 }
 
@@ -205,16 +170,6 @@ void IterativeUnfolding::Unfold( unsigned int MostIterations, double ChiSquaredT
 	//Finalise the smearing matrix
 	inputSmearing->Finalise();
 
-	//Debug output
-	TFile * debugFile;
-	if ( debug )
-	{
-		debugFile = new TFile( "unfoldingDebugOutput.root", "RECREATE" );
-		priorDistribution->MakeRootHistogram( "prior", "MC truth distribution as prior" )->Write();
-		dataDistribution->MakeRootHistogram( "data", "Uncorrected data distribution" )->Write();
-		inputSmearing->MakeRootHistogram( "smearing", "Smearing matrix" )->Write();
-	}
-
 	//Iterate, making new distribution from data, old distribution and smearing matrix
 	UnfoldingMatrix * lastUnfoldingMatrix;
 	for ( unsigned int iteration = 0; iteration < MostIterations; iteration++ )
@@ -246,15 +201,6 @@ void IterativeUnfolding::Unfold( unsigned int MostIterations, double ChiSquaredT
 			delete priorDistribution;
 		}
 		priorDistribution = unfoldedDistribution;
-
-		//Debug output
-		if ( debug )
-		{
-			cout << "Chi squared = " << chi2 << " and K-S probability = " << kolmogorov << " for iteration " << iteration << endl;
-			stringstream iterationName;
-			iterationName << "iteration" << iteration;
-			unfoldedDistribution->MakeRootHistogram( iterationName.str(), iterationName.str() )->Write();
-		}
 
 		//Check for termination conditions
 		if ( chi2 < ChiSquaredThreshold )
@@ -294,12 +240,6 @@ void IterativeUnfolding::Unfold( unsigned int MostIterations, double ChiSquaredT
 		}
 	}
 	delete lastUnfoldingMatrix;
-
-	//Close the debug file
-	if ( debug )
-	{
-		debugFile->Close();
-	}
 }
 
 //Perform a closure test

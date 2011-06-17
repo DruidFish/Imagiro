@@ -17,7 +17,7 @@ class UniformPrior : public Distribution
 {
 	public:
 		UniformPrior();
-		UniformPrior( double, Indices* );
+		UniformPrior( double InputIntegral, IIndexCalculator * InputIndices );
 		~UniformPrior();
 };
 

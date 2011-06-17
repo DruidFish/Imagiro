@@ -19,7 +19,7 @@ Distribution::Distribution()
 }
 
 //Just initialise an empty distribution
-Distribution::Distribution( Indices * InputIndices )
+Distribution::Distribution( IIndexCalculator * InputIndices )
 {
 	indexCalculator = InputIndices;
 	integral = 0.0;
@@ -29,7 +29,7 @@ Distribution::Distribution( Indices * InputIndices )
 }
 
 //Initialise by summing a bunch of TH1Fs
-Distribution::Distribution( vector< TH1F* > InputDistributions, Indices * InputIndices )
+Distribution::Distribution( vector< TH1F* > InputDistributions, IIndexCalculator * InputIndices )
 {
 	indexCalculator = InputIndices;
 	integral = 0.0;
@@ -191,7 +191,17 @@ TH1F * Distribution::MakeRootHistogram( string Name, string Title, bool MakeNorm
 	}
 
 	//Make a new root histogram
-	TH1F * rootHistogram = new TH1F( Name.c_str(), Title.c_str(), binNumber - 2, indexCalculator->GetMinima()[0], indexCalculator->GetMaxima()[0] );
+	TH1F * rootHistogram;
+	if ( binNumber == indexCalculator->GetBinNumber(0) )
+	{
+		//1D distribution - use proper bins
+		rootHistogram = new TH1F( Name.c_str(), Title.c_str(), binNumber - 2, indexCalculator->GetBinLowEdgesForRoot(0) );
+	}
+	else
+	{
+		//Multi-D distribution (or including unphysical "bad bin") - use arbitrary bins
+		rootHistogram = new TH1F( Name.c_str(), Title.c_str(), binNumber - 2, 0.0, (double)( binNumber - 2 ) );
+	}
 
 	//Populate the bins one-by-one - note that in the TH1F, bin 0 is the underflow
 	for ( unsigned int binIndex = 0; binIndex < binNumber; binIndex++ )

@@ -652,13 +652,14 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 		//Draw the MC truth histograms
 		for ( unsigned int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
 		{
-			TH1F * truthPlot = allTruthPlots[ plotIndex ];
-			truthPlot->SetLineColor( mcInfo->LineColour(plotIndex) );
-			truthPlot->SetMarkerColor( mcInfo->LineColour(plotIndex) );
-			truthPlot->SetLineStyle( mcInfo->LineStyle(plotIndex) );
-			truthPlot->SetLineWidth(2.5);
-			truthPlot->SetTitle( plotTitle.c_str() );
-			truthPlot->Draw( "SAME" );
+			//Make a TGraph from the TH1F, because the histogram draw method doesn't seem to work any more
+			TGraph * temporaryGraph = new TGraph( allTruthPlots[ plotIndex ] );
+			temporaryGraph->SetLineColor( mcInfo->LineColour(plotIndex) );
+			temporaryGraph->SetMarkerColor( mcInfo->LineColour(plotIndex) );
+			temporaryGraph->SetLineStyle( mcInfo->LineStyle(plotIndex) );
+			temporaryGraph->SetLineWidth(2.5);
+			temporaryGraph->SetTitle( plotTitle.c_str() );
+			temporaryGraph->Draw( "SAME" );
 
 			//Add to legend
 			string mcName = mcInfo->Description(plotIndex);
@@ -670,7 +671,7 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 			{
 				mcName += " (ref)";
 			}
-			lineColourKey->AddEntry( truthPlot, mcName.c_str(), "l" );
+			lineColourKey->AddEntry( temporaryGraph, mcName.c_str(), "l" );
 		}
 		lineColourKey->Draw();
 
@@ -732,12 +733,13 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 			truthRatioPlot->Divide( combinedCorrectedHistogramWithStatistics );
 
 			//Format
-			truthRatioPlot->SetLineColor( mcInfo->LineColour( plotIndex ) );
-			truthRatioPlot->SetMarkerColor( mcInfo->LineColour( plotIndex ) );
-			truthRatioPlot->SetLineStyle( mcInfo->LineStyle( plotIndex ) );
-			truthRatioPlot->SetLineWidth( 2.5 );
-			truthRatioPlot->SetTitle( plotTitle.c_str() );
-			truthRatioPlot->Draw( "SAME" );
+			TGraph * temporaryGraph = new TGraph( truthRatioPlot );
+			temporaryGraph->SetLineColor( mcInfo->LineColour( plotIndex ) );
+			temporaryGraph->SetMarkerColor( mcInfo->LineColour( plotIndex ) );
+			temporaryGraph->SetLineStyle( mcInfo->LineStyle( plotIndex ) );
+			temporaryGraph->SetLineWidth( 2.5 );
+			temporaryGraph->SetTitle( plotTitle.c_str() );
+			temporaryGraph->Draw( "SAME" );
 
 			allTruthPlots.push_back( truthRatioPlot );
 		}

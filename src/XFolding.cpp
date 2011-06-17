@@ -9,6 +9,7 @@
 
 
 #include "XFolding.h"
+#include "UniformIndices.h"
 #include "TFile.h"
 #include <iostream>
 #include <cstdlib>
@@ -23,9 +24,7 @@ XFolding::XFolding()
 }
 
 //Constructor with the names to use for the variables
-XFolding::XFolding( string XVariableName, string PriorName,
-		unsigned int XBinNumber, double XMinimum, double XMaximum,
-		double ScaleFactor, bool Normalise )
+XFolding::XFolding( string XVariableName, string PriorName, unsigned int XBinNumber, double XMinimum, double XMaximum, double ScaleFactor, bool Normalise )
 {
 	xName = XVariableName;
 	priorName = PriorName;
@@ -45,17 +44,38 @@ XFolding::XFolding( string XVariableName, string PriorName,
 	maxima.push_back( XMaximum );
 	binNumbers.push_back( XBinNumber );
 
+	//Set up the indices for the distributions
+	distributionIndices = new UniformIndices( binNumbers, minima, maxima );
+
 	//Make the x unfolder
-	XFolder = new Folding( binNumbers, minima, maxima, xName + priorName, thisPlotID );
+	XFolder = new Folding( distributionIndices, xName + priorName, thisPlotID );
+}
+
+//To be used with Clone
+XFolding::XFolding( string XVariableName, string PriorName, IIndexCalculator * DistributionIndices, double ScaleFactor, bool Normalise )
+{
+	xName = XVariableName;
+	priorName = PriorName;
+	finalised = false;
+	scaleFactor = ScaleFactor;
+	normalise = Normalise;
+
+	//Set up a variable to keep track of the number of plots - used to prevent Root from complaining about making objects with the same names
+	static unsigned int uniqueID = 0;
+	uniqueID++;
+	thisPlotID = uniqueID;
 
 	//Set up the indices for the distributions
-	DistributionIndices = new Indices( binNumbers, minima, maxima );
+	distributionIndices = DistributionIndices;
+
+	//Make the x unfolder
+	XFolder = new Folding( distributionIndices, xName + priorName, thisPlotID );
 }
 
 //Destructor
 XFolding::~XFolding()
 {
-	delete DistributionIndices;
+	delete distributionIndices;
 	delete XFolder;
 	delete foldedDistribution;
 	delete inputDistribution;
@@ -66,9 +86,7 @@ XFolding::~XFolding()
 //Copy the object
 IFolder * XFolding::Clone( string NewPriorName )
 {
-	return new XFolding( xName, NewPriorName,
-			DistributionIndices->GetBinNumber(0) - 2, DistributionIndices->GetMinima()[0], DistributionIndices->GetMaxima()[0],
-			scaleFactor, normalise );
+	return new XFolding( xName, NewPriorName, distributionIndices->Clone(), scaleFactor, normalise );
 }
 
 //Take input values from ntuples

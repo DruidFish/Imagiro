@@ -15,7 +15,7 @@ UniformPrior::UniformPrior()
 }
 
 //Uniform distribution
-UniformPrior::UniformPrior( double InputIntegral, Indices * InputIndices )
+UniformPrior::UniformPrior( double InputIntegral, IIndexCalculator * InputIndices )
 {
 	int binNumber = InputIndices->GetBinNumber();
 	binValues = vector<double>( binNumber, InputIntegral / (double)binNumber );

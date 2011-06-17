@@ -18,7 +18,7 @@ SmearingMatrix::SmearingMatrix()
 }
 
 //Constructor from MC data
-SmearingMatrix::SmearingMatrix( Indices * InputIndices )
+SmearingMatrix::SmearingMatrix( IIndexCalculator * InputIndices )
 {
 	isFinalised = false;
 	indexCalculator = InputIndices;

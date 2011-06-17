@@ -15,7 +15,7 @@
 #include "IUnfolder.h"
 #include "StatisticsSummary.h"
 #include "IterativeUnfolding.h"
-#include "DataIndices.h"
+#include "IIndexCalculator.h"
 #include <string>
 
 using namespace std;
@@ -70,16 +70,20 @@ class XvsYNormalisedPlotMaker : public IUnfolder
 		virtual vector< string > VariableNames();
 
 	private:
+		//To be used only with Clone
+		XvsYNormalisedPlotMaker( string XVariableName, string YVariableName, string PriorName,
+				IIndexCalculator * XIndices, IIndexCalculator * DistributionIndices, unsigned int OriginalID, double ScaleFactor = 1.0 );
+
 		//WARNING: this method deletes the argument object
 		TH1F * Delinearise( TH1F * LinearisedDistribution );
 		vector< double > DelineariseErrors( vector< double > InputSumWeightSquares );
 
-		unsigned int thisPlotID;
+		unsigned int thisPlotID, xBinNumber, yBinNumber;
 		IterativeUnfolding *XvsYUnfolder, *XUnfolder;
-		DataIndices *DistributionIndices;
+		IIndexCalculator *distributionIndices, *xIndices;
 		string xName, yName, priorName;
 		bool finalised;
-		double scaleFactor;
+		double scaleFactor, xMinimum, yMinimum, xMaximum, yMaximum;
 		vector<double> correctedDataErrors, dagostiniErrors;
 		StatisticsSummary * yValueSummary;
 		TH1F *correctedDistribution, *uncorrectedDistribution, *mcTruthDistribution, *xvsyTruthCheck, *xTruthCheck;

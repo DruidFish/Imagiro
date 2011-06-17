@@ -15,7 +15,7 @@
 #include "IFolder.h"
 #include "StatisticsSummary.h"
 #include "Folding.h"
-#include "DataIndices.h"
+#include "IIndexCalculator.h"
 #include <string>
 
 using namespace std;
@@ -62,13 +62,16 @@ class XvsYNormalisedFolding : public IFolder
 		virtual vector< string > VariableNames();
 
 	private:
+		//To be used with Clone
+		XvsYNormalisedFolding( string XVariableName, string YVariableName, string PriorName, IIndexCalculator * XIndices, IIndexCalculator * DistributionIndices, double ScaleFactor = 1.0 );
+
 		//WARNING: this method deletes the argument object
 		TH1F * Delinearise( TH1F * LinearisedDistribution );
 		vector< double > DelineariseErrors( vector< double > InputSumWeightSquares );
 
 		unsigned int thisPlotID;
 		Folding *XvsYFolder, *XFolder;
-		DataIndices *DistributionIndices;
+		IIndexCalculator *xIndices, *distributionIndices;
 		string xName, yName, priorName;
 		bool finalised;
 		double scaleFactor;

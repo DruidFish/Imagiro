@@ -14,7 +14,6 @@
 #include "SparseMatrix.h"
 #include "SmearingMatrix.h"
 #include "Distribution.h"
-#include "Indices.h"
 #include <vector>
 
 using namespace std;
