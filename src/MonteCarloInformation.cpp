@@ -259,7 +259,6 @@ IFileInput * MonteCarloInformation::MakeTruthInput( unsigned int Index, Observab
 				exit(1);
 			}
 
-			//return new CombinedFileInput( inputs, inputWeights[ extraIndex ], descriptions[ Index ], Index );
 			return new CombinedFileInput( allTruthPaths, inputWeights[ extraIndex ], internalTruth[ Index ], inputTypes[ Index ], descriptions[ Index ], Index, RelevanceChecker );
 		}
 		else
