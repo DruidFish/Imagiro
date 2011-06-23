@@ -157,8 +157,6 @@ double Distribution::GetBinNumber( unsigned int InputIndex )
 	}
 	else
 	{
-		TH1F * deliberateFail = 0;
-		deliberateFail->Write();
 		cerr << "FATAL: Invalid bin index " << InputIndex << endl;
 		exit(1);
 	}
@@ -173,8 +171,6 @@ double Distribution::GetBinProbability( unsigned int InputIndex )
 	}
 	else
 	{
-		TH1F * deliberateFail = 0;
-		deliberateFail->Write();
 		cerr << "FATAL: Invalid bin index " << InputIndex << endl;
 		exit(1);
 	}

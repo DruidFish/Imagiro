@@ -22,6 +22,7 @@ class XPlotMaker : public IUnfolder
 	public:
 		XPlotMaker();
 		XPlotMaker( string XVariableName, string PriorName, unsigned int XBinNumber, double XMinimum, double XMaximum, double ScaleFactor = 1.0, bool Normalise = false );
+		XPlotMaker( string XVariableName, string PriorName, vector< double > BinLowEdges, double ScaleFactor = 1.0, bool Normalise = false );
 		~XPlotMaker();
 
 		//Take input values from ntuples

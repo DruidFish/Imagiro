@@ -27,6 +27,8 @@ class XvsYNormalisedPlotMaker : public IUnfolder
 		XvsYNormalisedPlotMaker( string XVariableName, string YVariableName, string PriorName,
 				unsigned int XBinNumber, double XMinimum, double XMaximum,
 				unsigned int YBinNumber, double YMinimum, double YMaximum, double ScaleFactor = 1.0 );
+		XvsYNormalisedPlotMaker( string XVariableName, string YVariableName, string PriorName,
+				vector< double > XBinLowEdges, vector< double > YBinLowEdges, double ScaleFactor = 1.0 );
 		~XvsYNormalisedPlotMaker();
 
 		//Take input values from ntuples

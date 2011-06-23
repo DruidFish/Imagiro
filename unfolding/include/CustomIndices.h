@@ -53,7 +53,7 @@ class CustomIndices : public IIndexCalculator
 		vector< vector< double >* > binLowEdgePointers;
 		vector< unsigned int > numberOfBins;
 		unsigned int numberOfDimensions;
-		map< double, unsigned int > binHighEdgeMap;
+		vector< map< double, unsigned int > > binHighEdgeMaps;
 		map< double, unsigned int >::iterator searchIterator;
 		vector< vector< double > > binValueSums, binValueNormalisations;
 

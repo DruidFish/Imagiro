@@ -250,7 +250,7 @@ unsigned int UniformIndices::GetBinNumber( unsigned int DimensionIndex )
 //Return the index in a given dimension
 unsigned int UniformIndices::GetOneDimensionIndex( double Value, unsigned int Dimension )
 {
-	if ( Value < minima[ Dimension ] )
+	if ( Value <= minima[ Dimension ] )
 	{
 		//Underflow bin
 		return 0;

@@ -29,6 +29,9 @@ CustomIndices::CustomIndices( const vector< vector< double > > & LowEdges )
 	//Check the bins are in order
 	for ( unsigned int dimensionIndex = 0; dimensionIndex < numberOfDimensions; dimensionIndex++ )
 	{
+		//Make a map for looking up the bin edges
+		map< double, unsigned int > thisEdgeMap;
+
 		//Check for adjacent bin edges being equal or not correctly ordered
 		for ( unsigned int binIndex = 0; binIndex < LowEdges[ dimensionIndex ].size() - 1; binIndex++ )
 		{
@@ -49,9 +52,12 @@ CustomIndices::CustomIndices( const vector< vector< double > > & LowEdges )
 			}
 			else
 			{
-				binHighEdgeMap[ highEdge ] = binIndex;
+				thisEdgeMap[ highEdge ] = binIndex;
 			}
 		}
+
+		//Store the map
+		binHighEdgeMaps.push_back( thisEdgeMap );
 
 		//Store the number of bins in this dimension (one fewer bin than edge)
 		numberOfBins.push_back( LowEdges[ dimensionIndex ].size() - 1 );
@@ -81,7 +87,7 @@ IIndexCalculator * CustomIndices::Clone()
 CustomIndices::~CustomIndices()
 {
 	//binLowEdges.clear();
-	binHighEdgeMap.clear();
+	binHighEdgeMaps.clear();
 	numberOfBins.clear();
 }
 
@@ -243,7 +249,7 @@ unsigned int CustomIndices::GetBinNumber( unsigned int DimensionIndex )
 //Return the index in a given dimension
 unsigned int CustomIndices::GetOneDimensionIndex( double Value, unsigned int Dimension )
 {
-	if ( Value < binLowEdges[ Dimension ][ 0 ] )
+	if ( Value <= binLowEdges[ Dimension ][ 0 ] )
 	{
 		//Underflow bin
 		return 0;
@@ -251,9 +257,9 @@ unsigned int CustomIndices::GetOneDimensionIndex( double Value, unsigned int Dim
 	else
 	{
 		//Returns an iterator pointing to the first element in the container whose key compares greater than the value
-		searchIterator = binHighEdgeMap.upper_bound( Value );
+		searchIterator = binHighEdgeMaps[ Dimension ].upper_bound( Value );
 
-		if ( searchIterator == binHighEdgeMap.end() )
+		if ( searchIterator == binHighEdgeMaps[ Dimension ].end() )
 		{
 			//Overflow
 			return numberOfBins[ Dimension ] + 1;

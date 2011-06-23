@@ -10,6 +10,7 @@
 
 #include "XvsYNormalisedPlotMaker.h"
 #include "UniformIndices.h"
+#include "CustomIndices.h"
 #include "TFile.h"
 #include <iostream>
 #include <cstdlib>
@@ -72,6 +73,51 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 
 	//Avoid killing ROOT
 	doPlotSmearing = ( XBinNumber * YBinNumber < 1000 );
+}
+
+//Constructor with the names to use for the variables
+XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string YVariableName, string PriorName,
+		vector< double > XBinLowEdges, vector< double > YBinLowEdges, double ScaleFactor )
+{
+	xName = XVariableName;
+	yName = YVariableName;
+	priorName = PriorName;
+	finalised = false;
+	scaleFactor = ScaleFactor;
+	vector< vector< double > > binEdges;
+
+	//Set up a variable to keep track of the number of plots - used to prevent Root from complaining about making objects with the same names
+	static unsigned int uniqueID = 0;
+	uniqueID++;
+	thisPlotID = uniqueID;
+
+	//Store the x range
+	binEdges.push_back( XBinLowEdges );
+
+	//Make the x unfolder
+	xIndices = new CustomIndices( binEdges );
+	XUnfolder = new IterativeUnfolding( xIndices, xName + priorName, thisPlotID );
+
+	//Store the y range
+	binEdges.push_back( YBinLowEdges );
+
+	//Make the x vs y unfolder
+	distributionIndices = new CustomIndices( binEdges );
+	XvsYUnfolder = new IterativeUnfolding( distributionIndices, xName + "vs" + yName + priorName, thisPlotID );
+
+	//Set up the cross-check for data loss in delinearisation
+	stringstream idString;
+	idString << thisPlotID;
+	string xvsyTruthName = xName + yName + priorName + "TruthCheck" + idString.str();
+	string xTruthName = xName + "ButNot" + yName + priorName + "TruthCheck" + idString.str();
+	xvsyTruthCheck = new TH1F( xvsyTruthName.c_str(), xvsyTruthName.c_str(), XBinLowEdges.size() - 1, &XBinLowEdges[0] );
+	xTruthCheck = new TH1F( xTruthName.c_str(), xTruthName.c_str(), XBinLowEdges.size() - 1, &XBinLowEdges[0] );
+
+	//Make a summary for the y data values
+	yValueSummary = new StatisticsSummary();
+
+	//Avoid killing ROOT
+	doPlotSmearing = ( XBinLowEdges.size() * YBinLowEdges.size() < 1000 );
 }
 
 //To be used only with Clone

@@ -9,6 +9,7 @@
 
 #include "XPlotMaker.h"
 #include "UniformIndices.h"
+#include "CustomIndices.h"
 #include "TFile.h"
 #include <iostream>
 #include <cstdlib>
@@ -45,6 +46,29 @@ XPlotMaker::XPlotMaker( string XVariableName, string PriorName, unsigned int XBi
 
 	//Make the x unfolder
 	distributionIndices = new UniformIndices( binNumbers, minima, maxima );
+	XUnfolder = new IterativeUnfolding( distributionIndices, xName + priorName, thisPlotID );
+}
+
+//Constructor with the names to use for the variables
+XPlotMaker::XPlotMaker( string XVariableName, string PriorName, vector< double > BinLowEdges, double ScaleFactor, bool Normalise )
+{
+	xName = XVariableName;
+	priorName = PriorName;
+	finalised = false;
+	scaleFactor = ScaleFactor;
+	normalise = Normalise;
+	vector< vector< double > > binEdges;
+
+	//Set up a variable to keep track of the number of plots - used to prevent Root from complaining about making objects with the same names
+	static unsigned int uniqueID = 0;
+	uniqueID++;
+	thisPlotID = uniqueID;
+
+	//Store the x range
+	binEdges.push_back( BinLowEdges );
+
+	//Make the x unfolder
+	distributionIndices = new CustomIndices( binEdges );
 	XUnfolder = new IterativeUnfolding( distributionIndices, xName + priorName, thisPlotID );
 }
 
