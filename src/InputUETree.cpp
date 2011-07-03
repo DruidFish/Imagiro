@@ -89,6 +89,7 @@ InputUETree::InputUETree( string FilePath, string NtuplePath, string Description
 		}
 		else if ( leafType == "vector<double>" )
 		{
+
 			if ( RelevanceChecker->IsInList( leafName ) )
 			{
 				//All relevant vectors
