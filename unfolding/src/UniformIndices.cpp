@@ -188,12 +188,12 @@ vector< double > UniformIndices::GetCentralValues( const vector< unsigned int > 
 					if ( inputIndex == 0 )
 					{
 						//Underflow bin
-						centralValues[ dimensionIndex ] =  minima[ dimensionIndex ] - ( 0.5 * binWidths[ dimensionIndex ] );
+						centralValues[ dimensionIndex ] =  minima[ dimensionIndex ] - 1.0;
 					}
 					else if ( inputIndex == numberOfBins[ dimensionIndex ] + 1 )
 					{
 						//Overflow bin
-						centralValues[ dimensionIndex ] = maxima[ dimensionIndex ] + ( 0.5 * binWidths[ dimensionIndex ] );
+						centralValues[ dimensionIndex ] = maxima[ dimensionIndex ] + 1.0;
 					}
 					else if ( inputIndex <= numberOfBins[ dimensionIndex ] )
 					{

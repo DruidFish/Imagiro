@@ -65,8 +65,8 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	idString << thisPlotID;
 	string xvsyTruthName = xName + yName + priorName + "TruthCheck" + idString.str();
 	string xTruthName = xName + "ButNot" + yName + priorName + "TruthCheck" + idString.str();
-	xvsyTruthCheck = new TH1F( xvsyTruthName.c_str(), xvsyTruthName.c_str(), XBinNumber, XMinimum, XMaximum );
-	xTruthCheck = new TH1F( xTruthName.c_str(), xTruthName.c_str(), XBinNumber, XMinimum, XMaximum );
+	xvsyTruthCheck = new TH1F( xvsyTruthName.c_str(), xvsyTruthName.c_str(), xIndices->GetBinNumber() - 2, xIndices->GetBinLowEdgesForRoot(0) );
+	xTruthCheck = new TH1F( xTruthName.c_str(), xTruthName.c_str(), xIndices->GetBinNumber() - 2, xIndices->GetBinLowEdgesForRoot(0) );
 
 	//Make a summary for the y data values
 	yValueSummary = new StatisticsSummary();
@@ -110,8 +110,8 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	idString << thisPlotID;
 	string xvsyTruthName = xName + yName + priorName + "TruthCheck" + idString.str();
 	string xTruthName = xName + "ButNot" + yName + priorName + "TruthCheck" + idString.str();
-	xvsyTruthCheck = new TH1F( xvsyTruthName.c_str(), xvsyTruthName.c_str(), XBinLowEdges.size() - 1, &XBinLowEdges[0] );
-	xTruthCheck = new TH1F( xTruthName.c_str(), xTruthName.c_str(), XBinLowEdges.size() - 1, &XBinLowEdges[0] );
+	xvsyTruthCheck = new TH1F( xvsyTruthName.c_str(), xvsyTruthName.c_str(), xIndices->GetBinNumber() - 2, xIndices->GetBinLowEdgesForRoot(0) );
+	xTruthCheck = new TH1F( xTruthName.c_str(), xTruthName.c_str(), xIndices->GetBinNumber() - 2, xIndices->GetBinLowEdgesForRoot(0) );
 
 	//Make a summary for the y data values
 	yValueSummary = new StatisticsSummary();
