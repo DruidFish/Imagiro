@@ -1,5 +1,5 @@
 /**
-  @class XsubEventPlotMaker
+  @class UEdeltaPhiPlotMaker
 
   Unfolds a 1D distribution which takes multiple values within a single event
 
@@ -7,7 +7,7 @@
   @date 03-07-2011
  */
 
-#include "XsubEventPlotMaker.h"
+#include "UEdeltaPhiPlotMaker.h"
 #include "UniformIndices.h"
 #include "CustomIndices.h"
 #include "TFile.h"
@@ -19,12 +19,12 @@
 using namespace std;
 
 //Default constructor - useless
-XsubEventPlotMaker::XsubEventPlotMaker()
+UEdeltaPhiPlotMaker::UEdeltaPhiPlotMaker()
 {
 }
 
 //Constructor with the names to use for the variables
-XsubEventPlotMaker::XsubEventPlotMaker( string XVariableName, string PriorName, unsigned int XBinNumber, double XMinimum, double XMaximum, vector< string > OtherVariableNames, double ScaleFactor, bool Normalise )
+UEdeltaPhiPlotMaker::UEdeltaPhiPlotMaker( string XVariableName, string PriorName, unsigned int XBinNumber, double XMinimum, double XMaximum, vector< string > OtherVariableNames, double ScaleFactor, bool Normalise )
 {
 	xName = XVariableName;
 	priorName = PriorName;
@@ -52,7 +52,7 @@ XsubEventPlotMaker::XsubEventPlotMaker( string XVariableName, string PriorName, 
 }
 
 //Constructor with the names to use for the variables
-XsubEventPlotMaker::XsubEventPlotMaker( string XVariableName, string PriorName, vector< double > BinLowEdges, vector< string > OtherVariableNames, double ScaleFactor, bool Normalise )
+UEdeltaPhiPlotMaker::UEdeltaPhiPlotMaker( string XVariableName, string PriorName, vector< double > BinLowEdges, vector< string > OtherVariableNames, double ScaleFactor, bool Normalise )
 {
 	xName = XVariableName;
 	priorName = PriorName;
@@ -77,7 +77,7 @@ XsubEventPlotMaker::XsubEventPlotMaker( string XVariableName, string PriorName, 
 }
 
 //For use with Clone
-XsubEventPlotMaker::XsubEventPlotMaker( vector< string > OtherVariableNames, string PriorName, IIndexCalculator * DistributionIndices,
+UEdeltaPhiPlotMaker::UEdeltaPhiPlotMaker( vector< string > OtherVariableNames, string PriorName, IIndexCalculator * DistributionIndices,
 		unsigned int OriginalID, double ScaleFactor, bool Normalise )
 {
 	xName = OtherVariableNames[ OtherVariableNames.size() - 1 ];
@@ -98,7 +98,7 @@ XsubEventPlotMaker::XsubEventPlotMaker( vector< string > OtherVariableNames, str
 }
 
 //Destructor
-XsubEventPlotMaker::~XsubEventPlotMaker()
+UEdeltaPhiPlotMaker::~UEdeltaPhiPlotMaker()
 {
 	delete distributionIndices;
 	delete XUnfolder;
@@ -113,18 +113,18 @@ XsubEventPlotMaker::~XsubEventPlotMaker()
 }
 
 //Copy the object
-IUnfolder * XsubEventPlotMaker::Clone( string NewPriorName )
+IUnfolder * UEdeltaPhiPlotMaker::Clone( string NewPriorName )
 {
-	return new XsubEventPlotMaker( otherPairingNames, NewPriorName, distributionIndices->Clone(), thisPlotID, scaleFactor, normalise );
+	return new UEdeltaPhiPlotMaker( otherPairingNames, NewPriorName, distributionIndices->Clone(), thisPlotID, scaleFactor, normalise );
 }
 
 //Take input values from ntuples
 //To reduce file access, the appropriate row must already be in memory, the method does not change row
-void XsubEventPlotMaker::StoreMatch( IFileInput * TruthInput, IFileInput * ReconstructedInput )
+void UEdeltaPhiPlotMaker::StoreMatch( IFileInput * TruthInput, IFileInput * ReconstructedInput )
 {
 	if ( finalised )
 	{
-		cerr << "Trying to add matched MC events to finalised XsubEventPlotMaker" << endl;
+		cerr << "Trying to add matched MC events to finalised UEdeltaPhiPlotMaker" << endl;
 		exit(1);
 	}
 	else
@@ -166,34 +166,38 @@ void XsubEventPlotMaker::StoreMatch( IFileInput * TruthInput, IFileInput * Recon
 		double truthWeight = TruthInput->EventWeight();
 		double reconstructedWeight = ReconstructedInput->EventWeight();
 
+		//Find the lead jet phi
+		double truthLeadPhi = TruthInput->GetValue( "LeadJetPhi" );
+		double reconstructedLeadPhi = ReconstructedInput->GetValue( "LeadJetPhi" );
+
 		//Store the pairs
 		for ( unsigned int pairIndex = 0; pairIndex < truthRecoPairs.size(); pairIndex++ )
 		{
-			double singleTruth = ( *truthValues )[ truthRecoPairs[ pairIndex ].first ];
-			double singleReco = ( *reconstructedValues )[ truthRecoPairs[ pairIndex ].second ];
+			double singleTruth = PlusMinusPi( ( *truthValues )[ truthRecoPairs[ pairIndex ].first ] - truthLeadPhi );
+			double singleReco = PlusMinusPi( ( *reconstructedValues )[ truthRecoPairs[ pairIndex ].second ] - reconstructedLeadPhi );
 			XUnfolder->StoreTruthRecoPair( vector< double >( 1, singleTruth ), vector< double >( 1, singleReco ), truthWeight, reconstructedWeight, useInPrior );
 		}
 
 		//Store the misses
 		for ( unsigned int missIndex = 0; missIndex < unpairedTruth.size(); missIndex++ )
 		{
-			double singleTruth = ( *truthValues )[ unpairedTruth[ missIndex ] ];
+			double singleTruth = PlusMinusPi( ( *truthValues )[ unpairedTruth[ missIndex ] ] - truthLeadPhi );
 			XUnfolder->StoreUnreconstructedTruth( vector< double >( 1, singleTruth ), truthWeight, useInPrior );
 		}
 
 		//Store the fakes
 		for ( unsigned int fakeIndex = 0; fakeIndex < unpairedReco.size(); fakeIndex++ )
 		{
-			double singleReco = ( *reconstructedValues )[ unpairedReco[ fakeIndex ] ];
+			double singleReco = PlusMinusPi( ( *reconstructedValues )[ unpairedReco[ fakeIndex ] ] - reconstructedLeadPhi );
 			XUnfolder->StoreReconstructedFake( vector< double >( 1, singleReco ), reconstructedWeight, useInPrior );
 		}
 	}
 }
-void XsubEventPlotMaker::StoreMiss( IFileInput * TruthInput )
+void UEdeltaPhiPlotMaker::StoreMiss( IFileInput * TruthInput )
 {
 	if ( finalised )
 	{
-		cerr << "Trying to add missed MC event to finalised XsubEventPlotMaker" << endl;
+		cerr << "Trying to add missed MC event to finalised UEdeltaPhiPlotMaker" << endl;
 		exit(1);
 	}
 	else
@@ -205,18 +209,22 @@ void XsubEventPlotMaker::StoreMiss( IFileInput * TruthInput )
 		vector< double > truthValues = *( TruthInput->GetVector( xName ) );
 		double truthWeight = TruthInput->EventWeight();
 
+		//Find the lead jet phi
+		double truthLeadPhi = TruthInput->GetValue( "LeadJetPhi" );
+
 		//Store the x values
 		for ( unsigned int truthIndex = 0; truthIndex < truthValues.size(); truthIndex++ )
 		{
-			XUnfolder->StoreUnreconstructedTruth( vector< double >( 1, truthValues[ truthIndex ] ), truthWeight, useInPrior );
+			double singleTruth = PlusMinusPi( truthValues[ truthIndex ] - truthLeadPhi );
+			XUnfolder->StoreUnreconstructedTruth( vector< double >( 1, singleTruth ), truthWeight, useInPrior );
 		}
 	}
 }
-void XsubEventPlotMaker::StoreFake( IFileInput * ReconstructedInput )
+void UEdeltaPhiPlotMaker::StoreFake( IFileInput * ReconstructedInput )
 {
 	if ( finalised )
 	{
-		cerr << "Trying to add fake MC event to finalised XsubEventPlotMaker" << endl;
+		cerr << "Trying to add fake MC event to finalised UEdeltaPhiPlotMaker" << endl;
 		exit(1);
 	}       
 	else
@@ -228,18 +236,22 @@ void XsubEventPlotMaker::StoreFake( IFileInput * ReconstructedInput )
 		vector< double > reconstructedValues = *( ReconstructedInput->GetVector( xName ) );
 		double reconstructedWeight = ReconstructedInput->EventWeight();
 
+		//Find the lead jet phi
+		double reconstructedLeadPhi = ReconstructedInput->GetValue( "LeadJetPhi" );
+
 		//Store the x value
 		for ( unsigned int reconstructedIndex = 0; reconstructedIndex < reconstructedValues.size(); reconstructedIndex++ )
 		{
-			XUnfolder->StoreReconstructedFake( vector< double >( 1, reconstructedValues[ reconstructedIndex ] ), reconstructedWeight, useInPrior );
+			double singleReco = PlusMinusPi( reconstructedValues[ reconstructedIndex ] - reconstructedLeadPhi );
+			XUnfolder->StoreReconstructedFake( vector< double >( 1, singleReco ), reconstructedWeight, useInPrior );
 		}
 	}
 }
-void XsubEventPlotMaker::StoreData( IFileInput * DataInput )
+void UEdeltaPhiPlotMaker::StoreData( IFileInput * DataInput )
 {
 	if ( finalised )
 	{
-		cerr << "Trying to add data event to finalised XsubEventPlotMaker" << endl;
+		cerr << "Trying to add data event to finalised UEdeltaPhiPlotMaker" << endl;
 		exit(1);
 	}       
 	else
@@ -248,20 +260,24 @@ void XsubEventPlotMaker::StoreData( IFileInput * DataInput )
 		vector< double > dataValues = *( DataInput->GetVector( xName ) );
 		double dataWeight = DataInput->EventWeight();
 
+		//Find the lead jet phi
+		double dataLeadPhi = DataInput->GetValue( "LeadJetPhi" );
+
 		//Store the x value
 		for ( unsigned int dataIndex = 0; dataIndex < dataValues.size(); dataIndex++ )
 		{
-			XUnfolder->StoreDataValue( vector< double >( 1, dataValues[ dataIndex ] ), dataWeight );
+			double singleDatum = PlusMinusPi( dataValues[ dataIndex ] - dataLeadPhi );
+			XUnfolder->StoreDataValue( vector< double >( 1, singleDatum ), dataWeight );
 		}
 	} 
 }
 
 //Do the unfolding
-void XsubEventPlotMaker::Unfold( unsigned int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding, unsigned int ErrorMode, bool WithSmoothing )
+void UEdeltaPhiPlotMaker::Unfold( unsigned int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding, unsigned int ErrorMode, bool WithSmoothing )
 {
 	if ( finalised )
 	{
-		cerr << "XsubEventPlotMaker is already finalised" << endl;
+		cerr << "UEdeltaPhiPlotMaker is already finalised" << endl;
 		exit(1);
 	}       
 	else
@@ -404,19 +420,19 @@ void XsubEventPlotMaker::Unfold( unsigned int MostIterations, double ChiSquaredT
 }
 
 //Do a closure test
-bool XsubEventPlotMaker::ClosureTest( unsigned int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing )
+bool UEdeltaPhiPlotMaker::ClosureTest( unsigned int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing )
 {
 	return XUnfolder->ClosureTest( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
 }
 
 //Make a cross-check with MC
-unsigned int XsubEventPlotMaker::MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing )
+unsigned int UEdeltaPhiPlotMaker::MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing )
 {
 	return XUnfolder->MonteCarloCrossCheck( ReferenceDistribution, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
 }
 
 //Return some plots
-TH1F * XsubEventPlotMaker::CorrectedHistogram()
+TH1F * UEdeltaPhiPlotMaker::CorrectedHistogram()
 {
 	if ( finalised )
 	{
@@ -424,11 +440,11 @@ TH1F * XsubEventPlotMaker::CorrectedHistogram()
 	}
 	else
 	{
-		cerr << "Trying to retrieve corrected plot from unfinalised XsubEventPlotMaker" << endl;
+		cerr << "Trying to retrieve corrected plot from unfinalised UEdeltaPhiPlotMaker" << endl;
 		exit(1);
 	}
 }
-TH1F * XsubEventPlotMaker::UncorrectedHistogram()
+TH1F * UEdeltaPhiPlotMaker::UncorrectedHistogram()
 {
 	if ( finalised )
 	{
@@ -436,11 +452,11 @@ TH1F * XsubEventPlotMaker::UncorrectedHistogram()
 	}       
 	else
 	{
-		cerr << "Trying to retrieve uncorrected plot from unfinalised XsubEventPlotMaker" << endl;
+		cerr << "Trying to retrieve uncorrected plot from unfinalised UEdeltaPhiPlotMaker" << endl;
 		exit(1);
 	}
 }
-TH1F * XsubEventPlotMaker::MCTruthHistogram()
+TH1F * UEdeltaPhiPlotMaker::MCTruthHistogram()
 {
 	if ( finalised )
 	{
@@ -448,18 +464,18 @@ TH1F * XsubEventPlotMaker::MCTruthHistogram()
 	}       
 	else
 	{
-		cerr << "Trying to retrieve MC truth plot from unfinalised XsubEventPlotMaker" << endl;
+		cerr << "Trying to retrieve MC truth plot from unfinalised UEdeltaPhiPlotMaker" << endl;
 		exit(1);
 	}
 }
 
 //Return a distribution for use in the cross-checks
-Distribution * XsubEventPlotMaker::MonteCarloTruthForCrossCheck()
+Distribution * UEdeltaPhiPlotMaker::MonteCarloTruthForCrossCheck()
 {
 	return XUnfolder->GetTruthDistribution();
 }
 
-TH2F * XsubEventPlotMaker::SmearingMatrix()
+TH2F * UEdeltaPhiPlotMaker::SmearingMatrix()
 {
 	if ( finalised )
 	{
@@ -467,22 +483,22 @@ TH2F * XsubEventPlotMaker::SmearingMatrix()
 	}       
 	else
 	{
-		cerr << "Trying to retrieve smearing matrix from unfinalised XsubEventPlotMaker" << endl;
+		cerr << "Trying to retrieve smearing matrix from unfinalised UEdeltaPhiPlotMaker" << endl;
 		exit(1);
 	}
 }
 
-string XsubEventPlotMaker::Description( bool WithSpaces )
+string UEdeltaPhiPlotMaker::Description( bool WithSpaces )
 {
 	return xName;
 }
-string XsubEventPlotMaker::PriorName()
+string UEdeltaPhiPlotMaker::PriorName()
 {
 	return priorName;
 }
 
 //Error info for corrected distribution
-vector< double > XsubEventPlotMaker::CorrectedErrors()
+vector< double > UEdeltaPhiPlotMaker::CorrectedErrors()
 {
 	if ( finalised )
 	{
@@ -490,11 +506,11 @@ vector< double > XsubEventPlotMaker::CorrectedErrors()
 	}
 	else
 	{
-		cerr << "Trying to retrieve corrected data errors from unfinalised XsubEventPlotMaker" << endl;
+		cerr << "Trying to retrieve corrected data errors from unfinalised UEdeltaPhiPlotMaker" << endl;
 		exit(1);
 	}
 }
-vector< double > XsubEventPlotMaker::DAgostiniErrors()
+vector< double > UEdeltaPhiPlotMaker::DAgostiniErrors()
 {
 	if ( finalised )
 	{
@@ -502,11 +518,11 @@ vector< double > XsubEventPlotMaker::DAgostiniErrors()
 	}
 	else
 	{
-		cerr << "Trying to retrieve D'Agostini errors from unfinalised XsubEventPlotMaker" << endl;
+		cerr << "Trying to retrieve D'Agostini errors from unfinalised UEdeltaPhiPlotMaker" << endl;
 		exit(1);
 	}
 }
-TH2F * XsubEventPlotMaker::DAgostiniCovariance()
+TH2F * UEdeltaPhiPlotMaker::DAgostiniCovariance()
 {
 	if ( finalised )
 	{
@@ -514,19 +530,23 @@ TH2F * XsubEventPlotMaker::DAgostiniCovariance()
 	}
 	else
 	{
-		cerr << "Trying to retrieve D'Agostini covariance matrix from unfinalised XsubEventPlotMaker" << endl;
+		cerr << "Trying to retrieve D'Agostini covariance matrix from unfinalised UEdeltaPhiPlotMaker" << endl;
 		exit(1);
 	}
 }
 
 //Return the names of the variables involved
-vector< string > XsubEventPlotMaker::VariableNames()
+vector< string > UEdeltaPhiPlotMaker::VariableNames()
 {
-	return otherPairingNames;
+	//return otherPairingNames;
+
+	vector< string > relevantNames( otherPairingNames );
+	relevantNames.push_back( "LeadJetPhi" );
+	return relevantNames;
 }
 
 //Pair up values on the sub-event level using their proximity
-void XsubEventPlotMaker::MakePairs( vector< double > * TruthValues, vector< double > * RecoValues )
+void UEdeltaPhiPlotMaker::MakePairs( vector< double > * TruthValues, vector< double > * RecoValues )
 {
 	vector< vector< unsigned int > > guessPairings( RecoValues->size(), vector< unsigned int >() );
 
@@ -584,4 +604,26 @@ void XsubEventPlotMaker::MakePairs( vector< double > * TruthValues, vector< doub
 			}
 		}
 	}
+}
+
+double UEdeltaPhiPlotMaker::PlusMinusPi( double NotInRange )
+{
+	//Artificially limit the number of attempts to avoid floating point errors causing infinite loops
+	for ( unsigned int attemptIndex = 0; attemptIndex < 4; attemptIndex++ )
+	{
+		if ( NotInRange > M_PI )
+		{
+			NotInRange -= 2.0 * M_PI;
+		}
+		else if ( NotInRange < -M_PI )
+		{
+			NotInRange += 2.0 * M_PI;
+		}
+		else
+		{
+			return NotInRange;
+		}
+	}
+
+	return NotInRange;
 }
