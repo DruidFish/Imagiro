@@ -10,23 +10,24 @@
 #ifndef X_SUB_EVENT_PLOTMAKER_H
 #define X_SUB_EVENT_PLOTMAKER_H
 
-#include "IUnfolder.h"
-#include "IterativeUnfolding.h"
+#include "IPlotMaker.h"
+#include "ICorrection.h"
 #include "IIndexCalculator.h"
 #include <vector>
 #include <string>
 
 using namespace std;
 
-class XsubEventPlotMaker : public IUnfolder
+class XsubEventPlotMaker : public IPlotMaker
 {
 	public:
 		XsubEventPlotMaker();
 		XsubEventPlotMaker( string XVariableName, string PriorName, unsigned int XBinNumber, double XMinimum, double XMaximum,
-				vector< string > OtherVariableNames = vector< string >(), double ScaleFactor = 1.0, bool Normalise = false );
+				int CorrectionMode = 2, vector< string > OtherVariableNames = vector< string >(), double ScaleFactor = 1.0, bool Normalise = false );
 		XsubEventPlotMaker( string XVariableName, string PriorName, vector< double > BinLowEdges,
-				vector< string > OtherVariableNames = vector< string >(), double ScaleFactor = 1.0, bool Normalise = false );
-		~XsubEventPlotMaker();
+				int CorrectionMode = 2, vector< string > OtherVariableNames = vector< string >(), double ScaleFactor = 1.0, bool Normalise = false );
+
+		virtual ~XsubEventPlotMaker();
 
 		//Take input values from ntuples
 		//To reduce file access, the appropriate row must already be in memory, the method does not change row
@@ -36,13 +37,13 @@ class XsubEventPlotMaker : public IUnfolder
 		virtual void StoreData( IFileInput * DataInput );
 
 		//Do the unfolding
-		virtual void Unfold( unsigned int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding = false, unsigned int ErrorMode = 0, bool WithSmoothing = false );
+		virtual void Correct( unsigned int MostIterations, bool SkipUnfolding = false, unsigned int ErrorMode = 0, bool WithSmoothing = false );
 
 		//Do a closure test
-		virtual bool ClosureTest( unsigned int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing = false );
+		virtual bool ClosureTest( unsigned int MostIterations, bool WithSmoothing = false );
 
 		//Make a cross-check with MC
-		virtual unsigned int MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing = false );
+		virtual unsigned int MonteCarloCrossCheck( Distribution * ReferenceDistribution, bool WithSmoothing = false );
 
 		//Return a distribution for use in the cross-checks
 		virtual Distribution * MonteCarloTruthForCrossCheck();
@@ -54,7 +55,7 @@ class XsubEventPlotMaker : public IUnfolder
 		virtual TH2F * SmearingMatrix();
 
 		//Copy the object
-		virtual IUnfolder * Clone( string NewPriorName );
+		virtual XsubEventPlotMaker * Clone( string NewPriorName );
 
 		//General info
 		virtual string Description( bool WithSpaces );
@@ -62,16 +63,18 @@ class XsubEventPlotMaker : public IUnfolder
 
 		//Error info for corrected distribution
 		virtual vector< double > CorrectedErrors();
-		virtual vector< double > DAgostiniErrors();
 		virtual TH2F * DAgostiniCovariance();
 
 		//Return the names of the variables involved
-		virtual vector<string> VariableNames();
+		virtual vector< string > VariableNames();
+
+		//Return the type of correction the plot will perform
+		virtual int CorrectionMode();
 
 	private:
 		//To be used with Clone
 		XsubEventPlotMaker( vector< string > OtherVariableNames, string PriorName, IIndexCalculator * DistributionIndices,
-				unsigned int OriginalID, double ScaleFactor, bool Normalise );
+				unsigned int OriginalID, int CorrectionMode, double ScaleFactor, bool Normalise );
 
 		//Connect up the sub event values
 		void MakePairs( vector< double > * TruthValues, vector< double > * RecoValues );
@@ -80,14 +83,15 @@ class XsubEventPlotMaker : public IUnfolder
 		vector< unsigned int > unpairedTruth, unpairedReco;
 		vector< pair< unsigned int, unsigned int > > truthRecoPairs;
 
+		int correctionType;
 		unsigned int thisPlotID;
-		IterativeUnfolding * XUnfolder;
+		ICorrection * XUnfolder;
 		IIndexCalculator * distributionIndices;
 		string xName, priorName;
 		vector< string > otherPairingNames;
 		bool finalised, normalise;
 		double scaleFactor;
-		vector< double > correctedDataErrors, dagostiniErrors;
+		vector< double > correctedDataErrors;
 		TH1F *correctedDistribution, *uncorrectedDistribution, *mcTruthDistribution;
 		TH2F *smearingMatrix, *covarianceMatrix;
 };

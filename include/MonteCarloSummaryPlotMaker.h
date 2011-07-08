@@ -14,8 +14,6 @@
 
 #include "MonteCarloInformation.h"
 #include "IFileInput.h"
-#include "IUnfolder.h"
-#include "IFolder.h"
 #include "IPlotMaker.h"
 #include "TCanvas.h"
 #include "TFile.h"
@@ -29,8 +27,7 @@ class MonteCarloSummaryPlotMaker
 {
 	public:
 		MonteCarloSummaryPlotMaker();
-		MonteCarloSummaryPlotMaker( IUnfolder * TemplatePlotMaker, MonteCarloInformation * PlotInformation, bool CombineMCMode = true );
-		MonteCarloSummaryPlotMaker( IFolder * TemplatePlotMaker, MonteCarloInformation * PlotInformation, bool CombineMCMode = true );
+		MonteCarloSummaryPlotMaker( IPlotMaker * TemplatePlotMaker, MonteCarloInformation * PlotInformation, bool CombineMCMode = true );
 		~MonteCarloSummaryPlotMaker();
 
 		//Take input values from ntuples
@@ -58,16 +55,14 @@ class MonteCarloSummaryPlotMaker
 		vector< string > VariableNames();
 
 	private:
-		bool isUnfolding;
+		int correctionType;
 		vector< Distribution* > allTruthDistributions;
 		vector< TH1F* > allTruthPlots;
 		TH2F *smearingMatrix, *covarianceMatrix;
 		MonteCarloInformation * mcInfo;
 		TCanvas * plotCanvas;
 		bool finalised, combineMode, manualRange, manualLabels, logScale;
-		vector< IFolder* > foldingPlots;
-		vector< IUnfolder* > crossCheckPlots, unfoldingPlots;
-		vector< IPlotMaker* > allPlots;
+		vector< IPlotMaker* > allPlots, crossCheckPlots;
 		double yRangeMinimum, yRangeMaximum;
 		string dataDescription, xAxisLabel, yAxisLabel;
 		vector< string > variableNames;

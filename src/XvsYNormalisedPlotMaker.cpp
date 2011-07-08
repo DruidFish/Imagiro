@@ -9,6 +9,10 @@
  */
 
 #include "XvsYNormalisedPlotMaker.h"
+#include "BayesianUnfolding.h"
+#include "Folding.h"
+#include "NoCorrection.h"
+#include "BinByBinUnfolding.h"
 #include "UniformIndices.h"
 #include "CustomIndices.h"
 #include "TFile.h"
@@ -19,6 +23,8 @@
 
 using namespace std;
 
+const int BAYESIAN_MODE = 2;
+
 //Default constructor - useless
 XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker()
 {
@@ -27,8 +33,9 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker()
 //Constructor with the names to use for the variables
 XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string YVariableName, string PriorName,
 		unsigned int XBinNumber, double XMinimum, double XMaximum,
-		unsigned int YBinNumber, double YMinimum, double YMaximum, double ScaleFactor )
+		unsigned int YBinNumber, double YMinimum, double YMaximum, int CorrectionMode, double ScaleFactor )
 {
+	correctionType = CorrectionMode;
 	xName = XVariableName;
 	yName = YVariableName;
 	priorName = PriorName;
@@ -49,7 +56,7 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 
 	//Make the x unfolder
 	xIndices = new UniformIndices( binNumbers, minima, maxima );
-	XUnfolder = new IterativeUnfolding( xIndices, xName + priorName, thisPlotID );
+	XUnfolder = MakeCorrector( correctionType, xIndices, xName + priorName, thisPlotID );
 
 	//Store the y range
 	minima.push_back( YMinimum );
@@ -58,7 +65,7 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 
 	//Make the x vs y unfolder
 	distributionIndices = new UniformIndices( binNumbers, minima, maxima );
-	XvsYUnfolder = new IterativeUnfolding( distributionIndices, xName + "vs" + yName + priorName, thisPlotID );
+	XvsYUnfolder = MakeCorrector( correctionType, distributionIndices, xName + "vs" + yName + priorName, thisPlotID );
 
 	//Set up the cross-check for data loss in delinearisation
 	stringstream idString;
@@ -77,8 +84,9 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 
 //Constructor with the names to use for the variables
 XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string YVariableName, string PriorName,
-		vector< double > XBinLowEdges, vector< double > YBinLowEdges, double ScaleFactor )
+		vector< double > XBinLowEdges, vector< double > YBinLowEdges, int CorrectionMode, double ScaleFactor )
 {
+	correctionType = CorrectionMode;
 	xName = XVariableName;
 	yName = YVariableName;
 	priorName = PriorName;
@@ -96,14 +104,14 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 
 	//Make the x unfolder
 	xIndices = new CustomIndices( binEdges );
-	XUnfolder = new IterativeUnfolding( xIndices, xName + priorName, thisPlotID );
+	XUnfolder = MakeCorrector( correctionType, xIndices, xName + priorName, thisPlotID );
 
 	//Store the y range
 	binEdges.push_back( YBinLowEdges );
 
 	//Make the x vs y unfolder
 	distributionIndices = new CustomIndices( binEdges );
-	XvsYUnfolder = new IterativeUnfolding( distributionIndices, xName + "vs" + yName + priorName, thisPlotID );
+	XvsYUnfolder = MakeCorrector( correctionType, distributionIndices, xName + "vs" + yName + priorName, thisPlotID );
 
 	//Set up the cross-check for data loss in delinearisation
 	stringstream idString;
@@ -122,8 +130,9 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 
 //To be used only with Clone
 XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string YVariableName, string PriorName,
-		IIndexCalculator * XIndices, IIndexCalculator * DistributionIndices, unsigned int OriginalID, double ScaleFactor )
+		IIndexCalculator * XIndices, IIndexCalculator * DistributionIndices, int CorrectionMode, unsigned int OriginalID, double ScaleFactor )
 {
+	correctionType = CorrectionMode;
 	xName = XVariableName;
 	yName = YVariableName;
 	priorName = PriorName;
@@ -137,11 +146,11 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 
 	//Make the x unfolder
 	xIndices = XIndices;
-	XUnfolder = new IterativeUnfolding( xIndices, xName + priorName, thisPlotID );
+	XUnfolder = MakeCorrector( correctionType, xIndices, xName + priorName, thisPlotID );
 
 	//Make the x vs y unfolder
 	distributionIndices = DistributionIndices;
-	XvsYUnfolder = new IterativeUnfolding( distributionIndices, xName + "vs" + yName + priorName, thisPlotID );
+	XvsYUnfolder = MakeCorrector( correctionType, distributionIndices, xName + "vs" + yName + priorName, thisPlotID );
 
 	//Set up the cross-check for data loss in delinearisation
 	stringstream idString;
@@ -184,9 +193,9 @@ XvsYNormalisedPlotMaker::~XvsYNormalisedPlotMaker()
 }
 
 //Copy the object
-IUnfolder * XvsYNormalisedPlotMaker::Clone( string NewPriorName )
+XvsYNormalisedPlotMaker * XvsYNormalisedPlotMaker::Clone( string NewPriorName )
 {
-	return new XvsYNormalisedPlotMaker( xName, yName, NewPriorName, xIndices->Clone(), distributionIndices->Clone(), thisPlotID, scaleFactor );
+	return new XvsYNormalisedPlotMaker( xName, yName, NewPriorName, xIndices->Clone(), distributionIndices->Clone(), correctionType, thisPlotID, scaleFactor );
 }
 
 //Take input values from ntuples
@@ -226,8 +235,16 @@ void XvsYNormalisedPlotMaker::StoreMatch( IFileInput * TruthInput, IFileInput * 
 		if ( useInPrior )
 		{
 			//Store values for checking the delinearisation
-			xTruthCheck->Fill( xTruthValue, truthWeight );
-			xvsyTruthCheck->Fill( xTruthValue, yTruthValue * truthWeight );
+			if ( correctionType <= 0 )
+			{
+				xTruthCheck->Fill( xReconstructedValue, reconstructedWeight );
+				xvsyTruthCheck->Fill( xReconstructedValue, yReconstructedValue * reconstructedWeight );
+			}
+			else
+			{
+				xTruthCheck->Fill( xTruthValue, truthWeight );
+				xvsyTruthCheck->Fill( xTruthValue, yTruthValue * truthWeight );
+			}
 		}
 	}
 }
@@ -258,7 +275,7 @@ void XvsYNormalisedPlotMaker::StoreMiss( IFileInput * TruthInput )
 		truthValues.push_back( yTruthValue );
 		XvsYUnfolder->StoreUnreconstructedTruth( truthValues, truthWeight, useInPrior );
 
-		if ( useInPrior )
+		if ( useInPrior && correctionType > 0 )
 		{
 			//Store values for checking the delinearisation
 			xTruthCheck->Fill( xTruthValue, truthWeight );
@@ -292,6 +309,14 @@ void XvsYNormalisedPlotMaker::StoreFake( IFileInput * ReconstructedInput )
 		//Store the y value
 		reconstructedValues.push_back( yReconstructedValue );
 		XvsYUnfolder->StoreReconstructedFake( reconstructedValues, reconstructedWeight, useInPrior );
+
+
+		if ( useInPrior && correctionType <= 0 )
+		{
+			//Store values for checking the delinearisation
+			xTruthCheck->Fill( xReconstructedValue, reconstructedWeight );
+			xvsyTruthCheck->Fill( xReconstructedValue, yReconstructedValue * reconstructedWeight );
+		}
 	}
 }
 void XvsYNormalisedPlotMaker::StoreData( IFileInput * DataInput )
@@ -325,7 +350,7 @@ void XvsYNormalisedPlotMaker::StoreData( IFileInput * DataInput )
 }
 
 //Do the unfolding
-void XvsYNormalisedPlotMaker::Unfold( unsigned int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding, unsigned int ErrorMode, bool WithSmoothing )
+void XvsYNormalisedPlotMaker::Correct( unsigned int MostIterations, bool SkipUnfolding, unsigned int ErrorMode, bool WithSmoothing )
 {
 	if ( finalised )
 	{
@@ -337,8 +362,8 @@ void XvsYNormalisedPlotMaker::Unfold( unsigned int MostIterations, double ChiSqu
 		//Unfold the distributions
 		if ( !SkipUnfolding )
 		{
-			XUnfolder->Unfold( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, ErrorMode, WithSmoothing );
-			XvsYUnfolder->Unfold( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, ErrorMode, WithSmoothing );
+			XUnfolder->Correct( MostIterations, ErrorMode, WithSmoothing );
+			XvsYUnfolder->Correct( MostIterations, ErrorMode, WithSmoothing );
 		}
 
 		//Make some plot titles
@@ -350,12 +375,12 @@ void XvsYNormalisedPlotMaker::Unfold( unsigned int MostIterations, double ChiSqu
 		string XvsYTitle = xName + " vs " + yName + " using " + priorName;
 
 		//Retrieve the results
-		TH1F * XCorrected = XUnfolder->GetUnfoldedHistogram( XFullName + "Corrected", XFullTitle + " Corrected Distribution" );
-		TH1F * XvsYCorrected = XvsYUnfolder->GetUnfoldedHistogram( XvsYName + "Corrected", XvsYTitle + " Corrected Distribution" );
+		TH1F * XCorrected = XUnfolder->GetCorrectedHistogram( XFullName + "Corrected", XFullTitle + " Corrected Distribution" );
+		TH1F * XvsYCorrected = XvsYUnfolder->GetCorrectedHistogram( XvsYName + "Corrected", XvsYTitle + " Corrected Distribution" );
 
 		//Retrieve some other bits for debug
-		TH1F * XUncorrected = XUnfolder->GetUncorrectedDataHistogram( XFullName + "Uncorrected", XFullTitle + " Uncorrected Distribution" );
-		TH1F * XvsYUncorrected = XvsYUnfolder->GetUncorrectedDataHistogram( XvsYName + "Uncorrected", XvsYTitle + " Uncorrected Distribution" );
+		TH1F * XUncorrected = XUnfolder->GetUncorrectedHistogram( XFullName + "Uncorrected", XFullTitle + " Uncorrected Distribution" );
+		TH1F * XvsYUncorrected = XvsYUnfolder->GetUncorrectedHistogram( XvsYName + "Uncorrected", XvsYTitle + " Uncorrected Distribution" );
 
 		TH1F * XTruth = XUnfolder->GetTruthHistogram( XFullName + "Truth", XFullTitle + " Truth Distribution" );
 		TH1F * XvsYTruth = XvsYUnfolder->GetTruthHistogram( XvsYName + "Truth", XvsYTitle + " Truth Distribution" );
@@ -366,10 +391,8 @@ void XvsYNormalisedPlotMaker::Unfold( unsigned int MostIterations, double ChiSqu
 		TH1F * DelinearisedXvsYTruth = Delinearise(XvsYTruth);
 
 		//Get the error vectors
-		vector<double> XErrors = XUnfolder->SumOfDataWeightSquares();
-		vector<double> XvsYErrors = XvsYUnfolder->SumOfDataWeightSquares();
-		vector<double> XVariance = XUnfolder->DAgostiniVariance();
-		vector<double> XvsYVariance = XvsYUnfolder->DAgostiniVariance();
+		vector<double> XErrors = XUnfolder->Variances();
+		vector<double> XvsYErrors = XvsYUnfolder->Variances();
 
 		//Delinearise the x vs y errors
 		vector<double> delinearisedXvsYErrors = DelineariseErrors( XvsYErrors );
@@ -387,25 +410,6 @@ void XvsYNormalisedPlotMaker::Unfold( unsigned int MostIterations, double ChiSqu
 			double combinedError = ( sqrt( componentOne + componentTwo ) / componentThree );
 			combinedError *= scaleFactor;
 			correctedDataErrors.push_back( combinedError );
-		}
-
-		//Same for the D'Agostini variance
-		if ( ErrorMode > 0 )
-		{
-			vector<double> delinearisedXvsYVariance = DelineariseErrors( XvsYVariance );
-			for ( unsigned int binIndex = 0; binIndex < XVariance.size(); binIndex++ )
-			{
-				//Add the errors from the x vs y distribution and the divisor
-				//The formula is stright from ROOT::TH1::Divide, so I hope it's right
-				double XBinValue = XCorrected->GetBinContent(binIndex);
-				double XvsYBinValue = DelinearisedXvsYCorrected->GetBinContent(binIndex);
-				double componentOne = XVariance[binIndex] * XvsYBinValue * XvsYBinValue;
-				double componentTwo = delinearisedXvsYVariance[binIndex] * XBinValue * XBinValue;
-				double componentThree = XBinValue * XBinValue;
-				double combinedError = ( sqrt( componentOne + componentTwo ) / componentThree );
-				combinedError *= scaleFactor;
-				dagostiniErrors.push_back( combinedError );
-			}
 		}
 
 		//Normalise the x vs y distributions and scale appropriately
@@ -435,10 +439,6 @@ void XvsYNormalisedPlotMaker::Unfold( unsigned int MostIterations, double ChiSqu
 
 				//Add this error to the overall error calculation
 				correctedDataErrors[ binIndex ] *= ( 1.0 + errorFraction );
-				if ( ErrorMode > 0 )
-				{
-					dagostiniErrors[ binIndex ] *= ( 1.0 + errorFraction );
-				}
 
 				//Increment average error
 				averagePercentError += percentError;
@@ -517,21 +517,24 @@ void XvsYNormalisedPlotMaker::Unfold( unsigned int MostIterations, double ChiSqu
 		}
 
 		//Bin-by-bin scaling of errors using the corrected data
-		for ( unsigned int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
+		if ( correctionType != BAYESIAN_MODE || ErrorMode < 1 )
 		{
-			double errorScaleFactor = correctedDistribution->GetBinContent(binIndex) / uncorrectedDistribution->GetBinContent(binIndex);
-
-			//Check for div0 errors
-			if ( isinf( errorScaleFactor ) )
+			for ( unsigned int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
 			{
-				errorScaleFactor = 1.0;
-			}
-			if ( isnan( errorScaleFactor ) )
-			{
-				errorScaleFactor = 0.0;
-			}
+				double errorScaleFactor = correctedDistribution->GetBinContent(binIndex) / uncorrectedDistribution->GetBinContent(binIndex);
 
-			correctedDataErrors[binIndex] *= errorScaleFactor;
+				//Check for div0 errors
+				if ( isinf( errorScaleFactor ) )
+				{
+					errorScaleFactor = 1.0;
+				}
+				if ( isnan( errorScaleFactor ) )
+				{
+					errorScaleFactor = 0.0;
+				}
+
+				correctedDataErrors[binIndex] *= errorScaleFactor;
+			}
 		}
 
 		//Mark as done
@@ -540,17 +543,17 @@ void XvsYNormalisedPlotMaker::Unfold( unsigned int MostIterations, double ChiSqu
 }
 
 //Do a closure test
-bool XvsYNormalisedPlotMaker::ClosureTest( unsigned int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing )
+bool XvsYNormalisedPlotMaker::ClosureTest( unsigned int MostIterations, bool WithSmoothing )
 {
-	bool result = XvsYUnfolder->ClosureTest( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
-	result &= XUnfolder->ClosureTest( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
+	bool result = XvsYUnfolder->ClosureTest( MostIterations, WithSmoothing );
+	result &= XUnfolder->ClosureTest( MostIterations, WithSmoothing );
 	return result;
 }
 
 //Make a cross-check with MC
-unsigned int XvsYNormalisedPlotMaker::MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing )
+unsigned int XvsYNormalisedPlotMaker::MonteCarloCrossCheck( Distribution * ReferenceDistribution, bool WithSmoothing )
 {
-	return XvsYUnfolder->MonteCarloCrossCheck( ReferenceDistribution, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
+	return XvsYUnfolder->MonteCarloCrossCheck( ReferenceDistribution, WithSmoothing );
 }
 
 //Return some plots
@@ -708,18 +711,6 @@ vector< double > XvsYNormalisedPlotMaker::CorrectedErrors()
 		exit(1);
 	}
 }
-vector< double > XvsYNormalisedPlotMaker::DAgostiniErrors()
-{
-	if ( finalised )
-	{
-		return dagostiniErrors;
-	}
-	else
-	{
-		cerr << "Trying to retrieve corrected data errors from unfinalised XvsYNormalisedPlotMaker" << endl;
-		exit(1);
-	}
-}
 TH2F * XvsYNormalisedPlotMaker::DAgostiniCovariance()
 {
 	if ( finalised )
@@ -740,3 +731,36 @@ vector< string > XvsYNormalisedPlotMaker::VariableNames()
 	result.push_back( yName );
 	return result;
 }
+
+//Return the type of correction the plot will perform
+int XvsYNormalisedPlotMaker::CorrectionMode()
+{
+	return correctionType;
+}
+
+//Instantiate an object to correct the data
+ICorrection * XvsYNormalisedPlotMaker::MakeCorrector( int CorrectionMode, IIndexCalculator * CorrectionIndices, string CorrectionName, unsigned int CorrectionIndex )
+{
+	if ( CorrectionMode == -1 )
+	{
+		return new Folding( CorrectionIndices, CorrectionName, CorrectionIndex );
+	}
+	else if ( CorrectionMode == 0 )
+	{
+		return new NoCorrection( CorrectionIndices, CorrectionName, CorrectionIndex );
+	}
+	else if ( CorrectionMode == 1 )
+	{
+		return new BinByBinUnfolding( CorrectionIndices, CorrectionName, CorrectionIndex );
+	}
+	else if ( CorrectionMode == 2 )
+	{
+		return new BayesianUnfolding( CorrectionIndices, CorrectionName, CorrectionIndex );
+	}
+	else
+	{
+		cerr << "Unrecognised correction mode (" << CorrectionMode << ") for " << CorrectionName << endl;
+		exit(1);
+	}
+}
+

@@ -22,6 +22,7 @@
 using namespace std;
 
 const int MC_CHECK_OFFSET = 1;
+const int BAYESIAN_MODE = 2;
 
 //Default constructor - useless
 MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker()
@@ -29,9 +30,8 @@ MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker()
 }
 
 //Constructor for unfolding plots
-MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker( IUnfolder * TemplatePlotMaker, MonteCarloInformation * PlotInformation, bool CombineMCMode )
+MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker( IPlotMaker * TemplatePlotMaker, MonteCarloInformation * PlotInformation, bool CombineMCMode )
 {
-	isUnfolding = true;
 	finalised = false;
 	manualRange = false;
 	manualLabels = false;
@@ -40,6 +40,7 @@ MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker( IUnfolder * TemplatePlot
 	mcInfo = PlotInformation;
 	dataDescription = "";
 	variableNames = TemplatePlotMaker->VariableNames();
+	correctionType = TemplatePlotMaker->CorrectionMode();
 
 	//Make a separate plot for each MC source
 	bool usedTheTemplate = false;
@@ -50,56 +51,19 @@ MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker( IUnfolder * TemplatePlot
 		//Don't make a redundant copy of the template
 		if ( TemplatePlotMaker->PriorName() == mcDescription )
 		{
-			unfoldingPlots.push_back( TemplatePlotMaker );
 			allPlots.push_back( TemplatePlotMaker );
 			usedTheTemplate = true;
 		}
 		else
 		{
-			IUnfolder * clonePlot = TemplatePlotMaker->Clone( mcDescription );
-			unfoldingPlots.push_back( clonePlot );
-			allPlots.push_back( clonePlot );
+			allPlots.push_back( TemplatePlotMaker->Clone( mcDescription ) );
 		}
 
-		//Make plots for testing the unfolding with MC
-		crossCheckPlots.push_back( TemplatePlotMaker->Clone( mcDescription ) );
-	}
-	if ( !usedTheTemplate )
-	{
-		delete TemplatePlotMaker;
-	}
-}
-
-//Constructor for folding plots
-MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker( IFolder * TemplatePlotMaker, MonteCarloInformation * PlotInformation, bool CombineMCMode )
-{
-	isUnfolding = false;
-	finalised = false;
-	manualRange = false;
-	manualLabels = false;
-	logScale = false;
-	combineMode = CombineMCMode;
-	mcInfo = PlotInformation;
-	dataDescription = "";
-
-	//Make a separate plot for each MC source
-	bool usedTheTemplate = false;
-	for ( unsigned int mcIndex = 0; mcIndex < mcInfo->NumberOfSources(); mcIndex++ )
-	{
-		string mcDescription = mcInfo->Description( mcIndex );
-
-		//Don't make a redundant copy of the template
-		if ( TemplatePlotMaker->PriorName() == mcDescription )
+		//Only for Bayesian unfolding
+		if ( correctionType == BAYESIAN_MODE )
 		{
-			foldingPlots.push_back( TemplatePlotMaker );
-			allPlots.push_back( TemplatePlotMaker );
-			usedTheTemplate = true;
-		}
-		else
-		{
-			IFolder * clonePlot = TemplatePlotMaker->Clone( mcDescription );
-			foldingPlots.push_back( clonePlot );
-			allPlots.push_back( clonePlot );
+			//Make plots for testing the unfolding with MC
+			crossCheckPlots.push_back( TemplatePlotMaker->Clone( mcDescription ) );
 		}
 	}
 	if ( !usedTheTemplate )
@@ -123,11 +87,11 @@ MonteCarloSummaryPlotMaker::~MonteCarloSummaryPlotMaker()
 	{
 		for ( unsigned int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
 		{
-			if ( isUnfolding )
+			if ( correctionType == BAYESIAN_MODE )
 			{
 				delete crossCheckPlots[ plotIndex ];
 			}
-			delete foldingPlots[ plotIndex ];
+			delete allPlots[ plotIndex ];
 		}
 	}
 }
@@ -159,7 +123,7 @@ void MonteCarloSummaryPlotMaker::StoreMatch( IFileInput * TruthInput, IFileInput
 		}
 
 		//Also store the event for the cross-check unfolding
-		if ( isUnfolding )
+		if ( correctionType == BAYESIAN_MODE )
 		{
 			if ( combineMode )
 			{
@@ -204,7 +168,7 @@ void MonteCarloSummaryPlotMaker::StoreMiss( IFileInput * TruthInput )
 		}
 
 		//Also store the event for the cross-check unfolding
-		if ( isUnfolding )
+		if ( correctionType == BAYESIAN_MODE )
 		{
 			if ( combineMode )
 			{
@@ -245,7 +209,7 @@ void MonteCarloSummaryPlotMaker::StoreFake( IFileInput * ReconstructedInput )
 		}
 
 		//Also store the event for the cross-check unfolding
-		if ( isUnfolding )
+		if ( correctionType == BAYESIAN_MODE )
 		{
 			if ( combineMode )
 			{
@@ -341,15 +305,12 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 	else
 	{
 		int mostIterations = 0;
-		double chiSquaredThreshold = 0.0;
-		double kolmogorovThreshold = 0.0;
-		string plotDescription = allPlots[0]->Description( true );
+		string plotDescription = allPlots[ 0 ]->Description( true );
 
 		//Do the unfolding cross-check to find out good conditions for convergence
-		if ( isUnfolding )
+		cout << endl << "--------------- Started correcting " << plotDescription << " ----------------" << endl;
+		if ( correctionType == BAYESIAN_MODE )
 		{
-			cout << endl << "--------------- Started unfolding " << plotDescription << " ----------------" << endl;
-
 			for ( unsigned int mcIndex = 0; mcIndex < crossCheckPlots.size(); mcIndex++ )
 			{
 				//Get the distribution that should be produced by the unfolding from MC truth
@@ -358,16 +319,11 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 
 				//Unfold MC reco
 				cout << endl << "Cross check - MC " << nextIndex << " reco with MC " << mcIndex << " prior" << endl;
-				double convergenceChi2, convergenceKolmogorov;
-				mostIterations += crossCheckPlots[ mcIndex ]->MonteCarloCrossCheck( referenceDistribution, convergenceChi2, convergenceKolmogorov );
-				chiSquaredThreshold += convergenceChi2;
-				kolmogorovThreshold += convergenceKolmogorov;
+				mostIterations += crossCheckPlots[ mcIndex ]->MonteCarloCrossCheck( referenceDistribution, WithSmoothing );
 			}
 
 			//Find the average values for the convergence criteria
 			mostIterations = ceil( (double)mostIterations / (double)crossCheckPlots.size() );
-			chiSquaredThreshold /= (double)crossCheckPlots.size();
-			kolmogorovThreshold /= (double)crossCheckPlots.size();
 
 			//Check that the iteration process is useful
 			if ( mostIterations < 2 )
@@ -378,17 +334,13 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 				//Warn about potential problems
 				cout << "Unfolding will only be applied once - no iteration. This suggests there is a problem: perhaps the smearing matrix is underpopulated?" << endl;
 			}
-			cout << "Chosen convergence criteria: max " << mostIterations << " iterations; chi2 below " << chiSquaredThreshold << "; KS above " << kolmogorovThreshold << endl;
+			cout << "Chosen convergence criterion: " << mostIterations << " iterations" << endl;
 
 			//Tidy up
 			for ( unsigned int mcIndex = 0; mcIndex < crossCheckPlots.size(); mcIndex++ )
 			{
 				delete crossCheckPlots[ mcIndex ];
 			}
-		}
-		else
-		{
-			cout << endl << "--------------- Started folding " << plotDescription << " ----------------" << endl;
 		}
 
 		//Perform closure tests
@@ -398,21 +350,13 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 		for ( unsigned int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
 		{
 			cout << endl << "Closure test for " << mcInfo->Description( plotIndex ) << endl;
-			bool closureWorked;
-			if ( isUnfolding )
-			{
-				closureWorked = unfoldingPlots[plotIndex]->ClosureTest( mostIterations, chiSquaredThreshold, kolmogorovThreshold, WithSmoothing );
-			}
-			else
-			{
-				closureWorked = foldingPlots[plotIndex]->ClosureTest();
-			}
+			bool closureWorked = allPlots[plotIndex]->ClosureTest( mostIterations, WithSmoothing );
 
 			if ( !closureWorked )
 			{
 				numberFailed++;
 
-				//if ( isUnfolding )
+				//if ( correctionType == BAYESIAN_MODE )
 				//{
 				//	//Remove priors that did not pass the closure test
 				//	cout << "Removing " << mcInfo->Description( plotIndex ) << " from available priors" << endl;
@@ -423,7 +367,7 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 		}
 
 		//Quit if too many prior distributions fail
-		if ( numberFailed == allPlots.size() && isUnfolding )
+		if ( numberFailed == allPlots.size() && correctionType == BAYESIAN_MODE )
 		{
 			cerr << "All priors failed their closure tests: something is really wrong here. Suggest you choose better binning / provide more MC stats" << endl;
 			//exit(1);
@@ -461,25 +405,8 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 		bool firstPlot = true;
 		for ( unsigned int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
 		{
-			//Unfold
-			if ( isUnfolding )
-			{
-				if ( usePrior[ plotIndex ] )
-				{
-					cout << endl << "Unfolding " << allPlots[ plotIndex ]->Description(true) << " with " << allPlots[ plotIndex ]->PriorName() << endl;
-				}
-				else
-				{
-					cout << endl << "Skipping unfolding " << allPlots[ plotIndex ]->Description(true) << " with " << allPlots[ plotIndex ]->PriorName() << endl;
-				}
-
-				//Still need to run this to get the truth output
-				unfoldingPlots[plotIndex]->Unfold( mostIterations, chiSquaredThreshold, kolmogorovThreshold, !usePrior[ plotIndex ], ErrorMode, WithSmoothing );
-			}
-			else
-			{
-				foldingPlots[ plotIndex ]->Fold();
-			}
+			//Still need to run this to get the truth output
+			allPlots[ plotIndex ]->Correct( mostIterations, !usePrior[ plotIndex ], ErrorMode, WithSmoothing );
 
 			//Make a local copy of the truth plot
 			string truthPlotName = "localCopy" + allPlots[ plotIndex ]->PriorName() + "Truth";
@@ -490,22 +417,7 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 			if ( usePrior[ plotIndex ] )
 			{
 				//Get the error vector
-				vector< double > plotErrors;
-				if ( ErrorMode > 0 && isUnfolding )
-				{
-					plotErrors = unfoldingPlots[ plotIndex ]->DAgostiniErrors();
-
-					vector< double > simpleErrors = allPlots[ plotIndex ]->CorrectedErrors();
-
-					for ( unsigned int binIndex = 0; binIndex < plotErrors.size(); binIndex++ )
-					{
-						cout << plotErrors[ binIndex ] << ", " << simpleErrors[ binIndex ] << endl;
-					}
-				}
-				else
-				{
-					plotErrors = allPlots[ plotIndex ]->CorrectedErrors();
-				}
+				vector< double > plotErrors = allPlots[ plotIndex ]->CorrectedErrors();
 
 				//Load the corrected data into the combined distribution
 				TH1F * correctedHistogram = allPlots[ plotIndex ]->CorrectedHistogram();
@@ -546,20 +458,20 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 
 					//Copy a smearing matrix if it exists
 					smearingMatrix = NULL;
-					if ( allPlots[plotIndex]->SmearingMatrix() )
+					if ( allPlots[ plotIndex ]->SmearingMatrix() )
 					{
-						string smearingName = allPlots[plotIndex]->Description(false) + "SmearingMatrix";
-						string smearingTitle = allPlots[plotIndex]->Description(true) + " Smearing Matrix";
-						smearingMatrix = ( TH2F* )allPlots[plotIndex]->SmearingMatrix()->Clone( smearingName.c_str() );
+						string smearingName = allPlots[ plotIndex ]->Description( false ) + "SmearingMatrix";
+						string smearingTitle = allPlots[ plotIndex ]->Description( true ) + " Smearing Matrix";
+						smearingMatrix = ( TH2F* )allPlots[ plotIndex ]->SmearingMatrix()->Clone( smearingName.c_str() );
 						smearingMatrix->SetTitle( smearingTitle.c_str() );
 					}
 
 					//Copy a covariance matrix
-					if ( ErrorMode > 1 && isUnfolding )
+					if ( ErrorMode > 1 && correctionType == BAYESIAN_MODE )
 					{
-						string covarianceName = allPlots[plotIndex]->Description(false) + "CovarianceMatrix";
-						string covarianceTitle = allPlots[plotIndex]->Description(true) + " Covariance Matrix";
-						covarianceMatrix = ( TH2F* )unfoldingPlots[plotIndex]->DAgostiniCovariance()->Clone( covarianceName.c_str() );
+						string covarianceName = allPlots[ plotIndex ]->Description( false ) + "CovarianceMatrix";
+						string covarianceTitle = allPlots[ plotIndex ]->Description( true ) + " Covariance Matrix";
+						covarianceMatrix = ( TH2F* )allPlots[ plotIndex ]->DAgostiniCovariance()->Clone( covarianceName.c_str() );
 						covarianceMatrix->SetTitle( covarianceTitle.c_str() );
 					}
 					else

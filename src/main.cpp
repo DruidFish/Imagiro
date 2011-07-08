@@ -11,14 +11,13 @@
 #include "CombinedFileInput.h"
 #include "TriggerChoosingInput.h"
 #include "InputUETree.h"
+#include "XPlotMaker.h"
 #include "XvsYNormalisedPlotMaker.h"
-#include "XvsYNormalisedFolding.h"
 #include "XsubEventPlotMaker.h"
+#include "UEdeltaPhiPlotMaker.h"
 #include "MonteCarloSummaryPlotMaker.h"
 #include "MonteCarloInformation.h"
 #include "ObservableList.h"
-#include "XPlotMaker.h"
-#include "XFolding.h"
 #include "TFile.h"
 #include "TROOT.h"
 #include "TStyle.h"
@@ -40,6 +39,22 @@ TStyle * PlotStyle( string StyleName );
 
 //The plotmakers
 vector< MonteCarloSummaryPlotMaker* > allPlotMakers;
+
+////////////////////////////////////////////////////////////
+//                                                        //
+// Choose the plot mode                                   //
+//  -1 = Folding: apply smearing matrix to truth,         //
+//                then compare with MC reco               //
+//  0 = No correction: compare uncorrected data with      //
+//                     MC reco                            //
+//  1 = Bin-by-bin: use MC truth / MC reco ratio to       //
+//                  correct data, then compare with       //
+//                  MC truth                              //
+//  2 = Bayesian: use Bayesian method to correct data,    //
+//                then compare with MC truth              //
+//                                                        //
+////////////////////////////////////////////////////////////
+const int PLOT_MODE = 0;
 
 ////////////////////////////////////////////////////////////
 //                                                        //
@@ -107,15 +122,15 @@ int main ( int argc, char * argv[] )
 	//                                                        //
 	////////////////////////////////////////////////////////////
 
-	unsigned int phiBins = 100;
+/*	unsigned int phiBins = 100;
 	double phiMin = -M_PI;
 	double phiMax = M_PI;
 	//Phi distribution
-	XsubEventPlotMaker * phiPlot = new XsubEventPlotMaker( "Track500Phis", "PYTHIA6 AMBT1", phiBins, phiMin, phiMax, vector< string >( 1, "Track500Pts" ), 1.0, true );
+	UEdeltaPhiPlotMaker * phiPlot = new UEdeltaPhiPlotMaker( "Track500Phis", "PYTHIA6 AMBT1", phiBins, phiMin, phiMax, PLOT_MODE, vector< string >( 1, "Track500Pts" ), 1.0, true );
 	MonteCarloSummaryPlotMaker * phiSummary = new MonteCarloSummaryPlotMaker( phiPlot, mcInfo, COMBINE_MC );
-	allPlotMakers.push_back( phiSummary );
+	allPlotMakers.push_back( phiSummary );*/
 
-	/*double scaleFactor = 3.0 / ( 10.0 * M_PI );
+	double scaleFactor = 3.0 / ( 10.0 * M_PI );
 	unsigned int jetPtBins = 30;
 	double jetPtMin = 0.0;
 	double jetPtMax = 200000.0;
@@ -161,24 +176,24 @@ int main ( int argc, char * argv[] )
 	//1D Unfolding
 
 	//Lead jet pT
-	XPlotMaker * leadJetPtPlot = new XPlotMaker( "LeadJetPt", "PYTHIA6-AMBT1", jetPtBinEdges, 1.0, true );
+	XPlotMaker * leadJetPtPlot = new XPlotMaker( "LeadJetPt", "PYTHIA6-AMBT1", jetPtBinEdges, PLOT_MODE, 1.0, true );
 	MonteCarloSummaryPlotMaker * leadJetPtSummary = new MonteCarloSummaryPlotMaker( leadJetPtPlot, mcInfo, COMBINE_MC );
 	leadJetPtSummary->SetYRange( 1E-13, 1.0 );
 	leadJetPtSummary->UseLogScale();
 	allPlotMakers.push_back( leadJetPtSummary );
 
 	//N charge towards
-	XPlotMaker * nChargedTowardsPlot = new XPlotMaker( "NChargedTowards500", "PYTHIA6-AMBT1", nChargeBinEdges, 1.0, true );
+	XPlotMaker * nChargedTowardsPlot = new XPlotMaker( "NChargedTowards500", "PYTHIA6-AMBT1", nChargeBinEdges, PLOT_MODE, 1.0, true );
 	MonteCarloSummaryPlotMaker * nChargedTowardsSummary = new MonteCarloSummaryPlotMaker( nChargedTowardsPlot, mcInfo, COMBINE_MC );
 	allPlotMakers.push_back( nChargedTowardsSummary );
 
 	//mean pT towards
-	XPlotMaker * meanPtTowardsPlot = new XPlotMaker( "MeanPtTowards500", "PYTHIA6-AMBT1", meanPtBinEdges, 1.0, true );
+	XPlotMaker * meanPtTowardsPlot = new XPlotMaker( "MeanPtTowards500", "PYTHIA6-AMBT1", meanPtBinEdges, PLOT_MODE, 1.0, true );
 	MonteCarloSummaryPlotMaker * meanPtTowardsSummary = new MonteCarloSummaryPlotMaker( meanPtTowardsPlot, mcInfo, COMBINE_MC );
 	allPlotMakers.push_back( meanPtTowardsSummary );
 
 	//pT sum towards
-	XPlotMaker * pTSumTowardsPlot = new XPlotMaker( "PtSumTowards500", "PYTHIA6-AMBT1", sumPtBinEdges, 1.0, true );
+	XPlotMaker * pTSumTowardsPlot = new XPlotMaker( "PtSumTowards500", "PYTHIA6-AMBT1", sumPtBinEdges, PLOT_MODE, 1.0, true );
 	MonteCarloSummaryPlotMaker * pTSumTowardsSummary = new MonteCarloSummaryPlotMaker( pTSumTowardsPlot, mcInfo, COMBINE_MC );
 	allPlotMakers.push_back( pTSumTowardsSummary );
 
@@ -186,7 +201,7 @@ int main ( int argc, char * argv[] )
 
 	//Make a plot of number of charged particles in the toward region vs lead jet pT
 	XvsYNormalisedPlotMaker * pTvsNChargedTowardPlot = new XvsYNormalisedPlotMaker( "LeadJetPt", "NChargedTowards500", "PYTHIA6-AMBT1",
-			jetPtBinEdges, nChargeBinEdges, scaleFactor );
+			jetPtBinEdges, nChargeBinEdges, PLOT_MODE, scaleFactor );
 	MonteCarloSummaryPlotMaker * pTvsNChargedTowardSummary = new MonteCarloSummaryPlotMaker( pTvsNChargedTowardPlot, mcInfo, COMBINE_MC );
 	pTvsNChargedTowardSummary->SetYRange( 0.1, 5.9 );
 	pTvsNChargedTowardSummary->SetAxisLabels( "p_{T}^{lead} [MeV]", "<d^{2}N_{ch}/d#etad#phi>" );
@@ -194,7 +209,7 @@ int main ( int argc, char * argv[] )
 
 	//Make a plot of number of charged particles in the away region vs lead jet pT
 	XvsYNormalisedPlotMaker * pTvsNChargedAwayPlot = new XvsYNormalisedPlotMaker( "LeadJetPt", "NChargedAway500", "PYTHIA6-AMBT1",
-			jetPtBinEdges, nChargeBinEdges, scaleFactor );
+			jetPtBinEdges, nChargeBinEdges, PLOT_MODE, scaleFactor );
 	MonteCarloSummaryPlotMaker * pTvsNChargedAwaySummary = new MonteCarloSummaryPlotMaker( pTvsNChargedAwayPlot, mcInfo, COMBINE_MC );
 	pTvsNChargedAwaySummary->SetYRange( 0.1, 5.9 );
 	pTvsNChargedAwaySummary->SetAxisLabels( "p_{T}^{lead} [MeV]", "<d^{2}N_{ch}/d#etad#phi>" );
@@ -202,7 +217,7 @@ int main ( int argc, char * argv[] )
 
 	//Make a plot of number of charged particles in the transverse region vs lead jet pT
 	XvsYNormalisedPlotMaker * pTvsNChargedTransPlot = new XvsYNormalisedPlotMaker( "LeadJetPt", "NChargedTransverse500", "PYTHIA6-AMBT1",
-			jetPtBinEdges, nChargeBinEdges, scaleFactor );
+			jetPtBinEdges, nChargeBinEdges, PLOT_MODE, scaleFactor );
 	MonteCarloSummaryPlotMaker * pTvsNChargedTransSummary = new MonteCarloSummaryPlotMaker( pTvsNChargedTransPlot, mcInfo, COMBINE_MC );
 	pTvsNChargedTransSummary->SetYRange( 0.1, 2.9 );
 	pTvsNChargedTransSummary->SetAxisLabels( "p_{T}^{lead} [MeV]", "<d^{2}N_{ch}/d#etad#phi>" );
@@ -210,7 +225,7 @@ int main ( int argc, char * argv[] )
 
 	//Make a plot of mean pT of charged particles in the toward region vs lead jet pT
 	XvsYNormalisedPlotMaker * pTvsMeanPtTowardPlot = new XvsYNormalisedPlotMaker( "LeadJetPt", "MeanPtTowards500", "PYTHIA6-AMBT1",
-			jetPtBinEdges, meanPtBinEdges, 1.0 );
+			jetPtBinEdges, meanPtBinEdges, PLOT_MODE, 1.0 );
 	MonteCarloSummaryPlotMaker * pTvsMeanPtTowardSummary = new MonteCarloSummaryPlotMaker( pTvsMeanPtTowardPlot, mcInfo, COMBINE_MC );
 	//	pTvsMeanPtTowardSummary->SetYRange( 0.1, 5.9 );
 	pTvsMeanPtTowardSummary->SetAxisLabels( "p_{T}^{lead} [MeV]", "<p_{T}> [MeV]" );
@@ -218,7 +233,7 @@ int main ( int argc, char * argv[] )
 
 	//Make a plot of mean pT of charged particles in the away region vs lead jet pT
 	XvsYNormalisedPlotMaker * pTvsMeanPtAwayPlot = new XvsYNormalisedPlotMaker( "LeadJetPt", "MeanPtAway500", "PYTHIA6-AMBT1",
-			jetPtBinEdges, meanPtBinEdges, 1.0 );
+			jetPtBinEdges, meanPtBinEdges, PLOT_MODE, 1.0 );
 	MonteCarloSummaryPlotMaker * pTvsMeanPtAwaySummary = new MonteCarloSummaryPlotMaker( pTvsMeanPtAwayPlot, mcInfo, COMBINE_MC );
 	//	pTvsMeanPtAwaySummary->SetYRange( 0.1, 5.9 );
 	pTvsMeanPtAwaySummary->SetAxisLabels( "p_{T}^{lead} [MeV]", "<p_{T}> [MeV]" );
@@ -226,7 +241,7 @@ int main ( int argc, char * argv[] )
 
 	//Make a plot of mean pT of charged particles in the transverse region vs lead jet pT
 	XvsYNormalisedPlotMaker * pTvsMeanPtTransPlot = new XvsYNormalisedPlotMaker( "LeadJetPt", "MeanPtTransverse500", "PYTHIA6-AMBT1",
-			jetPtBinEdges, meanPtBinEdges, 1.0 );
+			jetPtBinEdges, meanPtBinEdges, PLOT_MODE, 1.0 );
 	MonteCarloSummaryPlotMaker * pTvsMeanPtTransSummary = new MonteCarloSummaryPlotMaker( pTvsMeanPtTransPlot, mcInfo, COMBINE_MC );
 	//	pTvsMeanPtTransSummary->SetYRange( 0.1, 2.9 );
 	pTvsMeanPtTransSummary->SetAxisLabels( "p_{T}^{lead} [MeV]", "<p_{T}> [MeV]" );
@@ -234,7 +249,7 @@ int main ( int argc, char * argv[] )
 
 	//Make a plot of sum pT of charged particles in the toward region vs lead jet pT
 	XvsYNormalisedPlotMaker * pTvsPtSumTowardPlot = new XvsYNormalisedPlotMaker( "LeadJetPt", "PtSumTowards500", "PYTHIA6-AMBT1",
-			jetPtBinEdges, sumPtBinEdges, scaleFactor );
+			jetPtBinEdges, sumPtBinEdges, PLOT_MODE, scaleFactor );
 	MonteCarloSummaryPlotMaker * pTvsPtSumTowardSummary = new MonteCarloSummaryPlotMaker( pTvsPtSumTowardPlot, mcInfo, COMBINE_MC );
 	//	pTvsPtSumTowardSummary->SetYRange( 0.1, 5.9 );
 	pTvsPtSumTowardSummary->SetAxisLabels( "p_{T}^{lead} [MeV]", "<d^{2}#Sigmap_{T}/d#etad#phi> [MeV]" );
@@ -242,7 +257,7 @@ int main ( int argc, char * argv[] )
 
 	//Make a plot of sum pT of charged particles in the away region vs lead jet pT
 	XvsYNormalisedPlotMaker * pTvsPtSumAwayPlot = new XvsYNormalisedPlotMaker( "LeadJetPt", "PtSumAway500", "PYTHIA6-AMBT1",
-			jetPtBinEdges, sumPtBinEdges, scaleFactor );
+			jetPtBinEdges, sumPtBinEdges, PLOT_MODE, scaleFactor );
 	MonteCarloSummaryPlotMaker * pTvsPtSumAwaySummary = new MonteCarloSummaryPlotMaker( pTvsPtSumAwayPlot, mcInfo, COMBINE_MC );
 	//	pTvsPtSumAwaySummary->SetYRange( 0.1, 5.9 );
 	pTvsPtSumAwaySummary->SetAxisLabels( "p_{T}^{lead} [MeV]", "<d^{2}#Sigmap_{T}/d#etad#phi> [MeV]" );
@@ -250,7 +265,7 @@ int main ( int argc, char * argv[] )
 
 	//Make a plot of sum pT of charged particles in the transverse region vs lead jet pT
 	XvsYNormalisedPlotMaker * pTvsPtSumTransPlot = new XvsYNormalisedPlotMaker( "LeadJetPt", "PtSumTransverse500", "PYTHIA6-AMBT1",
-			jetPtBinEdges, sumPtBinEdges, scaleFactor );
+			jetPtBinEdges, sumPtBinEdges, PLOT_MODE, scaleFactor );
 	MonteCarloSummaryPlotMaker * pTvsPtSumTransSummary = new MonteCarloSummaryPlotMaker( pTvsPtSumTransPlot, mcInfo, COMBINE_MC );
 	//	pTvsPtSumTransSummary->SetYRange( 0.1, 2.9 );
 	pTvsPtSumTransSummary->SetAxisLabels( "p_{T}^{lead} [MeV]", "<d^{2}#Sigmap_{T}/d#etad#phi> [MeV]" );
@@ -258,7 +273,7 @@ int main ( int argc, char * argv[] )
 
 	//Make a plot of number of charged particles in the toward region vs lead jet pT
 	XvsYNormalisedPlotMaker * pTmeanvsNChargedTowardPlot = new XvsYNormalisedPlotMaker( "NChargedTowards500", "MeanPtTowards500", "PYTHIA6-AMBT1",
-			XnChargeBinEdges, meanPtBinEdges, 1.0 );
+			XnChargeBinEdges, meanPtBinEdges, PLOT_MODE, 1.0 );
 	MonteCarloSummaryPlotMaker * pTmeanvsNChargedTowardSummary = new MonteCarloSummaryPlotMaker( pTmeanvsNChargedTowardPlot, mcInfo, COMBINE_MC );
 	pTmeanvsNChargedTowardSummary->SetYRange( 1000.0, 5000.0 );
 	pTmeanvsNChargedTowardSummary->SetAxisLabels( "N_{ch}", "<p_{T}> [MeV]" );
@@ -266,7 +281,7 @@ int main ( int argc, char * argv[] )
 
 	//Make a plot of number of charged particles in the away region vs lead jet pT
 	XvsYNormalisedPlotMaker * pTmeanvsNChargedAwayPlot = new XvsYNormalisedPlotMaker( "NChargedAway500", "MeanPtAway500", "PYTHIA6-AMBT1",
-			XnChargeBinEdges, meanPtBinEdges, 1.0 );
+			XnChargeBinEdges, meanPtBinEdges, PLOT_MODE, 1.0 );
 	MonteCarloSummaryPlotMaker * pTmeanvsNChargedAwaySummary = new MonteCarloSummaryPlotMaker( pTmeanvsNChargedAwayPlot, mcInfo, COMBINE_MC );
 	pTmeanvsNChargedAwaySummary->SetYRange( 1000.0, 2000.0 );
 	pTmeanvsNChargedAwaySummary->SetAxisLabels( "N_{ch}", "<p_{T}> [MeV]" );
@@ -274,11 +289,11 @@ int main ( int argc, char * argv[] )
 
 	//Make a plot of number of charged particles in the transverse region vs lead jet pT
 	XvsYNormalisedPlotMaker * pTmeanvsNChargedTransPlot = new XvsYNormalisedPlotMaker( "NChargedTransverse500", "MeanPtTransverse500", "PYTHIA6-AMBT1",
-			XnChargeBinEdges, meanPtBinEdges, 1.0 );
+			XnChargeBinEdges, meanPtBinEdges, PLOT_MODE, 1.0 );
 	MonteCarloSummaryPlotMaker * pTmeanvsNChargedTransSummary = new MonteCarloSummaryPlotMaker( pTmeanvsNChargedTransPlot, mcInfo, COMBINE_MC );
 	pTmeanvsNChargedTransSummary->SetYRange( 800.0, 1600.0 );
 	pTmeanvsNChargedTransSummary->SetAxisLabels( "N_{ch}", "<p_{T}> [MeV]" );
-	allPlotMakers.push_back( pTmeanvsNChargedTransSummary );*/
+	allPlotMakers.push_back( pTmeanvsNChargedTransSummary );
 
 	///////////////////////////////////////////////////////////
 	//                                                       //
@@ -305,6 +320,7 @@ int main ( int argc, char * argv[] )
 	//                                                        //
 	////////////////////////////////////////////////////////////
 	IFileInput * dataInput = mcInfo->MakeReconstructedInput( 0, relevanceChecker );
+	//IFileInput * dataInput = mcInfo->MakeTruthInput( 0, relevanceChecker );
 	//IFileInput * dataInput = new TriggerChoosingInput( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/JetTauEtmiss/PeriodGtoI/combined.TriggerName.AntiKt4TopoEM.root",
 	//		"benTuple", "JetTauEtmiss Data (2010)", mcInfo->NumberOfSources(), relevanceChecker );
 

@@ -8,6 +8,7 @@
  */
 
 #include "XsubEventPlotMaker.h"
+#include "BayesianUnfolding.h"
 #include "UniformIndices.h"
 #include "CustomIndices.h"
 #include "TFile.h"
@@ -18,14 +19,18 @@
 
 using namespace std;
 
+const int BAYESIAN_MODE = 2;
+
 //Default constructor - useless
 XsubEventPlotMaker::XsubEventPlotMaker()
 {
 }
 
 //Constructor with the names to use for the variables
-XsubEventPlotMaker::XsubEventPlotMaker( string XVariableName, string PriorName, unsigned int XBinNumber, double XMinimum, double XMaximum, vector< string > OtherVariableNames, double ScaleFactor, bool Normalise )
+XsubEventPlotMaker::XsubEventPlotMaker( string XVariableName, string PriorName, unsigned int XBinNumber, double XMinimum, double XMaximum,
+		int CorrectionMode, vector< string > OtherVariableNames, double ScaleFactor, bool Normalise )
 {
+	correctionType = CorrectionMode;
 	xName = XVariableName;
 	priorName = PriorName;
 	finalised = false;
@@ -48,12 +53,14 @@ XsubEventPlotMaker::XsubEventPlotMaker( string XVariableName, string PriorName, 
 
 	//Make the x unfolder
 	distributionIndices = new UniformIndices( binNumbers, minima, maxima );
-	XUnfolder = new IterativeUnfolding( distributionIndices, xName + priorName, thisPlotID );
+	XUnfolder = new BayesianUnfolding( distributionIndices, xName + priorName, thisPlotID );
 }
 
 //Constructor with the names to use for the variables
-XsubEventPlotMaker::XsubEventPlotMaker( string XVariableName, string PriorName, vector< double > BinLowEdges, vector< string > OtherVariableNames, double ScaleFactor, bool Normalise )
+XsubEventPlotMaker::XsubEventPlotMaker( string XVariableName, string PriorName, vector< double > BinLowEdges,
+		int CorrectionMode, vector< string > OtherVariableNames, double ScaleFactor, bool Normalise )
 {
+	correctionType = CorrectionMode;
 	xName = XVariableName;
 	priorName = PriorName;
 	finalised = false;
@@ -73,13 +80,14 @@ XsubEventPlotMaker::XsubEventPlotMaker( string XVariableName, string PriorName, 
 
 	//Make the x unfolder
 	distributionIndices = new CustomIndices( binEdges );
-	XUnfolder = new IterativeUnfolding( distributionIndices, xName + priorName, thisPlotID );
+	XUnfolder = new BayesianUnfolding( distributionIndices, xName + priorName, thisPlotID );
 }
 
 //For use with Clone
 XsubEventPlotMaker::XsubEventPlotMaker( vector< string > OtherVariableNames, string PriorName, IIndexCalculator * DistributionIndices,
-		unsigned int OriginalID, double ScaleFactor, bool Normalise )
+		unsigned int OriginalID, int CorrectionMode, double ScaleFactor, bool Normalise )
 {
+	correctionType = CorrectionMode;
 	xName = OtherVariableNames[ OtherVariableNames.size() - 1 ];
 	priorName = PriorName;
 	finalised = false;
@@ -94,7 +102,7 @@ XsubEventPlotMaker::XsubEventPlotMaker( vector< string > OtherVariableNames, str
 
 	//Make the x unfolder
 	distributionIndices = DistributionIndices;
-	XUnfolder = new IterativeUnfolding( distributionIndices, xName + priorName, thisPlotID );
+	XUnfolder = new BayesianUnfolding( distributionIndices, xName + priorName, thisPlotID );
 }
 
 //Destructor
@@ -113,9 +121,9 @@ XsubEventPlotMaker::~XsubEventPlotMaker()
 }
 
 //Copy the object
-IUnfolder * XsubEventPlotMaker::Clone( string NewPriorName )
+XsubEventPlotMaker * XsubEventPlotMaker::Clone( string NewPriorName )
 {
-	return new XsubEventPlotMaker( otherPairingNames, NewPriorName, distributionIndices->Clone(), thisPlotID, scaleFactor, normalise );
+	return new XsubEventPlotMaker( otherPairingNames, NewPriorName, distributionIndices->Clone(), thisPlotID, correctionType, scaleFactor, normalise );
 }
 
 //Take input values from ntuples
@@ -257,7 +265,7 @@ void XsubEventPlotMaker::StoreData( IFileInput * DataInput )
 }
 
 //Do the unfolding
-void XsubEventPlotMaker::Unfold( unsigned int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding, unsigned int ErrorMode, bool WithSmoothing )
+void XsubEventPlotMaker::Correct( unsigned int MostIterations, bool SkipUnfolding, unsigned int ErrorMode, bool WithSmoothing )
 {
 	if ( finalised )
 	{
@@ -269,7 +277,7 @@ void XsubEventPlotMaker::Unfold( unsigned int MostIterations, double ChiSquaredT
 		//Unfold the distribution
 		if ( !SkipUnfolding )
 		{
-			XUnfolder->Unfold( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, ErrorMode, WithSmoothing );
+			XUnfolder->Correct( MostIterations, ErrorMode, WithSmoothing );
 		}
 
 		//Make some plot titles
@@ -279,10 +287,10 @@ void XsubEventPlotMaker::Unfold( unsigned int MostIterations, double ChiSquaredT
 		string XFullTitle = xName + " using " + priorName;
 
 		//Retrieve the results
-		TH1F * XCorrected = XUnfolder->GetUnfoldedHistogram( XFullName + "Corrected", XFullTitle + " Corrected Distribution", normalise );
+		TH1F * XCorrected = XUnfolder->GetCorrectedHistogram( XFullName + "Corrected", XFullTitle + " Corrected Distribution", normalise );
 
 		//Retrieve some other bits for debug
-		TH1F * XUncorrected = XUnfolder->GetUncorrectedDataHistogram( XFullName + "Uncorrected", XFullTitle + " Uncorrected Distribution", normalise );
+		TH1F * XUncorrected = XUnfolder->GetUncorrectedHistogram( XFullName + "Uncorrected", XFullTitle + " Uncorrected Distribution", normalise );
 		TH1F * XTruth = XUnfolder->GetTruthHistogram( XFullName + "Truth", XFullTitle + " Truth Distribution", normalise );
 		TH2F * XSmearing = XUnfolder->GetSmearingMatrix( XFullName + "Smearing", XFullTitle + " Smearing Matrix" );
 		if ( ErrorMode > 1 && !SkipUnfolding )
@@ -296,29 +304,18 @@ void XsubEventPlotMaker::Unfold( unsigned int MostIterations, double ChiSquaredT
 		XUncorrected->Scale( scaleFactor );
 
 		//Get the error vectors
-		vector< double > XErrors = XUnfolder->SumOfDataWeightSquares();
-		vector< double > XVariance;
-		if ( ErrorMode > 0 && !SkipUnfolding )
-		{
-			XVariance = XUnfolder->DAgostiniVariance();
-		}
+		vector< double > XErrors = XUnfolder->Variances();
 
 		//Calculate errors
 		TH1F * XCorrectedNotNormalised;
 		if ( normalise )
 		{
-			XCorrectedNotNormalised = XUnfolder->GetUnfoldedHistogram( XFullName + "CorrectedNotNormalised", XFullTitle + " Corrected Distribution Not Normalised", false );
+			XCorrectedNotNormalised = XUnfolder->GetCorrectedHistogram( XFullName + "CorrectedNotNormalised", XFullTitle + " Corrected Distribution Not Normalised", false );
 			XCorrectedNotNormalised->Scale( scaleFactor );
 		}
 		for ( unsigned int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
 		{
 			double combinedError = sqrt( XErrors[ binIndex ] ) * scaleFactor;
-
-			double dagostiniError;
-			if ( ErrorMode > 0 && !SkipUnfolding )
-			{
-				dagostiniError = sqrt( XVariance[ binIndex ] ) * scaleFactor;
-			}
 
 			//Scale the errors if the plots are normalised
 			if ( normalise )
@@ -336,19 +333,9 @@ void XsubEventPlotMaker::Unfold( unsigned int MostIterations, double ChiSquaredT
 				}
 
 				combinedError *= normalisationFactor;
-
-				if ( ErrorMode > 0 && !SkipUnfolding )
-				{
-					dagostiniError *= normalisationFactor;
-				}
 			}
 
 			correctedDataErrors.push_back( combinedError );
-
-			if ( ErrorMode > 0 && !SkipUnfolding )
-			{
-				dagostiniErrors.push_back( dagostiniError );
-			}
 		}
 
 		//Format and save the corrected distribution
@@ -381,21 +368,24 @@ void XsubEventPlotMaker::Unfold( unsigned int MostIterations, double ChiSquaredT
 		}
 
 		//Bin-by-bin scaling of errors using the corrected data
-		for ( unsigned int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
+		if ( correctionType != BAYESIAN_MODE || ErrorMode < 1 )
 		{
-			double errorScaleFactor = correctedDistribution->GetBinContent(binIndex) / uncorrectedDistribution->GetBinContent(binIndex);
-
-			//Check for div0 errors
-			if ( isinf( errorScaleFactor ) )
+			for ( unsigned int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
 			{
-				errorScaleFactor = 1.0;
-			}
-			if ( isnan( errorScaleFactor ) )
-			{
-				errorScaleFactor = 0.0;
-			}
+				double errorScaleFactor = correctedDistribution->GetBinContent(binIndex) / uncorrectedDistribution->GetBinContent(binIndex);
 
-			correctedDataErrors[binIndex] *= errorScaleFactor;
+				//Check for div0 errors
+				if ( isinf( errorScaleFactor ) )
+				{
+					errorScaleFactor = 1.0;
+				}
+				if ( isnan( errorScaleFactor ) )
+				{
+					errorScaleFactor = 0.0;
+				}
+
+				correctedDataErrors[binIndex] *= errorScaleFactor;
+			}
 		}
 
 		//Mark as done
@@ -404,15 +394,15 @@ void XsubEventPlotMaker::Unfold( unsigned int MostIterations, double ChiSquaredT
 }
 
 //Do a closure test
-bool XsubEventPlotMaker::ClosureTest( unsigned int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing )
+bool XsubEventPlotMaker::ClosureTest( unsigned int MostIterations, bool WithSmoothing )
 {
-	return XUnfolder->ClosureTest( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
+	return XUnfolder->ClosureTest( MostIterations, WithSmoothing );
 }
 
 //Make a cross-check with MC
-unsigned int XsubEventPlotMaker::MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing )
+unsigned int XsubEventPlotMaker::MonteCarloCrossCheck( Distribution * ReferenceDistribution, bool WithSmoothing )
 {
-	return XUnfolder->MonteCarloCrossCheck( ReferenceDistribution, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
+	return XUnfolder->MonteCarloCrossCheck( ReferenceDistribution, WithSmoothing );
 }
 
 //Return some plots
@@ -494,18 +484,6 @@ vector< double > XsubEventPlotMaker::CorrectedErrors()
 		exit(1);
 	}
 }
-vector< double > XsubEventPlotMaker::DAgostiniErrors()
-{
-	if ( finalised )
-	{
-		return dagostiniErrors;
-	}
-	else
-	{
-		cerr << "Trying to retrieve D'Agostini errors from unfinalised XsubEventPlotMaker" << endl;
-		exit(1);
-	}
-}
 TH2F * XsubEventPlotMaker::DAgostiniCovariance()
 {
 	if ( finalised )
@@ -584,4 +562,10 @@ void XsubEventPlotMaker::MakePairs( vector< double > * TruthValues, vector< doub
 			}
 		}
 	}
+}
+
+//Return the type of correction the plot will perform
+int XsubEventPlotMaker::CorrectionMode()
+{
+        return correctionType;
 }

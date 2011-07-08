@@ -63,14 +63,15 @@ Distribution::Distribution( vector< TH1F* > InputDistributions, IIndexCalculator
 //Calculate a corrected distribtion
 Distribution::Distribution( Distribution * DataDistribution, UnfoldingMatrix * BayesPosterior )
 {
+	//Copy the pointer to the index calculator
 	indexCalculator = DataDistribution->indexCalculator;
-	integral = 0.0;
 
 	//Get the number of bins in the distribution (include a bad bin)
 	unsigned int binNumber = indexCalculator->GetBinNumber() + 1;
 
 	//Make a new, empty distribution
 	binValues = vector< double >( binNumber, 0.0 );
+	integral = 0.0;
 
 	//Populate the distribution
 	unsigned int entryNumber = BayesPosterior->GetEntryNumberAndResetIterator();
@@ -90,14 +91,15 @@ Distribution::Distribution( Distribution * DataDistribution, UnfoldingMatrix * B
 //Make this distribution by smearing another
 Distribution::Distribution( Distribution * InputDistribution, SmearingMatrix * Smearing )
 {
+	//Copy the pointer to the index calculator
 	indexCalculator = InputDistribution->indexCalculator;
-	integral = 0.0;
 
 	//Get the number of bins in the distribution (include a bad bin)
 	unsigned int binNumber = indexCalculator->GetBinNumber() + 1;
 
 	//Make a new, empty distribution
 	binValues = vector< double >( binNumber, 0.0 );
+	integral = 0.0;
 
 	//Loop over each entry in the smearing matrix
 	unsigned int entryNumber = Smearing->GetEntryNumberAndResetIterator();
@@ -111,6 +113,33 @@ Distribution::Distribution( Distribution * InputDistribution, SmearingMatrix * S
 		double newValue = smearingValue * InputDistribution->GetBinNumber( causeIndex );
 		binValues[ effectIndex ] += newValue;
 		integral += newValue;
+	}
+}
+
+//Make this distribution by weighting each bin of another (i.e. bin-by-bin unfolding)
+Distribution::Distribution( Distribution * DataDistribution, const vector< double > & BinWeights )
+{
+	//Copy the pointer to the index calculator
+	indexCalculator = DataDistribution->indexCalculator;
+
+	//Get the number of bins in the distribution (don't include a bad bin since there is no bin migration)
+	unsigned int binNumber = indexCalculator->GetBinNumber() + 1;
+	if ( binNumber != BinWeights.size() )
+	{
+		cerr << "Bin number mismatch in bin-by-bin unfolding: " << binNumber << " vs " << BinWeights.size() << endl;
+		exit(1);
+	}
+
+	//Make a new, empty distribution
+	binValues = vector< double >( binNumber, 0.0 );
+	integral = 0.0;
+
+	//Make the new distribution bin-by-bin from the old
+	for ( unsigned int binIndex = 0; binIndex < binNumber; binIndex++ )
+	{
+		double newBin = DataDistribution->GetBinNumber( binIndex ) * BinWeights[ binIndex ];
+		binValues[ binIndex ] = newBin;
+		integral += newBin;
 	}
 }
 

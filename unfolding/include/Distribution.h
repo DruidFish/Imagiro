@@ -29,6 +29,7 @@ class Distribution
 		Distribution( vector< TH1F* > InputDistributions, IIndexCalculator * InputIndices );
 		Distribution( Distribution * DataDistribution, UnfoldingMatrix * BayesPosterior );
 		Distribution( Distribution * InputDistribution, SmearingMatrix * Smearing );
+		Distribution( Distribution * DataDistribution, const vector< double > & BinWeights );
 		~Distribution();
 
 		void StoreEvent( vector< double > Value, double Weight = 1.0 );

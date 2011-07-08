@@ -1,33 +1,32 @@
 /**
-  @class Folding
+  @class NoCorrection
 
-  The class that applies a smearing matrix to a "truth" distribution, to simulate the detector effects
+  Just creates distributions from the given data, with no attempt at correction
 
   @author Benjamin M Wynne bwynne@cern.ch
-  @date 11-02-2011
+  @date 07-07-2011
  */
 
-#ifndef FOLDING_H
-#define FOLDING_H
+#ifndef NO_CORRECTION_H
+#define NO_CORRECTION_H
 
 #include "ICorrection.h"
 #include "IIndexCalculator.h"
 #include "Distribution.h"
-#include "Comparison.h"
 
 using namespace std;
 
-class Folding : public ICorrection
+class NoCorrection : public ICorrection
 {
 	public:
 		//Default constructor - useless
-		Folding();
+		NoCorrection();
 
 		//Constructor taking an IIndexCalculator to define the bins
-		Folding( IIndexCalculator * DistributionIndices, string Name, unsigned int UniqueID );
+		NoCorrection( IIndexCalculator * DistributionIndices, string Name, unsigned int UniqueID );
 
 		//Destructor
-		virtual ~Folding();
+		virtual ~NoCorrection();
 
 
 		//Use this method to supply a value from the truth
@@ -86,12 +85,11 @@ class Folding : public ICorrection
                 virtual TH2F * DAgostiniCovariance( string Name, string Title );
 
 	private:
-		Comparison * distributionComparison;
 		unsigned int uniqueID;
 		string name;
 		vector< double > sumOfInputWeightSquares;
 		IIndexCalculator * indexCalculator;
-		Distribution *inputDistribution, *smearedDistribution, *truthDistribution, *reconstructedDistribution;
+		Distribution *inputDistribution, *reconstructedDistribution;
 		double totalPaired, totalFake, totalMissed;
 		SmearingMatrix * inputSmearing;
 };

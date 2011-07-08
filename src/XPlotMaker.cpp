@@ -8,6 +8,10 @@
  */
 
 #include "XPlotMaker.h"
+#include "BayesianUnfolding.h"
+#include "Folding.h"
+#include "NoCorrection.h"
+#include "BinByBinUnfolding.h"
 #include "UniformIndices.h"
 #include "CustomIndices.h"
 #include "TFile.h"
@@ -18,14 +22,17 @@
 
 using namespace std;
 
+const int BAYESIAN_MODE = 2;
+
 //Default constructor - useless
 XPlotMaker::XPlotMaker()
 {
 }
 
 //Constructor with the names to use for the variables
-XPlotMaker::XPlotMaker( string XVariableName, string PriorName, unsigned int XBinNumber, double XMinimum, double XMaximum, double ScaleFactor, bool Normalise )
+XPlotMaker::XPlotMaker( string XVariableName, string PriorName, unsigned int XBinNumber, double XMinimum, double XMaximum, int CorrectionMode, double ScaleFactor, bool Normalise )
 {
+	correctionType = CorrectionMode;
 	xName = XVariableName;
 	priorName = PriorName;
 	finalised = false;
@@ -46,12 +53,13 @@ XPlotMaker::XPlotMaker( string XVariableName, string PriorName, unsigned int XBi
 
 	//Make the x unfolder
 	distributionIndices = new UniformIndices( binNumbers, minima, maxima );
-	XUnfolder = new IterativeUnfolding( distributionIndices, xName + priorName, thisPlotID );
+	XUnfolder = MakeCorrector( correctionType );
 }
 
 //Constructor with the names to use for the variables
-XPlotMaker::XPlotMaker( string XVariableName, string PriorName, vector< double > BinLowEdges, double ScaleFactor, bool Normalise )
+XPlotMaker::XPlotMaker( string XVariableName, string PriorName, vector< double > BinLowEdges, int CorrectionMode, double ScaleFactor, bool Normalise )
 {
+	correctionType = CorrectionMode;
 	xName = XVariableName;
 	priorName = PriorName;
 	finalised = false;
@@ -69,13 +77,14 @@ XPlotMaker::XPlotMaker( string XVariableName, string PriorName, vector< double >
 
 	//Make the x unfolder
 	distributionIndices = new CustomIndices( binEdges );
-	XUnfolder = new IterativeUnfolding( distributionIndices, xName + priorName, thisPlotID );
+	XUnfolder = MakeCorrector( correctionType );
 }
 
 //For use with Clone
 XPlotMaker::XPlotMaker( string XVariableName, string PriorName, IIndexCalculator * DistributionIndices,
-		unsigned int OriginalID, double ScaleFactor, bool Normalise )
+		unsigned int OriginalID, int CorrectionMode, double ScaleFactor, bool Normalise )
 {
+	correctionType = CorrectionMode;
 	xName = XVariableName;
 	priorName = PriorName;
 	finalised = false;
@@ -89,7 +98,7 @@ XPlotMaker::XPlotMaker( string XVariableName, string PriorName, IIndexCalculator
 
 	//Make the x unfolder
 	distributionIndices = DistributionIndices;
-	XUnfolder = new IterativeUnfolding( distributionIndices, xName + priorName, thisPlotID );
+	XUnfolder = MakeCorrector( correctionType );
 }
 
 //Destructor
@@ -107,9 +116,9 @@ XPlotMaker::~XPlotMaker()
 }
 
 //Copy the object
-IUnfolder * XPlotMaker::Clone( string NewPriorName )
+XPlotMaker * XPlotMaker::Clone( string NewPriorName )
 {
-	return new XPlotMaker( xName, NewPriorName, distributionIndices->Clone(), thisPlotID, scaleFactor, normalise );
+	return new XPlotMaker( xName, NewPriorName, distributionIndices->Clone(), thisPlotID, correctionType, scaleFactor, normalise );
 }
 
 //Take input values from ntuples
@@ -208,7 +217,7 @@ void XPlotMaker::StoreData( IFileInput * DataInput )
 }
 
 //Do the unfolding
-void XPlotMaker::Unfold( unsigned int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding, unsigned int ErrorMode, bool WithSmoothing )
+void XPlotMaker::Correct( unsigned int MostIterations, bool SkipUnfolding, unsigned int ErrorMode, bool WithSmoothing )
 {
 	if ( finalised )
 	{
@@ -220,7 +229,7 @@ void XPlotMaker::Unfold( unsigned int MostIterations, double ChiSquaredThreshold
 		//Unfold the distribution
 		if ( !SkipUnfolding )
 		{
-			XUnfolder->Unfold( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, ErrorMode, WithSmoothing );
+			XUnfolder->Correct( MostIterations, ErrorMode, WithSmoothing );
 		}
 
 		//Make some plot titles
@@ -230,10 +239,10 @@ void XPlotMaker::Unfold( unsigned int MostIterations, double ChiSquaredThreshold
 		string XFullTitle = xName + " using " + priorName;
 
 		//Retrieve the results
-		TH1F * XCorrected = XUnfolder->GetUnfoldedHistogram( XFullName + "Corrected", XFullTitle + " Corrected Distribution", normalise );
+		TH1F * XCorrected = XUnfolder->GetCorrectedHistogram( XFullName + "Corrected", XFullTitle + " Corrected Distribution", normalise );
 
 		//Retrieve some other bits for debug
-		TH1F * XUncorrected = XUnfolder->GetUncorrectedDataHistogram( XFullName + "Uncorrected", XFullTitle + " Uncorrected Distribution", normalise );
+		TH1F * XUncorrected = XUnfolder->GetUncorrectedHistogram( XFullName + "Uncorrected", XFullTitle + " Uncorrected Distribution", normalise );
 		TH1F * XTruth = XUnfolder->GetTruthHistogram( XFullName + "Truth", XFullTitle + " Truth Distribution", normalise );
 		TH2F * XSmearing = XUnfolder->GetSmearingMatrix( XFullName + "Smearing", XFullTitle + " Smearing Matrix" );
 		if ( ErrorMode > 1 && !SkipUnfolding )
@@ -247,29 +256,18 @@ void XPlotMaker::Unfold( unsigned int MostIterations, double ChiSquaredThreshold
 		XUncorrected->Scale( scaleFactor );
 
 		//Get the error vectors
-		vector< double > XErrors = XUnfolder->SumOfDataWeightSquares();
-		vector< double > XVariance;
-		if ( ErrorMode > 0 && !SkipUnfolding )
-		{
-			XVariance = XUnfolder->DAgostiniVariance();
-		}
+		vector< double > XErrors = XUnfolder->Variances();
 
 		//Calculate errors
 		TH1F * XCorrectedNotNormalised;
 		if ( normalise )
 		{
-			XCorrectedNotNormalised = XUnfolder->GetUnfoldedHistogram( XFullName + "CorrectedNotNormalised", XFullTitle + " Corrected Distribution Not Normalised", false );
+			XCorrectedNotNormalised = XUnfolder->GetCorrectedHistogram( XFullName + "CorrectedNotNormalised", XFullTitle + " Corrected Distribution Not Normalised", false );
 			XCorrectedNotNormalised->Scale( scaleFactor );
 		}
 		for ( unsigned int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
 		{
 			double combinedError = sqrt( XErrors[ binIndex ] ) * scaleFactor;
-
-			double dagostiniError;
-			if ( ErrorMode > 0 && !SkipUnfolding )
-			{
-				dagostiniError = sqrt( XVariance[ binIndex ] ) * scaleFactor;
-			}
 
 			//Scale the errors if the plots are normalised
 			if ( normalise )
@@ -287,19 +285,9 @@ void XPlotMaker::Unfold( unsigned int MostIterations, double ChiSquaredThreshold
 				}
 
 				combinedError *= normalisationFactor;
-
-				if ( ErrorMode > 0 && !SkipUnfolding )
-				{
-					dagostiniError *= normalisationFactor;
-				}
 			}
 
 			correctedDataErrors.push_back( combinedError );
-
-			if ( ErrorMode > 0 && !SkipUnfolding )
-			{
-				dagostiniErrors.push_back( dagostiniError );
-			}
 		}
 
 		//Format and save the corrected distribution
@@ -332,21 +320,24 @@ void XPlotMaker::Unfold( unsigned int MostIterations, double ChiSquaredThreshold
 		}
 
 		//Bin-by-bin scaling of errors using the corrected data
-		for ( unsigned int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
+		if ( correctionType != BAYESIAN_MODE || ErrorMode < 1 )
 		{
-			double errorScaleFactor = correctedDistribution->GetBinContent(binIndex) / uncorrectedDistribution->GetBinContent(binIndex);
-
-			//Check for div0 errors
-			if ( isinf( errorScaleFactor ) )
+			for ( unsigned int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
 			{
-				errorScaleFactor = 1.0;
-			}
-			if ( isnan( errorScaleFactor ) )
-			{
-				errorScaleFactor = 0.0;
-			}
+				double errorScaleFactor = correctedDistribution->GetBinContent(binIndex) / uncorrectedDistribution->GetBinContent(binIndex);
 
-			correctedDataErrors[binIndex] *= errorScaleFactor;
+				//Check for div0 errors
+				if ( isinf( errorScaleFactor ) )
+				{
+					errorScaleFactor = 1.0;
+				}
+				if ( isnan( errorScaleFactor ) )
+				{
+					errorScaleFactor = 0.0;
+				}
+
+				correctedDataErrors[binIndex] *= errorScaleFactor;
+			}
 		}
 
 		//Mark as done
@@ -355,15 +346,15 @@ void XPlotMaker::Unfold( unsigned int MostIterations, double ChiSquaredThreshold
 }
 
 //Do a closure test
-bool XPlotMaker::ClosureTest( unsigned int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing )
+bool XPlotMaker::ClosureTest( unsigned int MostIterations, bool WithSmoothing )
 {
-	return XUnfolder->ClosureTest( MostIterations, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
+	return XUnfolder->ClosureTest( MostIterations, WithSmoothing );
 }
 
 //Make a cross-check with MC
-unsigned int XPlotMaker::MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing )
+unsigned int XPlotMaker::MonteCarloCrossCheck( Distribution * ReferenceDistribution, bool WithSmoothing )
 {
-	return XUnfolder->MonteCarloCrossCheck( ReferenceDistribution, ChiSquaredThreshold, KolmogorovThreshold, WithSmoothing );
+	return XUnfolder->MonteCarloCrossCheck( ReferenceDistribution, WithSmoothing );
 }
 
 //Return some plots
@@ -445,18 +436,6 @@ vector< double > XPlotMaker::CorrectedErrors()
 		exit(1);
 	}
 }
-vector< double > XPlotMaker::DAgostiniErrors()
-{
-	if ( finalised )
-	{
-		return dagostiniErrors;
-	}
-	else
-	{
-		cerr << "Trying to retrieve D'Agostini errors from unfinalised XPlotMaker" << endl;
-		exit(1);
-	}
-}
 TH2F * XPlotMaker::DAgostiniCovariance()
 {
 	if ( finalised )
@@ -474,4 +453,36 @@ TH2F * XPlotMaker::DAgostiniCovariance()
 vector< string > XPlotMaker::VariableNames()
 {
 	return vector< string >( 1, xName );
+}
+
+//Return the type of correction the plot will perform
+int XPlotMaker::CorrectionMode()
+{
+	return correctionType;
+}
+
+//Instantiate an object to correct the data
+ICorrection * XPlotMaker::MakeCorrector( int CorrectionMode )
+{
+	if ( CorrectionMode == -1 )
+	{
+		return new Folding( distributionIndices, xName + priorName, thisPlotID );
+	}
+	else if ( CorrectionMode == 0 )
+	{
+		return new NoCorrection( distributionIndices, xName + priorName, thisPlotID );
+	}
+	else if ( CorrectionMode == 1 )
+	{
+		return new BinByBinUnfolding( distributionIndices, xName + priorName, thisPlotID );
+	}
+	else if ( CorrectionMode == 2 )
+	{
+		return new BayesianUnfolding( distributionIndices, xName + priorName, thisPlotID );
+	}
+	else
+	{
+		cerr << "Unrecognised correction mode (" << CorrectionMode << ")" << endl;
+		exit(1);
+	}
 }

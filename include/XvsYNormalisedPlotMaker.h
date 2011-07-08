@@ -12,24 +12,25 @@
 #ifndef X_VS_Y_NORMALISED_PLOTMAKER_H
 #define X_VS_Y_NORMALISED_PLOTMAKER_H
 
-#include "IUnfolder.h"
+#include "IPlotMaker.h"
 #include "StatisticsSummary.h"
-#include "IterativeUnfolding.h"
+#include "ICorrection.h"
 #include "IIndexCalculator.h"
 #include <string>
 
 using namespace std;
 
-class XvsYNormalisedPlotMaker : public IUnfolder
+class XvsYNormalisedPlotMaker : public IPlotMaker
 {
 	public:
 		XvsYNormalisedPlotMaker();
 		XvsYNormalisedPlotMaker( string XVariableName, string YVariableName, string PriorName,
 				unsigned int XBinNumber, double XMinimum, double XMaximum,
-				unsigned int YBinNumber, double YMinimum, double YMaximum, double ScaleFactor = 1.0 );
+				unsigned int YBinNumber, double YMinimum, double YMaximum, int CorrectionMode = 2, double ScaleFactor = 1.0 );
 		XvsYNormalisedPlotMaker( string XVariableName, string YVariableName, string PriorName,
-				vector< double > XBinLowEdges, vector< double > YBinLowEdges, double ScaleFactor = 1.0 );
-		~XvsYNormalisedPlotMaker();
+				vector< double > XBinLowEdges, vector< double > YBinLowEdges, int CorrectionMode = 2, double ScaleFactor = 1.0 );
+
+		virtual ~XvsYNormalisedPlotMaker();
 
 		//Take input values from ntuples
 		//To reduce file access, the appropriate row must already be in memory, the method does not change row
@@ -39,13 +40,13 @@ class XvsYNormalisedPlotMaker : public IUnfolder
 		virtual void StoreData( IFileInput * DataInput );
 
 		//Do the unfolding
-		virtual void Unfold( unsigned int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool SkipUnfolding = false, unsigned int ErrorMode = 0, bool WithSmoothing = false );
+		virtual void Correct( unsigned int MostIterations, bool SkipUnfolding = false, unsigned int ErrorMode = 0, bool WithSmoothing = false );
 
 		//Do a closure test
-                virtual bool ClosureTest( unsigned int MostIterations, double ChiSquaredThreshold, double KolmogorovThreshold, bool WithSmoothing = false );
+                virtual bool ClosureTest( unsigned int MostIterations, bool WithSmoothing = false );
 
 		//Make a cross-check with MC
-		virtual unsigned int MonteCarloCrossCheck( Distribution * ReferenceDistribution, double & ChiSquaredThreshold, double & KolmogorovThreshold, bool WithSmoothing = false );
+		virtual unsigned int MonteCarloCrossCheck( Distribution * ReferenceDistribution, bool WithSmoothing = false );
 
 		//Return a distribution for use in the cross-checks
 		virtual Distribution * MonteCarloTruthForCrossCheck();
@@ -57,7 +58,7 @@ class XvsYNormalisedPlotMaker : public IUnfolder
 		virtual TH2F * SmearingMatrix();
 
 		//Copy the object
-		virtual IUnfolder * Clone( string NewPriorName );
+		virtual XvsYNormalisedPlotMaker * Clone( string NewPriorName );
 
 		//General info
 		virtual string Description( bool WithSpaces );
@@ -65,32 +66,37 @@ class XvsYNormalisedPlotMaker : public IUnfolder
 
 		//Error info for corrected distribution
 		virtual vector< double > CorrectedErrors();
-		virtual vector< double > DAgostiniErrors();
 		virtual TH2F * DAgostiniCovariance();
 
 		//Return the names of the variables involved
 		virtual vector< string > VariableNames();
 
+		//Return the type of correction the plot will perform
+                virtual int CorrectionMode();
+
 	private:
 		//To be used only with Clone
 		XvsYNormalisedPlotMaker( string XVariableName, string YVariableName, string PriorName,
-				IIndexCalculator * XIndices, IIndexCalculator * DistributionIndices, unsigned int OriginalID, double ScaleFactor = 1.0 );
+				IIndexCalculator * XIndices, IIndexCalculator * DistributionIndices, int CorrectionMode, unsigned int OriginalID, double ScaleFactor = 1.0 );
+
+		//Instantiate an object to correct the data
+		ICorrection * MakeCorrector( int CorrectionMode, IIndexCalculator * CorrectionIndices, string CorrectionName, unsigned int CorrectionID );
 
 		//WARNING: this method deletes the argument object
 		TH1F * Delinearise( TH1F * LinearisedDistribution );
 		vector< double > DelineariseErrors( vector< double > InputSumWeightSquares );
 
+		int correctionType;
 		unsigned int thisPlotID, xBinNumber, yBinNumber;
-		IterativeUnfolding *XvsYUnfolder, *XUnfolder;
+		ICorrection *XvsYUnfolder, *XUnfolder;
 		IIndexCalculator *distributionIndices, *xIndices;
 		string xName, yName, priorName;
-		bool finalised;
+		bool finalised, doPlotSmearing;
 		double scaleFactor, xMinimum, yMinimum, xMaximum, yMaximum;
-		vector<double> correctedDataErrors, dagostiniErrors;
+		vector<double> correctedDataErrors;
 		StatisticsSummary * yValueSummary;
 		TH1F *correctedDistribution, *uncorrectedDistribution, *mcTruthDistribution, *xvsyTruthCheck, *xTruthCheck;
 		TH2F *smearingMatrix, *covarianceMatrix;
-		bool doPlotSmearing;
 };
 
 #endif

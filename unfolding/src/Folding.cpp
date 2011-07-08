@@ -8,7 +8,6 @@
  */
 
 #include "Folding.h"
-#include "TFile.h"
 #include <iostream>
 #include <cstdlib>
 
@@ -35,6 +34,7 @@ Folding::Folding( IIndexCalculator * DistributionIndices, string Name, unsigned 
 	reconstructedDistribution = new Distribution( indexCalculator );
 	sumOfInputWeightSquares = vector< double >( indexCalculator->GetBinNumber(), 0.0 );
 	distributionComparison = new Comparison( Name, UniqueID );
+	smearedDistribution = 0;
 }
 
 //Destructor
@@ -44,7 +44,10 @@ Folding::~Folding()
 	delete truthDistribution;
 	delete inputDistribution;
 	delete reconstructedDistribution;
-	delete smearedDistribution;
+	if ( smearedDistribution )
+	{
+		delete smearedDistribution;
+	}
 	delete distributionComparison;
 }
 
@@ -53,19 +56,6 @@ Folding::~Folding()
 //value
 //NB: These values must both come from the SAME
 //Monte Carlo event, or the whole process is meaningless
-void Folding::StoreTruthRecoPair( double Truth, double Reco, double TruthWeight, double RecoWeight, bool UseInPrior )
-{
-	if (UseInPrior)
-	{
-		truthDistribution->StoreEvent( vector< double >( 1, Truth ), TruthWeight );
-		reconstructedDistribution->StoreEvent( vector< double >( 1, Reco ), RecoWeight );
-	}
-
-	totalPaired += TruthWeight;
-	inputSmearing->StoreTruthRecoPair( vector< double >( 1, Truth ), vector< double >( 1, Reco ), TruthWeight, RecoWeight );
-}
-
-//N-Dimensional version
 void Folding::StoreTruthRecoPair( vector< double > Truth, vector< double > Reco, double TruthWeight, double RecoWeight, bool UseInPrior )
 {
 	if (UseInPrior)
@@ -80,19 +70,6 @@ void Folding::StoreTruthRecoPair( vector< double > Truth, vector< double > Reco,
 
 //If an MC event is not reconstructed at all, use this
 //method to store the truth value alone
-void Folding::StoreUnreconstructedTruth( double Truth, double Weight, bool UseInPrior )
-{
-	if (UseInPrior)
-	{
-		truthDistribution->StoreEvent( vector< double >( 1, Truth ), Weight );
-		reconstructedDistribution->StoreBadEvent( Weight );
-	}
-
-	totalMissed += Weight;
-	inputSmearing->StoreUnreconstructedTruth( vector< double >( 1, Truth ), Weight );
-}
-
-//N-Dimensional version
 void Folding::StoreUnreconstructedTruth( vector< double > Truth, double Weight, bool UseInPrior )
 {
 	if (UseInPrior)
@@ -107,19 +84,6 @@ void Folding::StoreUnreconstructedTruth( vector< double > Truth, double Weight, 
 
 //If there is a fake reconstructed event with no
 //corresponding truth, use this method
-void Folding::StoreReconstructedFake( double Reco, double Weight, bool UseInPrior )
-{
-	if (UseInPrior)
-	{
-		truthDistribution->StoreBadEvent( Weight );
-		reconstructedDistribution->StoreEvent( vector< double >( 1, Reco ), Weight );
-	}
-
-	totalFake += Weight;
-	inputSmearing->StoreReconstructedFake( vector< double >( 1, Reco ), Weight );
-}
-
-//N-Dimensional version
 void Folding::StoreReconstructedFake( vector< double > Reco, double Weight, bool UseInPrior )
 {
 	if (UseInPrior)
@@ -133,22 +97,14 @@ void Folding::StoreReconstructedFake( vector< double > Reco, double Weight, bool
 }
 
 //Store a value from the uncorrected data distribution
-void Folding::StoreValueToFold( double Input, double Weight )
-{
-	vector< double > inputVector( 1, Input );
-	inputDistribution->StoreEvent( inputVector, Weight );
-	sumOfInputWeightSquares[ indexCalculator->GetIndex( inputVector ) ] += ( Weight * Weight );
-}
-
-//N-Dimensional version
-void Folding::StoreValueToFold( vector< double > Input, double Weight )
+void Folding::StoreDataValue( vector< double > Input, double Weight )
 {
 	inputDistribution->StoreEvent( Input, Weight );
 	sumOfInputWeightSquares[ indexCalculator->GetIndex( Input ) ] += ( Weight * Weight );
 }
 
 //Smear the input distribution
-void Folding::Fold()
+void Folding::Correct( unsigned int MostIterations, unsigned int ErrorMode, bool WithSmoothing )
 {
 	//Finalise the smearing matrix
 	inputSmearing->Finalise();
@@ -162,7 +118,7 @@ void Folding::Fold()
 
 //Perform a closure test
 //Fold the MC truth information - should give the MC reco exactly
-bool Folding::ClosureTest()
+bool Folding::ClosureTest( unsigned int MostIterations, bool WithSmoothing )
 {
 	//Finalise the smearing matrix
 	inputSmearing->Finalise();
@@ -193,8 +149,15 @@ bool Folding::ClosureTest()
 	}
 }
 
+//Perform an unfolding cross-check
+//Dummy, since folding is not iterative
+unsigned int Folding::MonteCarloCrossCheck( Distribution * ReferenceDistribution, bool WithSmoothing )
+{
+	return 1;
+}
+
 //Retrieve the folded distribution
-TH1F * Folding::GetFoldedHistogram( string Name, string Title, bool Normalise )
+TH1F * Folding::GetCorrectedHistogram( string Name, string Title, bool Normalise )
 {
 	return smearedDistribution->MakeRootHistogram( Name, Title, Normalise );
 }
@@ -206,19 +169,27 @@ TH2F * Folding::GetSmearingMatrix( string Name, string Title )
 }
 
 //Retrieve the reconstructed distribution
-TH1F * Folding::GetReconstructedHistogram( string Name, string Title, bool Normalise )
+TH1F * Folding::GetTruthHistogram( string Name, string Title, bool Normalise )
 {
 	return reconstructedDistribution->MakeRootHistogram( Name, Title, Normalise );
 }
+Distribution * Folding::GetTruthDistribution()
+{
+	return reconstructedDistribution;
+}
 
 //Retrieve the uncorrected data distribution
-TH1F * Folding::GetInputHistogram( string Name, string Title, bool Normalise )
+TH1F * Folding::GetUncorrectedHistogram( string Name, string Title, bool Normalise )
 {
 	return inputDistribution->MakeRootHistogram( Name, Title, Normalise );
 }
 
 //Handy for error calculation
-vector< double > Folding::SumOfInputWeightSquares()
+vector< double > Folding::Variances()
 {
 	return sumOfInputWeightSquares;
+}
+TH2F * Folding::DAgostiniCovariance( string Name, string Title )
+{
+	return 0;
 }
