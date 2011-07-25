@@ -17,6 +17,7 @@
 #include "ICorrection.h"
 #include "IIndexCalculator.h"
 #include <string>
+#include "TProfile.h"
 
 using namespace std;
 
@@ -77,23 +78,23 @@ class XvsYNormalisedPlotMaker : public IPlotMaker
 	private:
 		//To be used only with Clone
 		XvsYNormalisedPlotMaker( string XVariableName, string YVariableName, string PriorName,
-				IIndexCalculator * XIndices, IIndexCalculator * DistributionIndices, int CorrectionMode, unsigned int OriginalID, double ScaleFactor = 1.0 );
+				IIndexCalculator * DistributionIndices, int CorrectionMode, unsigned int OriginalID, double ScaleFactor = 1.0 );
 
 		//Instantiate an object to correct the data
 		ICorrection * MakeCorrector( int CorrectionMode, IIndexCalculator * CorrectionIndices, string CorrectionName, unsigned int CorrectionID );
 
 		//WARNING: this method deletes the argument object
-		TH1F * Delinearise( TH1F * LinearisedDistribution );
+		TH1F * MakeProfile( TH1F * LinearisedDistribution );
 		vector< double > DelineariseErrors( vector< double > InputSumWeightSquares );
 
 		int correctionType;
 		unsigned int thisPlotID, xBinNumber, yBinNumber;
-		ICorrection *XvsYUnfolder, *XUnfolder;
-		IIndexCalculator *distributionIndices, *xIndices;
+		ICorrection *XvsYUnfolder;
+		IIndexCalculator *distributionIndices;
 		string xName, yName, priorName;
 		bool finalised, doPlotSmearing;
 		double scaleFactor, xMinimum, yMinimum, xMaximum, yMaximum;
-		vector<double> correctedDataErrors;
+		vector< double > correctedDataErrors, sumWeights, sumWeight2s, sumWeightsYs, sumWeightsY2s;
 		StatisticsSummary * yValueSummary;
 		TH1F *correctedDistribution, *uncorrectedDistribution, *mcTruthDistribution, *xvsyTruthCheck, *xTruthCheck;
 		TH2F *smearingMatrix, *covarianceMatrix;

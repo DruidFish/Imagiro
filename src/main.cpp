@@ -122,7 +122,7 @@ int main ( int argc, char * argv[] )
 	//                                                        //
 	////////////////////////////////////////////////////////////
 
-/*	unsigned int phiBins = 100;
+	/*unsigned int phiBins = 100;
 	double phiMin = -M_PI;
 	double phiMax = M_PI;
 	//Phi distribution
@@ -203,7 +203,7 @@ int main ( int argc, char * argv[] )
 	XvsYNormalisedPlotMaker * pTvsNChargedTowardPlot = new XvsYNormalisedPlotMaker( "LeadJetPt", "NChargedTowards500", "PYTHIA6-AMBT1",
 			jetPtBinEdges, nChargeBinEdges, PLOT_MODE, scaleFactor );
 	MonteCarloSummaryPlotMaker * pTvsNChargedTowardSummary = new MonteCarloSummaryPlotMaker( pTvsNChargedTowardPlot, mcInfo, COMBINE_MC );
-	pTvsNChargedTowardSummary->SetYRange( 0.1, 5.9 );
+	//pTvsNChargedTowardSummary->SetYRange( 0.1, 5.9 );
 	pTvsNChargedTowardSummary->SetAxisLabels( "p_{T}^{lead} [MeV]", "<d^{2}N_{ch}/d#etad#phi>" );
 	allPlotMakers.push_back( pTvsNChargedTowardSummary );
 

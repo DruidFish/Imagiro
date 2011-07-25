@@ -54,10 +54,6 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	maxima.push_back( XMaximum );
 	binNumbers.push_back( XBinNumber );
 
-	//Make the x unfolder
-	xIndices = new UniformIndices( binNumbers, minima, maxima );
-	XUnfolder = MakeCorrector( correctionType, xIndices, xName + priorName, thisPlotID );
-
 	//Store the y range
 	minima.push_back( YMinimum );
 	maxima.push_back( YMaximum );
@@ -72,14 +68,20 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	idString << thisPlotID;
 	string xvsyTruthName = xName + yName + priorName + "TruthCheck" + idString.str();
 	string xTruthName = xName + "ButNot" + yName + priorName + "TruthCheck" + idString.str();
-	xvsyTruthCheck = new TH1F( xvsyTruthName.c_str(), xvsyTruthName.c_str(), xIndices->GetBinNumber() - 2, xIndices->GetBinLowEdgesForRoot(0) );
-	xTruthCheck = new TH1F( xTruthName.c_str(), xTruthName.c_str(), xIndices->GetBinNumber() - 2, xIndices->GetBinLowEdgesForRoot(0) );
+	xvsyTruthCheck = new TH1F( xvsyTruthName.c_str(), xvsyTruthName.c_str(), distributionIndices->GetBinNumber(0) - 2, distributionIndices->GetBinLowEdgesForRoot(0) );
+	xTruthCheck = new TH1F( xTruthName.c_str(), xTruthName.c_str(), distributionIndices->GetBinNumber(0) - 2, distributionIndices->GetBinLowEdgesForRoot(0) );
 
 	//Make a summary for the y data values
 	yValueSummary = new StatisticsSummary();
 
 	//Avoid killing ROOT
 	doPlotSmearing = ( XBinNumber * YBinNumber < 1000 );
+
+	//Error calculation
+	sumWeights = vector< double >( distributionIndices->GetBinNumber(0), 0.0 );
+	sumWeight2s = vector< double >( distributionIndices->GetBinNumber(0), 0.0 );
+	sumWeightsYs = vector< double >( distributionIndices->GetBinNumber(0), 0.0 );
+	sumWeightsY2s = vector< double >( distributionIndices->GetBinNumber(0), 0.0 );
 }
 
 //Constructor with the names to use for the variables
@@ -102,10 +104,6 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	//Store the x range
 	binEdges.push_back( XBinLowEdges );
 
-	//Make the x unfolder
-	xIndices = new CustomIndices( binEdges );
-	XUnfolder = MakeCorrector( correctionType, xIndices, xName + priorName, thisPlotID );
-
 	//Store the y range
 	binEdges.push_back( YBinLowEdges );
 
@@ -118,19 +116,25 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	idString << thisPlotID;
 	string xvsyTruthName = xName + yName + priorName + "TruthCheck" + idString.str();
 	string xTruthName = xName + "ButNot" + yName + priorName + "TruthCheck" + idString.str();
-	xvsyTruthCheck = new TH1F( xvsyTruthName.c_str(), xvsyTruthName.c_str(), xIndices->GetBinNumber() - 2, xIndices->GetBinLowEdgesForRoot(0) );
-	xTruthCheck = new TH1F( xTruthName.c_str(), xTruthName.c_str(), xIndices->GetBinNumber() - 2, xIndices->GetBinLowEdgesForRoot(0) );
+	xvsyTruthCheck = new TH1F( xvsyTruthName.c_str(), xvsyTruthName.c_str(), distributionIndices->GetBinNumber(0) - 2, distributionIndices->GetBinLowEdgesForRoot(0) );
+	xTruthCheck = new TH1F( xTruthName.c_str(), xTruthName.c_str(), distributionIndices->GetBinNumber(0) - 2, distributionIndices->GetBinLowEdgesForRoot(0) );
 
 	//Make a summary for the y data values
 	yValueSummary = new StatisticsSummary();
 
 	//Avoid killing ROOT
 	doPlotSmearing = ( XBinLowEdges.size() * YBinLowEdges.size() < 1000 );
+
+	//Error calculation
+	sumWeights = vector< double >( distributionIndices->GetBinNumber(0), 0.0 );
+	sumWeight2s = vector< double >( distributionIndices->GetBinNumber(0), 0.0 );
+	sumWeightsYs = vector< double >( distributionIndices->GetBinNumber(0), 0.0 );
+	sumWeightsY2s = vector< double >( distributionIndices->GetBinNumber(0), 0.0 );
 }
 
 //To be used only with Clone
 XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string YVariableName, string PriorName,
-		IIndexCalculator * XIndices, IIndexCalculator * DistributionIndices, int CorrectionMode, unsigned int OriginalID, double ScaleFactor )
+		IIndexCalculator * DistributionIndices, int CorrectionMode, unsigned int OriginalID, double ScaleFactor )
 {
 	correctionType = CorrectionMode;
 	xName = XVariableName;
@@ -144,10 +148,6 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	uniqueID++;
 	thisPlotID = uniqueID + OriginalID;
 
-	//Make the x unfolder
-	xIndices = XIndices;
-	XUnfolder = MakeCorrector( correctionType, xIndices, xName + priorName, thisPlotID );
-
 	//Make the x vs y unfolder
 	distributionIndices = DistributionIndices;
 	XvsYUnfolder = MakeCorrector( correctionType, distributionIndices, xName + "vs" + yName + priorName, thisPlotID );
@@ -158,13 +158,19 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	string xvsyTruthName = xName + yName + priorName + "TruthCheck" + idString.str();
 	string xTruthName = xName + priorName + "TruthCheck" + idString.str();
 	xvsyTruthCheck = new TH1F( xvsyTruthName.c_str(), xvsyTruthName.c_str(), distributionIndices->GetBinNumber(0) - 2, distributionIndices->GetBinLowEdgesForRoot(0) );
-	xTruthCheck = new TH1F( xTruthName.c_str(), xTruthName.c_str(), xIndices->GetBinNumber(0) - 2, xIndices->GetBinLowEdgesForRoot(0) );
+	xTruthCheck = new TH1F( xTruthName.c_str(), xTruthName.c_str(), distributionIndices->GetBinNumber(0) - 2, distributionIndices->GetBinLowEdgesForRoot(0) );
 
 	//Make a summary for the y data values
 	yValueSummary = new StatisticsSummary();
 
 	//Avoid killing ROOT
 	doPlotSmearing = ( distributionIndices->GetBinNumber(0) * distributionIndices->GetBinNumber(1) < 1000 );
+
+	//Error calculation
+	sumWeights = vector< double >( distributionIndices->GetBinNumber(0), 0.0 );
+	sumWeight2s = vector< double >( distributionIndices->GetBinNumber(0), 0.0 );
+	sumWeightsYs = vector< double >( distributionIndices->GetBinNumber(0), 0.0 );
+	sumWeightsY2s = vector< double >( distributionIndices->GetBinNumber(0), 0.0 );
 }
 
 //Destructor
@@ -172,9 +178,7 @@ XvsYNormalisedPlotMaker::~XvsYNormalisedPlotMaker()
 {
 	delete xvsyTruthCheck;
 	delete xTruthCheck;
-	delete xIndices;
 	delete distributionIndices;
-	delete XUnfolder;
 	delete XvsYUnfolder;
 	if ( finalised )
 	{
@@ -195,7 +199,7 @@ XvsYNormalisedPlotMaker::~XvsYNormalisedPlotMaker()
 //Copy the object
 XvsYNormalisedPlotMaker * XvsYNormalisedPlotMaker::Clone( string NewPriorName )
 {
-	return new XvsYNormalisedPlotMaker( xName, yName, NewPriorName, xIndices->Clone(), distributionIndices->Clone(), correctionType, thisPlotID, scaleFactor );
+	return new XvsYNormalisedPlotMaker( xName, yName, NewPriorName, distributionIndices->Clone(), correctionType, thisPlotID, scaleFactor );
 }
 
 //Take input values from ntuples
@@ -209,7 +213,7 @@ void XvsYNormalisedPlotMaker::StoreMatch( IFileInput * TruthInput, IFileInput * 
 	}
 	else
 	{
-		vector<double> truthValues, reconstructedValues;
+		vector< double > truthValues, reconstructedValues;
 
 		//Find out if this is the correct prior
 		bool useInPrior = ( priorName == *( TruthInput->Description() ) );
@@ -225,7 +229,6 @@ void XvsYNormalisedPlotMaker::StoreMatch( IFileInput * TruthInput, IFileInput * 
 		//Store the x values
 		truthValues.push_back( xTruthValue );
 		reconstructedValues.push_back( xReconstructedValue );
-		XUnfolder->StoreTruthRecoPair( truthValues, reconstructedValues, truthWeight, reconstructedWeight, useInPrior );
 
 		//Store the y values
 		truthValues.push_back( yTruthValue );
@@ -257,7 +260,7 @@ void XvsYNormalisedPlotMaker::StoreMiss( IFileInput * TruthInput )
 	}
 	else
 	{
-		vector<double> truthValues;
+		vector< double > truthValues;
 
 		//Find out if this is the correct prior
 		bool useInPrior = ( priorName == *( TruthInput->Description() ) );
@@ -269,7 +272,6 @@ void XvsYNormalisedPlotMaker::StoreMiss( IFileInput * TruthInput )
 
 		//Store the x value
 		truthValues.push_back( xTruthValue );
-		XUnfolder->StoreUnreconstructedTruth( truthValues, truthWeight, useInPrior );
 
 		//Store the y value
 		truthValues.push_back( yTruthValue );
@@ -292,7 +294,7 @@ void XvsYNormalisedPlotMaker::StoreFake( IFileInput * ReconstructedInput )
 	}       
 	else
 	{
-		vector<double> reconstructedValues;
+		vector< double > reconstructedValues;
 
 		//Find out if this is the correct prior
 		bool useInPrior = ( priorName == *( ReconstructedInput->Description() ) );
@@ -304,7 +306,6 @@ void XvsYNormalisedPlotMaker::StoreFake( IFileInput * ReconstructedInput )
 
 		//Store the x value
 		reconstructedValues.push_back( xReconstructedValue );
-		XUnfolder->StoreReconstructedFake( reconstructedValues, reconstructedWeight, useInPrior );
 
 		//Store the y value
 		reconstructedValues.push_back( yReconstructedValue );
@@ -337,7 +338,6 @@ void XvsYNormalisedPlotMaker::StoreData( IFileInput * DataInput )
 
 		//Store the x value
 		dataValues.push_back( xDataValue );
-		XUnfolder->StoreDataValue( dataValues, dataWeight );
 
 		//Store the y value
 		dataValues.push_back( yDataValue );
@@ -346,6 +346,13 @@ void XvsYNormalisedPlotMaker::StoreData( IFileInput * DataInput )
 
 		//Store values for performing the delinearisation
 		distributionIndices->StoreDataValue( dataValues, dataWeight );
+
+		//Store the values for error calculation
+		unsigned int xIndex = distributionIndices->GetNDimensionalIndex( dataValues )[0];
+		sumWeights[ xIndex ] += dataWeight;
+		sumWeight2s[ xIndex ] += dataWeight * dataWeight;
+		sumWeightsYs[ xIndex ] += dataWeight * yDataValue;
+		sumWeightsY2s[ xIndex ] += dataWeight * yDataValue * yDataValue;
 	} 
 }
 
@@ -362,7 +369,6 @@ void XvsYNormalisedPlotMaker::Correct( unsigned int MostIterations, bool SkipUnf
 		//Unfold the distributions
 		if ( !SkipUnfolding )
 		{
-			XUnfolder->Correct( MostIterations, ErrorMode, WithSmoothing );
 			XvsYUnfolder->Correct( MostIterations, ErrorMode, WithSmoothing );
 		}
 
@@ -375,47 +381,62 @@ void XvsYNormalisedPlotMaker::Correct( unsigned int MostIterations, bool SkipUnf
 		string XvsYTitle = xName + " vs " + yName + " using " + priorName;
 
 		//Retrieve the results
-		TH1F * XCorrected = XUnfolder->GetCorrectedHistogram( XFullName + "Corrected", XFullTitle + " Corrected Distribution" );
 		TH1F * XvsYCorrected = XvsYUnfolder->GetCorrectedHistogram( XvsYName + "Corrected", XvsYTitle + " Corrected Distribution" );
 
 		//Retrieve some other bits for debug
-		TH1F * XUncorrected = XUnfolder->GetUncorrectedHistogram( XFullName + "Uncorrected", XFullTitle + " Uncorrected Distribution" );
 		TH1F * XvsYUncorrected = XvsYUnfolder->GetUncorrectedHistogram( XvsYName + "Uncorrected", XvsYTitle + " Uncorrected Distribution" );
-
-		TH1F * XTruth = XUnfolder->GetTruthHistogram( XFullName + "Truth", XFullTitle + " Truth Distribution" );
 		TH1F * XvsYTruth = XvsYUnfolder->GetTruthHistogram( XvsYName + "Truth", XvsYTitle + " Truth Distribution" );
 
 		//De-linearise the x vs y distributions
-		TH1F * DelinearisedXvsYCorrected = Delinearise(XvsYCorrected);
-		TH1F * DelinearisedXvsYUncorrected = Delinearise(XvsYUncorrected);
-		TH1F * DelinearisedXvsYTruth = Delinearise(XvsYTruth);
-
-		//Get the error vectors
-		vector<double> XErrors = XUnfolder->Variances();
-		vector<double> XvsYErrors = XvsYUnfolder->Variances();
-
-		//Delinearise the x vs y errors
-		vector<double> delinearisedXvsYErrors = DelineariseErrors( XvsYErrors );
+		TH1F * DelinearisedXvsYCorrected = MakeProfile( XvsYCorrected );
+		TH1F * DelinearisedXvsYUncorrected = MakeProfile( XvsYUncorrected );
+		TH1F * DelinearisedXvsYTruth = MakeProfile( XvsYTruth );
 
 		//Combine errors
-		for ( unsigned int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
+		if ( correctionType != BAYESIAN_MODE || ErrorMode < 1 )
 		{
-			//Add the errors from the x vs y distribution and the divisor
-			//The formula is stright from ROOT::TH1::Divide, so I hope it's right
-			double XBinValue = XCorrected->GetBinContent(binIndex);
-			double XvsYBinValue = DelinearisedXvsYCorrected->GetBinContent(binIndex);
-			double componentOne = XErrors[binIndex] * XvsYBinValue * XvsYBinValue;
-			double componentTwo = delinearisedXvsYErrors[binIndex] * XBinValue * XBinValue;
-			double componentThree = XBinValue * XBinValue;
-			double combinedError = ( sqrt( componentOne + componentTwo ) / componentThree );
-			combinedError *= scaleFactor;
-			correctedDataErrors.push_back( combinedError );
+			for ( unsigned int binIndex = 0; binIndex < distributionIndices->GetBinNumber(0); binIndex++ )
+			{
+				double combinedError = 0.0;
+
+				//Avoid div0
+				if ( sumWeights[ binIndex ] != 0.0 )
+				{
+					//This formula for the errors on a profile plot is straight from ROOT
+					double mean = sumWeightsYs[ binIndex ] / sumWeights[ binIndex ];
+					double effectiveNumber = sumWeights[ binIndex ] * sumWeights[ binIndex ] / sumWeight2s[ binIndex ];
+					combinedError = ( sumWeightsY2s[ binIndex ] / sumWeights[ binIndex ] ) - ( mean * mean );
+					combinedError = fabs( combinedError ) / effectiveNumber;
+					combinedError = sqrt( combinedError );
+
+					//Scale the error, just like the bin value
+					combinedError *= scaleFactor;
+				}
+
+				//Store error
+				correctedDataErrors.push_back( combinedError );
+			}
+		}
+		else
+		{
+			//Get the errors from the unfolder, then delinearise
+			vector<double> XvsYErrors = XvsYUnfolder->Variances();
+			vector<double> delinearisedXvsYErrors = DelineariseErrors( XvsYErrors );
+
+			for ( unsigned int binIndex = 0; binIndex < distributionIndices->GetBinNumber(0); binIndex++ )
+			{
+				//Scale the error, just like the bin value
+				double combinedError = delinearisedXvsYErrors[ binIndex ] * scaleFactor;
+
+				//Store error
+				correctedDataErrors.push_back( combinedError );
+			}
 		}
 
-		//Normalise the x vs y distributions and scale appropriately
-		DelinearisedXvsYCorrected->Divide( DelinearisedXvsYCorrected, XCorrected, scaleFactor, 1.0 );
-		DelinearisedXvsYUncorrected->Divide( DelinearisedXvsYUncorrected, XUncorrected, scaleFactor, 1.0 );
-		DelinearisedXvsYTruth->Divide( DelinearisedXvsYTruth, XTruth, scaleFactor, 1.0 );
+		//Scale the bin values
+		DelinearisedXvsYCorrected->Scale( scaleFactor );
+		DelinearisedXvsYUncorrected->Scale( scaleFactor );
+		DelinearisedXvsYTruth->Scale( scaleFactor );
 
 		//Check for data loss in the delinearisation
 		xvsyTruthCheck->Divide( xvsyTruthCheck, xTruthCheck, scaleFactor, 1.0 );
@@ -463,9 +484,6 @@ void XvsYNormalisedPlotMaker::Correct( unsigned int MostIterations, bool SkipUnf
 		}
 
 		//Free some memory
-		delete XCorrected;
-		delete XUncorrected;
-		delete XTruth;
 		delete yValueSummary;
 
 		//Get the y range to plot
@@ -519,9 +537,9 @@ void XvsYNormalisedPlotMaker::Correct( unsigned int MostIterations, bool SkipUnf
 		//Bin-by-bin scaling of errors using the corrected data
 		if ( correctionType != BAYESIAN_MODE || ErrorMode < 1 )
 		{
-			for ( unsigned int binIndex = 0; binIndex < XErrors.size(); binIndex++ )
+			for ( unsigned int binIndex = 0; binIndex < correctedDataErrors.size(); binIndex++ )
 			{
-				double errorScaleFactor = correctedDistribution->GetBinContent(binIndex) / uncorrectedDistribution->GetBinContent(binIndex);
+				double errorScaleFactor = correctedDistribution->GetBinContent( binIndex ) / uncorrectedDistribution->GetBinContent( binIndex );
 
 				//Check for div0 errors
 				if ( isinf( errorScaleFactor ) )
@@ -533,7 +551,7 @@ void XvsYNormalisedPlotMaker::Correct( unsigned int MostIterations, bool SkipUnf
 					errorScaleFactor = 0.0;
 				}
 
-				correctedDataErrors[binIndex] *= errorScaleFactor;
+				correctedDataErrors[ binIndex ] *= errorScaleFactor;
 			}
 		}
 
@@ -545,9 +563,7 @@ void XvsYNormalisedPlotMaker::Correct( unsigned int MostIterations, bool SkipUnf
 //Do a closure test
 bool XvsYNormalisedPlotMaker::ClosureTest( unsigned int MostIterations, bool WithSmoothing )
 {
-	bool result = XvsYUnfolder->ClosureTest( MostIterations, WithSmoothing );
-	result &= XUnfolder->ClosureTest( MostIterations, WithSmoothing );
-	return result;
+	return XvsYUnfolder->ClosureTest( MostIterations, WithSmoothing );
 }
 
 //Make a cross-check with MC
@@ -623,42 +639,39 @@ TH2F * XvsYNormalisedPlotMaker::SmearingMatrix()
 
 //Convert from an X*Y linearised distribution to an X vs Y plot
 //WARNING: this method deletes the argument object
-TH1F * XvsYNormalisedPlotMaker::Delinearise( TH1F * LinearisedDistribution )
+TH1F * XvsYNormalisedPlotMaker::MakeProfile( TH1F * LinearisedDistribution )
 {
-	//Find the target number of bins
+	//Make an instance of TProfile
 	unsigned int binNumber = distributionIndices->GetBinNumber(0);
+	string name = LinearisedDistribution->GetName();
+	string title = LinearisedDistribution->GetTitle();
+	TProfile * profilePlot = new TProfile( "temporaryProfile", "temporaryProfile", binNumber - 2, distributionIndices->GetBinLowEdgesForRoot( 0 ) );
 
-	//Make a vector of the de-linearised data
-	vector< double > delinearisedDistribution( binNumber, 0.0 );
+	//Populate the profile
 	vector< unsigned int > separateIndices;
-	vector< double > centralValues, dataCentralValues;
+	vector< double > centralValues;
 	for ( unsigned int binIndex = 0; binIndex < distributionIndices->GetBinNumber(); binIndex++ )
 	{
 		//Work out the delinearised bin index and central value
 		separateIndices = distributionIndices->GetNDimensionalIndex( binIndex );
 		centralValues = distributionIndices->GetCentralValues( separateIndices );
 
-		//Increment the bin in the delinearised distribution
-		double thisBinValue = LinearisedDistribution->GetBinContent(binIndex) * centralValues[1];
-		delinearisedDistribution[ separateIndices[0] ] += thisBinValue;
+		//Store the values
+		profilePlot->Fill( centralValues[0], centralValues[1], LinearisedDistribution->GetBinContent( binIndex ) );
 	}
 
-	//Delete the old distribution
-	string name = LinearisedDistribution->GetName();
-	string title = LinearisedDistribution->GetTitle();
+	//Copy it into a histogram to avoid the stupid bug in Copy() with a profile cast as TH1D
 	delete LinearisedDistribution;
-
-	//Make the new distribution
-	TH1F * delinearisedHistogram = new TH1F( name.c_str(), title.c_str(), binNumber - 2, distributionIndices->GetBinLowEdgesForRoot( 0 ) );
-
-	//Copy the data into the new distribution
+	TH1F * returnHisto = new TH1F( name.c_str(), title.c_str(), binNumber - 2, distributionIndices->GetBinLowEdgesForRoot( 0 ) );
 	for ( unsigned int binIndex = 0; binIndex < binNumber; binIndex++ )
 	{
-		delinearisedHistogram->SetBinContent( binIndex, delinearisedDistribution[binIndex] );
+		double content = profilePlot->GetBinContent( binIndex );
+		returnHisto->SetBinContent( binIndex, content );
 	}
 
-	//Return the new distribution
-	return delinearisedHistogram;
+	//Return result
+	delete profilePlot;
+	return returnHisto;
 }
 
 vector< double > XvsYNormalisedPlotMaker::DelineariseErrors( vector< double > LinearisedErrors )
