@@ -87,6 +87,7 @@ class XvsYNormalisedPlotMaker : public IPlotMaker
 		TH1F * MakeProfile( TH1F * LinearisedDistribution );
 		vector< double > DelineariseErrors( vector< double > InputSumWeightSquares );
 
+		TProfile * simpleDataProfile; 
 		int correctionType;
 		unsigned int thisPlotID, xBinNumber, yBinNumber;
 		ICorrection *XvsYUnfolder;
@@ -94,7 +95,7 @@ class XvsYNormalisedPlotMaker : public IPlotMaker
 		string xName, yName, priorName;
 		bool finalised, doPlotSmearing;
 		double scaleFactor, xMinimum, yMinimum, xMaximum, yMaximum;
-		vector< double > correctedDataErrors, sumWeights, sumWeight2s, sumWeightsYs, sumWeightsY2s;
+		vector< double > correctedDataErrors;
 		StatisticsSummary * yValueSummary;
 		TH1F *correctedDistribution, *uncorrectedDistribution, *mcTruthDistribution, *xvsyTruthCheck, *xTruthCheck;
 		TH2F *smearingMatrix, *covarianceMatrix;

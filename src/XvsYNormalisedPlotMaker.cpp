@@ -78,10 +78,8 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	doPlotSmearing = ( XBinNumber * YBinNumber < 1000 );
 
 	//Error calculation
-	sumWeights = vector< double >( distributionIndices->GetBinNumber(0), 0.0 );
-	sumWeight2s = vector< double >( distributionIndices->GetBinNumber(0), 0.0 );
-	sumWeightsYs = vector< double >( distributionIndices->GetBinNumber(0), 0.0 );
-	sumWeightsY2s = vector< double >( distributionIndices->GetBinNumber(0), 0.0 );
+	xvsyTruthName += "SimpleProfile";
+	simpleDataProfile = new TProfile( xvsyTruthName.c_str(), xvsyTruthName.c_str(), distributionIndices->GetBinNumber(0) - 2, distributionIndices->GetBinLowEdgesForRoot(0) );
 }
 
 //Constructor with the names to use for the variables
@@ -126,10 +124,8 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	doPlotSmearing = ( XBinLowEdges.size() * YBinLowEdges.size() < 1000 );
 
 	//Error calculation
-	sumWeights = vector< double >( distributionIndices->GetBinNumber(0), 0.0 );
-	sumWeight2s = vector< double >( distributionIndices->GetBinNumber(0), 0.0 );
-	sumWeightsYs = vector< double >( distributionIndices->GetBinNumber(0), 0.0 );
-	sumWeightsY2s = vector< double >( distributionIndices->GetBinNumber(0), 0.0 );
+	xvsyTruthName += "SimpleProfile";
+	simpleDataProfile = new TProfile( xvsyTruthName.c_str(), xvsyTruthName.c_str(), distributionIndices->GetBinNumber(0) - 2, distributionIndices->GetBinLowEdgesForRoot(0) );
 }
 
 //To be used only with Clone
@@ -167,10 +163,8 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	doPlotSmearing = ( distributionIndices->GetBinNumber(0) * distributionIndices->GetBinNumber(1) < 1000 );
 
 	//Error calculation
-	sumWeights = vector< double >( distributionIndices->GetBinNumber(0), 0.0 );
-	sumWeight2s = vector< double >( distributionIndices->GetBinNumber(0), 0.0 );
-	sumWeightsYs = vector< double >( distributionIndices->GetBinNumber(0), 0.0 );
-	sumWeightsY2s = vector< double >( distributionIndices->GetBinNumber(0), 0.0 );
+	xvsyTruthName += "SimpleProfile";
+	simpleDataProfile = new TProfile( xvsyTruthName.c_str(), xvsyTruthName.c_str(), distributionIndices->GetBinNumber(0) - 2, distributionIndices->GetBinLowEdgesForRoot(0) );
 }
 
 //Destructor
@@ -180,6 +174,7 @@ XvsYNormalisedPlotMaker::~XvsYNormalisedPlotMaker()
 	delete xTruthCheck;
 	delete distributionIndices;
 	delete XvsYUnfolder;
+	delete simpleDataProfile;
 	if ( finalised )
 	{
 		delete correctedDistribution;
@@ -348,11 +343,7 @@ void XvsYNormalisedPlotMaker::StoreData( IFileInput * DataInput )
 		distributionIndices->StoreDataValue( dataValues, dataWeight );
 
 		//Store the values for error calculation
-		unsigned int xIndex = distributionIndices->GetNDimensionalIndex( dataValues )[0];
-		sumWeights[ xIndex ] += dataWeight;
-		sumWeight2s[ xIndex ] += dataWeight * dataWeight;
-		sumWeightsYs[ xIndex ] += dataWeight * yDataValue;
-		sumWeightsY2s[ xIndex ] += dataWeight * yDataValue * yDataValue;
+		simpleDataProfile->Fill( xDataValue, yDataValue, dataWeight );
 	} 
 }
 
@@ -392,26 +383,13 @@ void XvsYNormalisedPlotMaker::Correct( unsigned int MostIterations, bool SkipUnf
 		TH1F * DelinearisedXvsYUncorrected = MakeProfile( XvsYUncorrected );
 		TH1F * DelinearisedXvsYTruth = MakeProfile( XvsYTruth );
 
-		//Combine errors
+		//Make a vector of bin error values
 		if ( correctionType != BAYESIAN_MODE || ErrorMode < 1 )
 		{
 			for ( unsigned int binIndex = 0; binIndex < distributionIndices->GetBinNumber(0); binIndex++ )
 			{
-				double combinedError = 0.0;
-
-				//Avoid div0
-				if ( sumWeights[ binIndex ] != 0.0 )
-				{
-					//This formula for the errors on a profile plot is straight from ROOT
-					double mean = sumWeightsYs[ binIndex ] / sumWeights[ binIndex ];
-					double effectiveNumber = sumWeights[ binIndex ] * sumWeights[ binIndex ] / sumWeight2s[ binIndex ];
-					combinedError = ( sumWeightsY2s[ binIndex ] / sumWeights[ binIndex ] ) - ( mean * mean );
-					combinedError = fabs( combinedError ) / effectiveNumber;
-					combinedError = sqrt( combinedError );
-
-					//Scale the error, just like the bin value
-					combinedError *= scaleFactor;
-				}
+				//Get the error calculated by the uncorrected data TProfile, then scale it just like the bin values
+				double combinedError = simpleDataProfile->GetBinError( binIndex ) * scaleFactor;
 
 				//Store error
 				correctedDataErrors.push_back( combinedError );
@@ -534,7 +512,7 @@ void XvsYNormalisedPlotMaker::Correct( unsigned int MostIterations, bool SkipUnf
 			covarianceMatrix = NULL;
 		}
 
-		//Bin-by-bin scaling of errors using the corrected data
+		//Bin-by-bin scaling of errors using the corrected data if a full error calculation was not done
 		if ( correctionType != BAYESIAN_MODE || ErrorMode < 1 )
 		{
 			for ( unsigned int binIndex = 0; binIndex < correctedDataErrors.size(); binIndex++ )
