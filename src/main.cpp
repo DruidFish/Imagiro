@@ -54,7 +54,7 @@ vector< MonteCarloSummaryPlotMaker* > allPlotMakers;
 //                then compare with MC truth              //
 //                                                        //
 ////////////////////////////////////////////////////////////
-const int PLOT_MODE = 0;
+const int PLOT_MODE = -1;
 
 ////////////////////////////////////////////////////////////
 //                                                        //
@@ -133,7 +133,7 @@ int main ( int argc, char * argv[] )
 	double scaleFactor = 3.0 / ( 10.0 * M_PI );
 	unsigned int jetPtBins = 30;
 	double jetPtMin = 0.0;
-	double jetPtMax = 200000.0;
+	double jetPtMax = 200.0;
 	unsigned int nChargeBins = 60;
 	double nChargeMin = 0.5;
 	double nChargeMax = 60.5;
@@ -173,9 +173,16 @@ int main ( int argc, char * argv[] )
 		sumPtBinEdges.push_back( sumPtMin + ( ( sumPtMax - sumPtMin ) * (double)binIndex / (double) sumPtBins ) );
 	}
 
+XvsYNormalisedPlotMaker * pTvsNChargedTowardPlot = new XvsYNormalisedPlotMaker( "MaxJetPt", "NChargeTrans", "PYTHIA6-AMBT1",
+		                        jetPtBinEdges, nChargeBinEdges, PLOT_MODE, scaleFactor );
+        MonteCarloSummaryPlotMaker * pTvsNChargedTowardSummary = new MonteCarloSummaryPlotMaker( pTvsNChargedTowardPlot, mcInfo, COMBINE_MC );
+	        //pTvsNChargedTowardSummary->SetYRange( 0.1, 5.9 );
+	        pTvsNChargedTowardSummary->SetAxisLabels( "p_{T}^{lead} [MeV]", "<d^{2}N_{ch}/d#etad#phi>" );
+		        allPlotMakers.push_back( pTvsNChargedTowardSummary );
+
 	//1D Unfolding
 
-	//Lead jet pT
+/*	//Lead jet pT
 	XPlotMaker * leadJetPtPlot = new XPlotMaker( "LeadJetPt", "PYTHIA6-AMBT1", jetPtBinEdges, PLOT_MODE, 1.0, true );
 	MonteCarloSummaryPlotMaker * leadJetPtSummary = new MonteCarloSummaryPlotMaker( leadJetPtPlot, mcInfo, COMBINE_MC );
 	leadJetPtSummary->SetYRange( 1E-13, 1.0 );
@@ -293,7 +300,7 @@ int main ( int argc, char * argv[] )
 	MonteCarloSummaryPlotMaker * pTmeanvsNChargedTransSummary = new MonteCarloSummaryPlotMaker( pTmeanvsNChargedTransPlot, mcInfo, COMBINE_MC );
 	pTmeanvsNChargedTransSummary->SetYRange( 800.0, 1600.0 );
 	pTmeanvsNChargedTransSummary->SetAxisLabels( "N_{ch}", "<p_{T}> [MeV]" );
-	allPlotMakers.push_back( pTmeanvsNChargedTransSummary );
+	allPlotMakers.push_back( pTmeanvsNChargedTransSummary );*/
 
 	///////////////////////////////////////////////////////////
 	//                                                       //
@@ -319,8 +326,8 @@ int main ( int argc, char * argv[] )
 	// Load the data - Again, set this up yourself            //
 	//                                                        //
 	////////////////////////////////////////////////////////////
-	IFileInput * dataInput = mcInfo->MakeReconstructedInput( 0, relevanceChecker );
-	//IFileInput * dataInput = mcInfo->MakeTruthInput( 0, relevanceChecker );
+	//IFileInput * dataInput = mcInfo->MakeReconstructedInput( 0, relevanceChecker );
+	IFileInput * dataInput = mcInfo->MakeTruthInput( 0, relevanceChecker );
 	//IFileInput * dataInput = new TriggerChoosingInput( "/Disk/speyside7/Grid/grid-files/bwynne/Version4/JetTauEtmiss/PeriodGtoI/combined.TriggerName.AntiKt4TopoEM.root",
 	//		"benTuple", "JetTauEtmiss Data (2010)", mcInfo->NumberOfSources(), relevanceChecker );
 

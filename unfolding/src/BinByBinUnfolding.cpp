@@ -25,6 +25,7 @@ BinByBinUnfolding::BinByBinUnfolding( IIndexCalculator * DistributionIndices, st
 	totalPaired = 0.0;
 	totalFake = 0.0;
 	totalMissed = 0.0;
+	isClone = false;
 
 	indexCalculator = DistributionIndices;
 	dataDistribution = new Distribution( indexCalculator );
@@ -39,20 +40,59 @@ BinByBinUnfolding::BinByBinUnfolding( IIndexCalculator * DistributionIndices, st
 	recoBinSums = vector< double >( indexCalculator->GetBinNumber() + 1, 0.0 );
 }
 
+//To be used with Clone
+BinByBinUnfolding::BinByBinUnfolding( IIndexCalculator * DistributionIndices, string Name, unsigned int UniqueID,
+		Comparison * SharedComparison, Distribution * SharedTruth, vector< double > & SharedTruthSums, vector< double > & SharedRecoSums, double PairedMC, double MissedMC, double FakeMC )
+{
+	name = Name;
+	uniqueID = UniqueID;
+	totalPaired = PairedMC;
+	totalFake = FakeMC;
+	totalMissed = MissedMC;
+	isClone = true;
+
+	indexCalculator = DistributionIndices;
+	dataDistribution = new Distribution( indexCalculator );
+	unfoldedDistribution = 0;
+	truthDistribution = SharedTruth;
+	reconstructedDistribution = new Distribution( indexCalculator );
+	sumOfDataWeightSquares = vector< double >( indexCalculator->GetBinNumber(), 0.0 );
+	distributionComparison = SharedComparison;
+
+	//Make the vectors for storing the bin-by-bin correction ratios (include bad bins)
+	truthBinSums = SharedTruthSums;
+	recoBinSums = SharedRecoSums;;
+}
+
 //Destructor
 BinByBinUnfolding::~BinByBinUnfolding()
 {
 	delete dataDistribution;
+	delete reconstructedDistribution;
 	if ( unfoldedDistribution )
 	{
 		delete unfoldedDistribution;
 	}
-	delete truthDistribution;
-	delete reconstructedDistribution;
-	delete distributionComparison;
+
+	if ( isClone )
+	{
+		delete indexCalculator;
+	}
+	else
+	{
+		delete truthDistribution;
+		delete distributionComparison;
+	}
+
 	sumOfDataWeightSquares.clear();
 	truthBinSums.clear();
 	recoBinSums.clear();
+}
+
+//Make another instance of the ICorrection which shares the smearing matrix
+BinByBinUnfolding * BinByBinUnfolding::CloneShareSmearingMatrix()
+{
+	return new BinByBinUnfolding( indexCalculator->Clone(), name, uniqueID + 1, distributionComparison, truthDistribution, truthBinSums, recoBinSums, totalPaired, totalMissed, totalFake );
 }
 
 //Use this method to supply a value from the truth
@@ -115,7 +155,7 @@ void BinByBinUnfolding::StoreDataValue( vector< double > Data, double Weight )
 void BinByBinUnfolding::Correct( unsigned int MostIterations, unsigned int ErrorMode, bool WithSmoothing )
 {
 	//Extrapolate the number of missed events in the data
-        dataDistribution->SetBadBin( totalMissed / ( totalPaired + totalFake ) );	
+	dataDistribution->SetBadBin( totalMissed / ( totalPaired + totalFake ) );	
 
 	//Work out the truth/reco ratios
 	vector< double > binWeights( truthBinSums.size(), 0.0 );

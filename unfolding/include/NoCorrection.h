@@ -84,7 +84,15 @@ class NoCorrection : public ICorrection
 		virtual vector< double > Variances();
                 virtual TH2F * DAgostiniCovariance( string Name, string Title );
 
+		//Make another instance of the ICorrection which shares the smearing matrix
+                virtual NoCorrection * CloneShareSmearingMatrix();
+
 	private:
+		//For use with Clone
+		NoCorrection( IIndexCalculator * DistributionIndices, string Name, unsigned int UniqueID,
+				Distribution * SharedReconstructed, SmearingMatrix * SharedSmearing, double PairedMC, double FakeMC, double MissedMC );
+
+		bool isClone;
 		unsigned int uniqueID;
 		string name;
 		vector< double > sumOfInputWeightSquares;

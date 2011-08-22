@@ -83,6 +83,9 @@ class ICorrection
 		//Handy for error calculation
 		virtual vector< double > Variances() = 0;
 		virtual TH2F * DAgostiniCovariance( string Name, string Title ) = 0;
+
+		//Make another instance of the ICorrection which shares the smearing matrix
+		virtual ICorrection * CloneShareSmearingMatrix() = 0;
 };
 
 #endif

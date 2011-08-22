@@ -85,7 +85,15 @@ class Folding : public ICorrection
 		virtual vector< double > Variances();
                 virtual TH2F * DAgostiniCovariance( string Name, string Title );
 
+		//Make another instance of the ICorrection which shares the smearing matrix
+                virtual Folding * CloneShareSmearingMatrix();
+
 	private:
+		//For use with Clone
+		Folding( IIndexCalculator * DistributionIndices, string Name, unsigned int UniqueID,
+				Comparison * SharedComparison, Distribution * SharedReconstructed, SmearingMatrix * SharedSmearing, double PairedMC, double MissedMC, double FakeMC );
+
+		bool isClone;
 		Comparison * distributionComparison;
 		unsigned int uniqueID;
 		string name;

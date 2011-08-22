@@ -107,9 +107,9 @@ InputNtuple::InputNtuple( string FilePath, string NtuplePath, string Description
 //Destructor
 InputNtuple::~InputNtuple()
 {
+	delete wrappedNtuple;
 	inputFile->Close();
 	delete inputFile;
-	delete wrappedNtuple;
 }
 
 //Change the Ntuple row being examined

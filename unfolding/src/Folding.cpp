@@ -25,6 +25,7 @@ Folding::Folding( IIndexCalculator * DistributionIndices, string Name, unsigned 
 	totalPaired = 0.0;
 	totalMissed = 0.0;
 	totalFake = 0.0;
+	isClone = false;
 
 	//Make new vectors just with the one entry
 	indexCalculator = DistributionIndices;
@@ -37,18 +38,55 @@ Folding::Folding( IIndexCalculator * DistributionIndices, string Name, unsigned 
 	smearedDistribution = 0;
 }
 
+//For use with Clone
+Folding::Folding( IIndexCalculator * DistributionIndices, string Name, unsigned int UniqueID,
+		Comparison * SharedComparison, Distribution * SharedReconstructed, SmearingMatrix * SharedSmearing, double PairedMC, double MissedMC, double FakeMC )
+{
+	//Initialisations
+	name = Name;
+	uniqueID = UniqueID;
+	totalPaired = PairedMC;
+	totalMissed = MissedMC;
+	totalFake = FakeMC;
+	isClone = true;
+
+	//Make new vectors just with the one entry
+	indexCalculator = DistributionIndices;
+	inputSmearing = SharedSmearing;
+	truthDistribution = new Distribution( indexCalculator );
+	inputDistribution = new Distribution( indexCalculator );
+	reconstructedDistribution = SharedReconstructed;
+	sumOfInputWeightSquares = vector< double >( indexCalculator->GetBinNumber(), 0.0 );
+	distributionComparison = SharedComparison;
+	smearedDistribution = 0;
+}
+
 //Destructor
 Folding::~Folding()
 {
-	delete inputSmearing;
+	if ( isClone )
+	{
+		delete indexCalculator;
+	}
+	else
+	{
+		delete distributionComparison;
+		delete reconstructedDistribution;
+		delete inputSmearing;
+	}
+
 	delete truthDistribution;
 	delete inputDistribution;
-	delete reconstructedDistribution;
 	if ( smearedDistribution )
 	{
 		delete smearedDistribution;
 	}
-	delete distributionComparison;
+}
+
+//Make another instance of the ICorrection which shares the smearing matrix
+Folding * Folding::CloneShareSmearingMatrix()
+{
+	return new Folding( indexCalculator->Clone(), name, uniqueID + 1, distributionComparison, reconstructedDistribution, inputSmearing, totalPaired, totalMissed, totalFake );
 }
 
 //Use this method to supply a value from the truth
@@ -131,7 +169,6 @@ bool Folding::ClosureTest( unsigned int MostIterations, bool WithSmoothing )
 	distributionComparison->CompareDistributions( reconstructedDistribution, smearedTruthDistribution, chi2, kolmogorov, false, true );
 
 	//Output result
-	cout << "Number of bins: " << indexCalculator->GetBinNumber() << endl;
 	if ( chi2 == 0.0 && kolmogorov == 1.0 )
 	{
 		cout << "Perfect closure test: chi squared = " << chi2 << " and K-S probability = " << kolmogorov << ". Nice one!" << endl;

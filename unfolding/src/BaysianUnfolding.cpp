@@ -29,6 +29,7 @@ BayesianUnfolding::BayesianUnfolding( IIndexCalculator * DistributionIndices, st
 	totalPaired = 0.0;
 	totalFake = 0.0;
 	totalMissed = 0.0;
+	isClone = false;
 
 	indexCalculator = DistributionIndices;
 	inputSmearing = new SmearingMatrix( indexCalculator );
@@ -40,15 +41,50 @@ BayesianUnfolding::BayesianUnfolding( IIndexCalculator * DistributionIndices, st
 	distributionComparison = new Comparison( Name, UniqueID );
 }
 
+//For use with Clone
+BayesianUnfolding::BayesianUnfolding( IIndexCalculator * DistributionIndices, string Name, unsigned int UniqueID,
+		Comparison * SharedComparison, Distribution * SharedTruthDistribution, SmearingMatrix * SharedSmearingMatrix, double PairedMC, double MissedMC, double FakeMC )
+{
+	name = Name;
+	uniqueID = UniqueID;
+	totalPaired = PairedMC;
+	totalMissed = MissedMC;
+	totalFake = FakeMC;
+	isClone = true;
+
+	indexCalculator = DistributionIndices;
+	inputSmearing = SharedSmearingMatrix;
+	dataDistribution = new Distribution( indexCalculator );
+	unfoldedDistribution = new Distribution( indexCalculator );
+	truthDistribution = SharedTruthDistribution;
+	reconstructedDistribution = new Distribution( indexCalculator );
+	sumOfDataWeightSquares = vector< double >( indexCalculator->GetBinNumber(), 0.0 );
+	distributionComparison = SharedComparison;
+}
+
 //Destructor
 BayesianUnfolding::~BayesianUnfolding()
 {
-	delete inputSmearing;
 	delete dataDistribution;
 	delete unfoldedDistribution;
-	delete truthDistribution;
 	delete reconstructedDistribution;
-	delete distributionComparison;
+
+	if ( isClone )
+	{
+		delete indexCalculator;
+	}
+	else
+	{
+		delete distributionComparison;
+		delete truthDistribution;
+		delete inputSmearing;
+	}
+}
+
+//Make another instance of the ICorrection which shares the smearing matrix
+BayesianUnfolding * BayesianUnfolding::CloneShareSmearingMatrix()
+{
+	return new BayesianUnfolding( indexCalculator->Clone(), name, uniqueID + 1, distributionComparison, truthDistribution, inputSmearing, totalPaired, totalMissed, totalFake );
 }
 
 //Use this method to supply a value from the truth

@@ -23,6 +23,7 @@ using namespace std;
 
 const int MC_CHECK_OFFSET = 1;
 const int BAYESIAN_MODE = 2;
+const int NO_CORRECTION_MODE = 0;
 
 //Default constructor - useless
 MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker()
@@ -347,34 +348,37 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 		int numberRemoved = 0;
 		unsigned int numberFailed = 0;
 		vector< bool > usePrior( allPlots.size(), true );
-		for ( unsigned int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
+		if ( correctionType != NO_CORRECTION_MODE )
 		{
-			cout << endl << "Closure test for " << mcInfo->Description( plotIndex ) << endl;
-			bool closureWorked = allPlots[plotIndex]->ClosureTest( mostIterations, WithSmoothing );
-
-			if ( !closureWorked )
+			for ( unsigned int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
 			{
-				numberFailed++;
+				cout << endl << "Closure test for " << mcInfo->Description( plotIndex ) << endl;
+				bool closureWorked = allPlots[plotIndex]->ClosureTest( mostIterations, WithSmoothing );
 
-				//if ( correctionType == BAYESIAN_MODE )
-				//{
-				//	//Remove priors that did not pass the closure test
-				//	cout << "Removing " << mcInfo->Description( plotIndex ) << " from available priors" << endl;
-				//	usePrior[ plotIndex ] = false;
-				//	numberRemoved++;
-				//}
+				if ( !closureWorked )
+				{
+					numberFailed++;
+
+					//if ( correctionType == BAYESIAN_MODE )
+					//{
+					//	//Remove priors that did not pass the closure test
+					//	cout << "Removing " << mcInfo->Description( plotIndex ) << " from available priors" << endl;
+					//	usePrior[ plotIndex ] = false;
+					//	numberRemoved++;
+					//}
+				}
 			}
-		}
 
-		//Quit if too many prior distributions fail
-		if ( numberFailed == allPlots.size() && correctionType == BAYESIAN_MODE )
-		{
-			cerr << "All priors failed their closure tests: something is really wrong here. Suggest you choose better binning / provide more MC stats" << endl;
-			//exit(1);
-		}
-		else if ( numberFailed > (double)allPlots.size() / 2.0 )
-		{
-			cerr << "The majority of priors failed their closure tests. Suggest you choose better binning / provide more MC stats" << endl;
+			//Quit if too many prior distributions fail
+			if ( numberFailed == allPlots.size() && correctionType == BAYESIAN_MODE )
+			{
+				cerr << "All priors failed their closure tests: something is really wrong here. Suggest you choose better binning / provide more MC stats" << endl;
+				//exit(1);
+			}
+			else if ( numberFailed > (double)allPlots.size() / 2.0 )
+			{
+				cerr << "The majority of priors failed their closure tests. Suggest you choose better binning / provide more MC stats" << endl;
+			}
 		}
 
 		//Make a canvas to display the plots

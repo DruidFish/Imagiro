@@ -89,7 +89,14 @@ class BayesianUnfolding : public ICorrection
 		virtual vector< double > Variances();
 		virtual TH2F * DAgostiniCovariance( string Name, string Title );
 
+		//Make another instance of the ICorrection which shares the smearing matrix
+                virtual BayesianUnfolding * CloneShareSmearingMatrix();
+
 	private:
+		//For use with Clone
+		BayesianUnfolding( IIndexCalculator * DistributionIndices, string Name, unsigned int UniqueID,
+				Comparison * SharedComparison, Distribution * SharedTruthDistribution, SmearingMatrix * SharedSmearingMatrix, double PairedMC, double MissedMC, double FakeMC );
+
 		Comparison * distributionComparison;
 		unsigned int uniqueID;
 		string name;
@@ -99,7 +106,7 @@ class BayesianUnfolding : public ICorrection
 		CovarianceMatrix * fullErrors;
 		SmearingMatrix * inputSmearing;
 		double totalPaired, totalFake, totalMissed;
-		bool debug;
+		bool isClone;
 };
 
 #endif
