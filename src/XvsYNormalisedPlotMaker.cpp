@@ -75,7 +75,7 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	yValueSummary = new StatisticsSummary();
 
 	//Avoid killing ROOT
-	doPlotSmearing = ( XBinNumber * YBinNumber < 1000 );
+	doPlotSmearing = ( XBinNumber * YBinNumber < 1200 );
 
 	//Error calculation
 	xvsyTruthName += "SimpleProfile";
@@ -121,7 +121,7 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	yValueSummary = new StatisticsSummary();
 
 	//Avoid killing ROOT
-	doPlotSmearing = ( XBinLowEdges.size() * YBinLowEdges.size() < 1000 );
+	doPlotSmearing = ( distributionIndices->GetBinNumber(0) * distributionIndices->GetBinNumber(1) < 1200 );
 
 	//Error calculation
 	xvsyTruthName += "SimpleProfile";
@@ -160,7 +160,7 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	yValueSummary = new StatisticsSummary();
 
 	//Avoid killing ROOT
-	doPlotSmearing = ( distributionIndices->GetBinNumber(0) * distributionIndices->GetBinNumber(1) < 1000 );
+	doPlotSmearing = ( distributionIndices->GetBinNumber(0) * distributionIndices->GetBinNumber(1) < 1200 );
 
 	//Error calculation
 	xvsyTruthName += "SimpleProfile";

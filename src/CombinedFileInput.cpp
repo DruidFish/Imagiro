@@ -179,7 +179,15 @@ void CombinedFileInput::ChangeInputFile( unsigned int NewFileIndex )
 	}
 	else if ( m_inputType == TRIGGER_CHOOSING_TYPE_STRING )
 	{
-		m_currentInput = new TriggerChoosingInput( m_filePaths[ m_currentFile ], m_internalPath, m_sourceDescription, m_sourceIndex, m_relevanceChecker, m_pTcuts[ m_currentFile ] );
+		//if ( m_pTcuts.size() == m_filePaths.size() )
+		if ( m_fileWeights[ m_currentFile ] != 1.0 )
+		{
+			m_currentInput = new TriggerChoosingInput( m_filePaths[ m_currentFile ], m_internalPath, m_sourceDescription, m_sourceIndex, m_relevanceChecker, m_pTcuts[ m_currentFile ] );
+		}
+		else
+		{
+			m_currentInput = new TriggerChoosingInput( m_filePaths[ m_currentFile ], m_internalPath, m_sourceDescription, m_sourceIndex, m_relevanceChecker );
+		}
 	}
 	else
 	{

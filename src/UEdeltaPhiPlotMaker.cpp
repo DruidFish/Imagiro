@@ -11,6 +11,9 @@
 #include "BayesianUnfolding.h"
 #include "UniformIndices.h"
 #include "CustomIndices.h"
+#include "Folding.h"
+#include "NoCorrection.h"
+#include "BinByBinUnfolding.h"
 #include "TFile.h"
 #include <iostream>
 #include <cstdlib>
@@ -53,7 +56,7 @@ UEdeltaPhiPlotMaker::UEdeltaPhiPlotMaker( string XVariableName, string PriorName
 
 	//Make the x unfolder
 	distributionIndices = new UniformIndices( binNumbers, minima, maxima );
-	XUnfolder = new BayesianUnfolding( distributionIndices, xName + priorName, thisPlotID );
+	XUnfolder = MakeCorrector( CorrectionMode );
 }
 
 //Constructor with the names to use for the variables
@@ -80,7 +83,7 @@ UEdeltaPhiPlotMaker::UEdeltaPhiPlotMaker( string XVariableName, string PriorName
 
 	//Make the x unfolder
 	distributionIndices = new CustomIndices( binEdges );
-	XUnfolder = new BayesianUnfolding( distributionIndices, xName + priorName, thisPlotID );
+	XUnfolder = MakeCorrector( CorrectionMode );
 }
 
 //For use with Clone
@@ -102,7 +105,7 @@ UEdeltaPhiPlotMaker::UEdeltaPhiPlotMaker( vector< string > OtherVariableNames, s
 
 	//Make the x unfolder
 	distributionIndices = DistributionIndices;
-	XUnfolder = new BayesianUnfolding( distributionIndices, xName + priorName, thisPlotID );
+	XUnfolder = MakeCorrector( CorrectionMode );
 }
 
 //Destructor
@@ -555,16 +558,30 @@ void UEdeltaPhiPlotMaker::MakePairs( vector< double > * TruthValues, vector< dou
 	for ( unsigned int recoIndex = 0; recoIndex < guessPairings.size(); recoIndex++ )
 	{
 		//Look for unconflicted pairs
-		if ( guessPairings[ recoIndex ].size() == 1 )
+		if ( guessPairings[ recoIndex ].size() > 0 )
 		{
+			//Find the truth that the reco most prefers
+			unsigned int closestTruthIndex;
+			double smallestTruthDifference;
+			for ( unsigned int truthIndex = 0; truthIndex < guessPairings[ recoIndex ].size(); truthIndex++ )
+			{
+				double truthDifference = fabs( ( *TruthValues )[ guessPairings[ recoIndex ][ truthIndex ] ] - ( *RecoValues )[ recoIndex ] );
+
+				if ( truthIndex == 0 || truthDifference < smallestTruthDifference )
+				{
+					closestTruthIndex = guessPairings[ recoIndex ][ truthIndex ];
+					smallestTruthDifference = truthDifference;
+				}
+			}
+
 			//Store the pair
-			truthRecoPairs.push_back( make_pair( guessPairings[ recoIndex ][ 0 ], recoIndex ) );
+			truthRecoPairs.push_back( make_pair( closestTruthIndex, recoIndex ) );
 
 			//Remove the truth index from the unpaired truth list
 			vector< unsigned int >::iterator searchIterator;
 			for ( searchIterator = unpairedTruth.begin(); searchIterator != unpairedTruth.end(); searchIterator++ )
 			{
-				if ( *searchIterator == guessPairings[ recoIndex ][ 0 ] )
+				if ( *searchIterator == closestTruthIndex )
 				{
 					unpairedTruth.erase( searchIterator );
 					break;
@@ -610,4 +627,30 @@ double UEdeltaPhiPlotMaker::PlusMinusPi( double NotInRange )
 int UEdeltaPhiPlotMaker::CorrectionMode()
 {
 	return correctionType;
+}
+
+//Instantiate an object to correct the data
+ICorrection * UEdeltaPhiPlotMaker::MakeCorrector( int CorrectionMode )
+{
+	if ( CorrectionMode == -1 )
+	{
+		return new Folding( distributionIndices, xName + priorName, thisPlotID );
+	}
+	else if ( CorrectionMode == 0 )
+	{
+		return new NoCorrection( distributionIndices, xName + priorName, thisPlotID );
+	}
+	else if ( CorrectionMode == 1 )
+	{
+		return new BinByBinUnfolding( distributionIndices, xName + priorName, thisPlotID );
+	}
+	else if ( CorrectionMode == 2 )
+	{
+		return new BayesianUnfolding( distributionIndices, xName + priorName, thisPlotID );
+	}
+	else
+	{
+		cerr << "Unrecognised correction mode (" << CorrectionMode << ")" << endl;
+		exit(1);
+	}
 }

@@ -87,6 +87,9 @@ class UEdeltaPhiPlotMaker : public IPlotMaker
 		//UE-specific
 		double PlusMinusPi( double NotInRange );
 
+		//Instantiate the corrector
+                ICorrection * MakeCorrector( int CorrectionMode );
+
 		int correctionType;
 		unsigned int thisPlotID;
 		ICorrection * XUnfolder;

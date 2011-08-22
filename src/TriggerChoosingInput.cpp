@@ -19,10 +19,10 @@ const string EVENT_NUMBER_COLUMN_NAME = "EventNumber";
 const string EVENT_WEIGHT_COLUMN_NAME = "EventWeight";
 const string LEAD_JET_PT_COLUMN_NAME = "LeadJetPt";
 const string REPLACE_FOR_TRIGGER_IN_PATH = "TriggerName";
-//const char * TRIGGER_NAMES[] = { "L1_MBTS_1", "L1_J5", "L1_J15", "L1_J30", "L1_J55", "L1_J75", "L1_J95" };
-//const double TRIGGER_LOWER_BOUNDS[] = { 20000.0, 60000.0, 110000.0, 160000.0, 210000.0, 260000.0, 310000.0, 1E10 };
-const char * TRIGGER_NAMES[] = { "L1_MBTS_1", "EF_j20_jetNoEF", "EF_j35_jetNoEF", "EF_j50_jetNoEF", "EF_j75_jetNoEF", "EF_j95_jetNoEF", "L1_J95", "L1_J115" };
-const double TRIGGER_LOWER_BOUNDS[] = { 20000.0, 60000.0, 110000.0, 160000.0, 210000.0, 260000.0, 310000.0, 400000.0, 1E10 };
+const char * TRIGGER_NAMES[] = { "L1_MBTS_1", "L1_J5", "L1_J15", "L1_J30", "L1_J55", "L1_J75", "L1_J95" };
+const double TRIGGER_LOWER_BOUNDS[] = { 20000.0, 60000.0, 110000.0, 160000.0, 210000.0, 260000.0, 310000.0, 1E10 };
+//const char * TRIGGER_NAMES[] = { "L1_MBTS_1", "EF_j20_jetNoEF", "EF_j35_jetNoEF", "EF_j50_jetNoEF", "EF_j75_jetNoEF", "EF_j95_jetNoEF", "L1_J95", "L1_J115" };
+//const double TRIGGER_LOWER_BOUNDS[] = { 20000.0, 60000.0, 110000.0, 160000.0, 210000.0, 260000.0, 310000.0, 400000.0, 1E10 };
 
 //Default constructor - useless
 TriggerChoosingInput::TriggerChoosingInput()
@@ -32,6 +32,8 @@ TriggerChoosingInput::TriggerChoosingInput()
 //Constructor taking arguments pointing to a particular Ntuple in a root file
 TriggerChoosingInput::TriggerChoosingInput( string FilePath, string NtuplePath, string Description, unsigned int DescriptionIndex, ObservableList * RelevanceChecker, double JetPtMax )
 {
+	cout << "WARNING: TriggerChoosingInput contains hard-coded values specific to the calorimeter jet underlying event analysis. If you're unsure what that means then don't use it!" << endl;
+
 	sourceDescription = Description;
 	sourceDescriptionIndex = DescriptionIndex;
 	totalRows = 0;
