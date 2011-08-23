@@ -62,7 +62,7 @@ class MonteCarloSummaryPlotMaker
 		MonteCarloInformation * mcInfo;
 		TCanvas * plotCanvas;
 		bool finalised, combineMode, manualRange, manualLabels, logScale;
-		vector< IPlotMaker* > allPlots, crossCheckPlots;
+		vector< IPlotMaker* > allPlots;
 		double yRangeMinimum, yRangeMaximum;
 		string dataDescription, xAxisLabel, yAxisLabel;
 		vector< string > variableNames;

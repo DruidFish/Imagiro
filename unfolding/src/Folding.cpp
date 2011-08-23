@@ -166,15 +166,17 @@ bool Folding::ClosureTest( unsigned int MostIterations, bool WithSmoothing )
 
 	//Compare with reconstructed distribution
 	double chi2, kolmogorov;
-	distributionComparison->CompareDistributions( reconstructedDistribution, smearedTruthDistribution, chi2, kolmogorov, false, true );
+	distributionComparison->CompareDistributions( reconstructedDistribution, smearedTruthDistribution, chi2, kolmogorov, true );
 
 	//Output result
+	double binNumber = (double)indexCalculator->GetBinNumber();
+	delete smearedTruthDistribution;
 	if ( chi2 == 0.0 && kolmogorov == 1.0 )
 	{
 		cout << "Perfect closure test: chi squared = " << chi2 << " and K-S probability = " << kolmogorov << ". Nice one!" << endl;
 		return true;
 	}
-	else if ( chi2 < 10.0 && kolmogorov > 0.1 )
+	else if ( chi2 <  binNumber && kolmogorov > 1.0 / binNumber )
 	{
 		cout << "Closure test passed: chi squared = " << chi2 << " and K-S probability = " << kolmogorov << endl;
 		return true;

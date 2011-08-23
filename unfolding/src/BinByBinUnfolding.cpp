@@ -207,7 +207,7 @@ bool BinByBinUnfolding::ClosureTest( unsigned int MostIterations, bool WithSmoot
 
 	//Compare with truth distribution
 	double chi2Reference, kolmogorovReference;
-	distributionComparison->CompareDistributions( truthDistribution, unfoldedReconstructedDistribution, chi2Reference, kolmogorovReference, false, true );
+	distributionComparison->CompareDistributions( truthDistribution, unfoldedReconstructedDistribution, chi2Reference, kolmogorovReference, true );
 
 	//Output result
 	double binNumber = (double)indexCalculator->GetBinNumber();

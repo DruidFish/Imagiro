@@ -21,7 +21,7 @@
 
 using namespace std;
 
-const int MC_CHECK_OFFSET = 1;
+//const int MC_CHECK_OFFSET = 1;
 const int BAYESIAN_MODE = 2;
 const int NO_CORRECTION_MODE = 0;
 
@@ -59,13 +59,6 @@ MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker( IPlotMaker * TemplatePlo
 		{
 			allPlots.push_back( TemplatePlotMaker->Clone( mcDescription ) );
 		}
-
-		//Only for Bayesian unfolding
-		if ( correctionType == BAYESIAN_MODE )
-		{
-			//Make plots for testing the unfolding with MC
-			crossCheckPlots.push_back( TemplatePlotMaker->Clone( mcDescription ) );
-		}
 	}
 	if ( !usedTheTemplate )
 	{
@@ -88,10 +81,6 @@ MonteCarloSummaryPlotMaker::~MonteCarloSummaryPlotMaker()
 	{
 		for ( unsigned int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
 		{
-			if ( correctionType == BAYESIAN_MODE )
-			{
-				delete crossCheckPlots[ plotIndex ];
-			}
 			delete allPlots[ plotIndex ];
 		}
 	}
@@ -122,26 +111,6 @@ void MonteCarloSummaryPlotMaker::StoreMatch( IFileInput * TruthInput, IFileInput
 		{
 			allPlots[ inputIndex ]->StoreMatch( TruthInput, ReconstructedInput );
 		}
-
-		//Also store the event for the cross-check unfolding
-		if ( correctionType == BAYESIAN_MODE )
-		{
-			if ( combineMode )
-			{
-				for ( unsigned int mcIndex = 0; mcIndex < allPlots.size(); mcIndex++ )
-				{
-					crossCheckPlots[ mcIndex ]->StoreMatch( TruthInput, ReconstructedInput );
-				}
-			}
-			else
-			{
-				crossCheckPlots[ inputIndex ]->StoreMatch( TruthInput, ReconstructedInput );
-			}
-
-			inputIndex += MC_CHECK_OFFSET;
-			inputIndex %= allPlots.size();
-			crossCheckPlots[ inputIndex ]->StoreData( ReconstructedInput );
-		}
 	}
 }
 void MonteCarloSummaryPlotMaker::StoreMiss( IFileInput * TruthInput )
@@ -167,22 +136,6 @@ void MonteCarloSummaryPlotMaker::StoreMiss( IFileInput * TruthInput )
 		{
 			allPlots[ inputIndex ]->StoreMiss( TruthInput );
 		}
-
-		//Also store the event for the cross-check unfolding
-		if ( correctionType == BAYESIAN_MODE )
-		{
-			if ( combineMode )
-			{
-				for ( unsigned int mcIndex = 0; mcIndex < allPlots.size(); mcIndex++ )
-				{
-					crossCheckPlots[ mcIndex ]->StoreMiss( TruthInput );
-				}
-			}
-			else
-			{
-				crossCheckPlots[ inputIndex ]->StoreMiss( TruthInput );
-			}
-		}
 	}
 }
 void MonteCarloSummaryPlotMaker::StoreFake( IFileInput * ReconstructedInput )
@@ -207,26 +160,6 @@ void MonteCarloSummaryPlotMaker::StoreFake( IFileInput * ReconstructedInput )
 		else
 		{
 			allPlots[ inputIndex ]->StoreFake( ReconstructedInput );
-		}
-
-		//Also store the event for the cross-check unfolding
-		if ( correctionType == BAYESIAN_MODE )
-		{
-			if ( combineMode )
-			{
-				for ( unsigned int mcIndex = 0; mcIndex < allPlots.size(); mcIndex++ )
-				{
-					crossCheckPlots[ mcIndex ]->StoreFake( ReconstructedInput );
-				}
-			}
-			else
-			{
-				crossCheckPlots[ inputIndex ]->StoreFake( ReconstructedInput );
-			}
-
-			inputIndex += MC_CHECK_OFFSET;
-			inputIndex %= allPlots.size();
-			crossCheckPlots[ inputIndex ]->StoreData( ReconstructedInput );
 		}
 	}
 }
@@ -312,19 +245,23 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 		cout << endl << "--------------- Started correcting " << plotDescription << " ----------------" << endl;
 		if ( correctionType == BAYESIAN_MODE )
 		{
-			for ( unsigned int mcIndex = 0; mcIndex < crossCheckPlots.size(); mcIndex++ )
+			//Loop over all possible combinations of MC truth as prior and MC reco as experiment
+			for ( unsigned int mcIndex = 0; mcIndex < allPlots.size(); mcIndex++ )
 			{
-				//Get the distribution that should be produced by the unfolding from MC truth
-				int nextIndex = ( mcIndex + MC_CHECK_OFFSET ) % crossCheckPlots.size();
-				Distribution * referenceDistribution = crossCheckPlots[ nextIndex ]->MonteCarloTruthForCrossCheck();
+				//Get a distribution to use as a prior
+				Distribution * priorDistribution = allPlots[ mcIndex ]->MonteCarloTruthForCrossCheck();
 
-				//Unfold MC reco
-				cout << endl << "Cross check - MC " << nextIndex << " reco with MC " << mcIndex << " prior" << endl;
-				mostIterations += crossCheckPlots[ mcIndex ]->MonteCarloCrossCheck( referenceDistribution, WithSmoothing );
+				//Unfold each other distribution with that as a prior
+				for ( unsigned int checkOffset = 1; checkOffset < allPlots.size(); checkOffset++ )
+				{
+					int nextIndex = ( mcIndex + checkOffset ) % allPlots.size();
+					cout << endl << "Cross check - MC " << nextIndex << " reco with MC " << mcIndex << " prior" << endl;
+					mostIterations += allPlots[ nextIndex ]->MonteCarloCrossCheck( priorDistribution, WithSmoothing );
+				}
 			}
 
 			//Find the average values for the convergence criteria
-			mostIterations = ceil( (double)mostIterations / (double)crossCheckPlots.size() );
+			mostIterations = ceil( (double)mostIterations / (double)( allPlots.size() * ( allPlots.size() - 1 ) ) );
 
 			//Check that the iteration process is useful
 			if ( mostIterations < 2 )
@@ -336,12 +273,6 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 				cout << "Unfolding will only be applied once - no iteration. This suggests there is a problem: perhaps the smearing matrix is underpopulated?" << endl;
 			}
 			cout << "Chosen convergence criterion: " << mostIterations << " iterations" << endl;
-
-			//Tidy up
-			for ( unsigned int mcIndex = 0; mcIndex < crossCheckPlots.size(); mcIndex++ )
-			{
-				delete crossCheckPlots[ mcIndex ];
-			}
 		}
 
 		//Perform closure tests

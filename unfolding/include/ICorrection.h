@@ -65,7 +65,7 @@ class ICorrection
 		//Use MC truth A as a prior to unfold MC reco B
 		//Iterations cease when result is sufficiently close to MC truth B (passed as argument)
 		//Returns the number of iterations required
-		virtual unsigned int MonteCarloCrossCheck( Distribution * ReferenceDistribution, bool WithSmoothing = false ) = 0;
+		virtual unsigned int MonteCarloCrossCheck( Distribution * InputPriorDistribution, bool WithSmoothing = false ) = 0;
 
 		//Retrieve a TH1F* containing the corrected data distribution
 		virtual TH1F * GetCorrectedHistogram( string Name, string Title, bool Normalise = false ) = 0;

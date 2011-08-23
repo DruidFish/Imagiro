@@ -23,7 +23,7 @@ class Comparison
 		Comparison( string Name, int UniqueID );
 		~Comparison();
 
-		void CompareDistributions( Distribution * FirstInput, Distribution * SecondInput, double & ChiSquared, double & Kolmogorov, bool Normalised, bool IsClosureTest = false );
+		void CompareDistributions( Distribution * FirstInput, Distribution * SecondInput, double & ChiSquared, double & Kolmogorov, bool IsClosureTest = false );
 
 	private:
 		string name;

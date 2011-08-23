@@ -32,7 +32,7 @@ Comparison::~Comparison()
 {
 }
 
-void Comparison::CompareDistributions( Distribution * FirstInput, Distribution * SecondInput, double & ChiSquared, double & Kolmogorov, bool Normalised, bool IsClosureTest )
+void Comparison::CompareDistributions( Distribution * FirstInput, Distribution * SecondInput, double & ChiSquared, double & Kolmogorov, bool IsClosureTest )
 {
 	//Set up the name for both plots in this comparison
 	stringstream internalName;
@@ -47,11 +47,11 @@ void Comparison::CompareDistributions( Distribution * FirstInput, Distribution *
 
 	//Make a plot of the first distribution
 	string firstPlotName = "FirstPlot" + internalName.str();
-	TH1F * firstPlot = FirstInput->MakeRootHistogram( firstPlotName, firstPlotName, Normalised );
+	TH1F * firstPlot = FirstInput->MakeRootHistogram( firstPlotName, firstPlotName );
 
 	//Make a plot of the second distribution
 	string secondPlotName = "SecondPlot" + internalName.str();
-	TH1F * secondPlot = SecondInput->MakeRootHistogram( secondPlotName, secondPlotName, Normalised );
+	TH1F * secondPlot = SecondInput->MakeRootHistogram( secondPlotName, secondPlotName );
 
 	if ( IsClosureTest && CLOSURE_FILE_OUTPUT )
 	{

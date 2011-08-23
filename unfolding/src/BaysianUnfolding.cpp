@@ -244,7 +244,7 @@ bool BayesianUnfolding::ClosureTest( unsigned int MostIterations, bool WithSmoot
 
 	//Compare with truth distribution
 	double chi2Reference, kolmogorovReference;
-	distributionComparison->CompareDistributions( truthDistribution, unfoldedReconstructedDistribution, chi2Reference, kolmogorovReference, false, true );
+	distributionComparison->CompareDistributions( truthDistribution, unfoldedReconstructedDistribution, chi2Reference, kolmogorovReference, true );
 
 	//Output result
 	double binNumber = (double)indexCalculator->GetBinNumber();
@@ -270,20 +270,20 @@ bool BayesianUnfolding::ClosureTest( unsigned int MostIterations, bool WithSmoot
 //Use MC truth A as a prior to unfold MC reco B
 //Iterations cease when result is sufficiently close to MC truth B (passed as argument)
 //Returns the number of iterations required. Convergence criteria as output arguments
-unsigned int BayesianUnfolding::MonteCarloCrossCheck( Distribution * ReferenceDistribution, bool WithSmoothing )
+unsigned int BayesianUnfolding::MonteCarloCrossCheck( Distribution * InputPriorDistribution, bool WithSmoothing )
 {
-	//Extrapolate the number of missed events in the data
-	dataDistribution->SetBadBin( totalMissed / ( totalPaired + totalFake ) );
+	//Extrapolate the number of missed events in the data - Not needed, using reco
+	//dataDistribution->SetBadBin( totalMissed / ( totalPaired + totalFake ) );
 
-	//Use the truth distribution as the prior
-	Distribution * priorDistribution = truthDistribution;
+	//Use the input distribution as a prior for unfolding
+	Distribution * priorDistribution = InputPriorDistribution;
 
 	//Finalise the smearing matrix
 	inputSmearing->Finalise();
 
-	//Compare the uncorrected data to the truth
+	//Compare the uncorrected reco to the truth
 	double lastChiSquared, lastKolmogorov;
-	distributionComparison->CompareDistributions( truthDistribution, dataDistribution, lastChiSquared, lastKolmogorov, true );
+	distributionComparison->CompareDistributions( truthDistribution, reconstructedDistribution, lastChiSquared, lastKolmogorov );
 	cout << "------------- Cross-Check -------------" << endl;
 	cout << "0: " << lastChiSquared << ", " << lastKolmogorov;
 
@@ -292,7 +292,7 @@ unsigned int BayesianUnfolding::MonteCarloCrossCheck( Distribution * ReferenceDi
 	UnfoldingMatrix * lastUnfoldingMatrix;
 	for ( unsigned int iteration = 0; iteration < MAX_ITERATIONS_FOR_CROSS_CHECK; iteration++ )
 	{
-		//Smooth the prior distribution, is asked. Don't smooth the truth
+		//Smooth the prior distribution, if asked. Don't smooth the truth
 		if ( WithSmoothing && iteration != 0 )
 		{
 			priorDistribution->Smooth();
@@ -300,17 +300,17 @@ unsigned int BayesianUnfolding::MonteCarloCrossCheck( Distribution * ReferenceDi
 
 		//Iterate
 		lastUnfoldingMatrix = new UnfoldingMatrix( inputSmearing, priorDistribution );
-		adjustedDistribution = new Distribution( dataDistribution, lastUnfoldingMatrix );
+		adjustedDistribution = new Distribution( reconstructedDistribution, lastUnfoldingMatrix );
 		delete lastUnfoldingMatrix;
 
-		//Compare with reference distribution
+		//Compare with reference distribution (the MC truth)
 		double referenceChi2, referenceKolmogorov;
-		distributionComparison->CompareDistributions( adjustedDistribution, ReferenceDistribution, referenceChi2, referenceKolmogorov, true );
+		distributionComparison->CompareDistributions( adjustedDistribution, truthDistribution, referenceChi2, referenceKolmogorov );
 
 		//Reset for next iteration
 		if ( iteration != 0 )
 		{
-			//Don't delete the MC truth
+			//Don't delete the input prior
 			delete priorDistribution;
 		}
 		priorDistribution = adjustedDistribution;
