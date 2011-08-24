@@ -80,6 +80,7 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	//Error calculation
 	xvsyTruthName += "SimpleProfile";
 	simpleDataProfile = new TProfile( xvsyTruthName.c_str(), xvsyTruthName.c_str(), distributionIndices->GetBinNumber(0) - 2, distributionIndices->GetBinLowEdgesForRoot(0) );
+	simpleDataProfile->Sumw2();
 }
 
 //Constructor with the names to use for the variables
@@ -126,6 +127,7 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	//Error calculation
 	xvsyTruthName += "SimpleProfile";
 	simpleDataProfile = new TProfile( xvsyTruthName.c_str(), xvsyTruthName.c_str(), distributionIndices->GetBinNumber(0) - 2, distributionIndices->GetBinLowEdgesForRoot(0) );
+	simpleDataProfile->Sumw2();
 }
 
 //To be used only with Clone
@@ -165,6 +167,7 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	//Error calculation
 	xvsyTruthName += "SimpleProfile";
 	simpleDataProfile = new TProfile( xvsyTruthName.c_str(), xvsyTruthName.c_str(), distributionIndices->GetBinNumber(0) - 2, distributionIndices->GetBinLowEdgesForRoot(0) );
+	simpleDataProfile->Sumw2();
 }
 
 //Destructor

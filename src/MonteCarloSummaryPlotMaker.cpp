@@ -301,15 +301,15 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 			}
 
 			//Quit if too many prior distributions fail
-			if ( numberFailed == allPlots.size() && correctionType == BAYESIAN_MODE )
-			{
-				cerr << "All priors failed their closure tests: something is really wrong here. Suggest you choose better binning / provide more MC stats" << endl;
-				//exit(1);
-			}
-			else if ( numberFailed > (double)allPlots.size() / 2.0 )
-			{
-				cerr << "The majority of priors failed their closure tests. Suggest you choose better binning / provide more MC stats" << endl;
-			}
+			//if ( numberFailed == allPlots.size() && correctionType == BAYESIAN_MODE )
+			//{
+			//	cerr << "All priors failed their closure tests: something is really wrong here. Suggest you choose better binning / provide more MC stats" << endl;
+			//	//exit(1);
+			//}
+			//else if ( numberFailed > (double)allPlots.size() / 2.0 )
+			//{
+			//	cerr << "The majority of priors failed their closure tests. Suggest you choose better binning / provide more MC stats" << endl;
+			//}
 		}
 
 		//Make a canvas to display the plots

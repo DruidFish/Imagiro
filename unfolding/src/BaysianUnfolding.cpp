@@ -14,7 +14,7 @@
 #include <cstdlib>
 #include <sstream>
 
-const unsigned int MAX_ITERATIONS_FOR_CROSS_CHECK = 10;
+const unsigned int MAX_ITERATIONS_FOR_CROSS_CHECK = 100;
 
 //Default constructor - useless
 BayesianUnfolding::BayesianUnfolding()
@@ -316,13 +316,22 @@ unsigned int BayesianUnfolding::MonteCarloCrossCheck( Distribution * InputPriorD
 		priorDistribution = adjustedDistribution;
 
 		//Check to see if things have got worse
-		if ( referenceChi2 > lastChiSquared || referenceKolmogorov < lastKolmogorov || iteration == MAX_ITERATIONS_FOR_CROSS_CHECK - 1 || ( referenceChi2 == lastChiSquared && referenceKolmogorov == lastKolmogorov ) )
+		if ( referenceChi2 > lastChiSquared || referenceKolmogorov < lastKolmogorov || ( referenceChi2 == lastChiSquared && referenceKolmogorov == lastKolmogorov ) )
 		{
 			//Return the criteria
 			cout << " <--" << endl << iteration + 1 << ": " << referenceChi2 << ", " << referenceKolmogorov << endl;
 			cout << "-------------------------------------" << endl;
 			delete adjustedDistribution;
 			return iteration;
+		}
+		else if ( iteration == MAX_ITERATIONS_FOR_CROSS_CHECK - 1 )
+		{
+			//Return the criteria
+			cout << endl << iteration + 1 << ": " << referenceChi2 << ", " << referenceKolmogorov << " <--" << endl;
+			cout << "Artificial iteration limit reached - change the code if you really want to go further" << endl;
+                        cout << "-------------------------------------" << endl;
+			delete adjustedDistribution;
+			return MAX_ITERATIONS_FOR_CROSS_CHECK;
 		}
 		else
 		{
