@@ -492,7 +492,7 @@ void XvsYNormalisedPlotMaker::Correct( unsigned int MostIterations, bool SkipUnf
 		//Format and save the smearing matrix
 		if ( doPlotSmearing )
 		{
-			smearingMatrix = XvsYUnfolder->GetSmearingMatrix( XvsYName + "Smearing", XvsYTitle + " Smearing Matrix" );
+			smearingMatrix = XvsYUnfolder->GetSmearingHistogram( XvsYName + "Smearing", XvsYTitle + " Smearing Matrix" );
 			string smearingXTitle = xName + " vs " + yName + " Truth";
 			string smearingYTitle = xName + " vs " + yName + " Reconstructed";
 			smearingMatrix->SetXTitle( smearingXTitle.c_str() );
@@ -548,9 +548,9 @@ bool XvsYNormalisedPlotMaker::ClosureTest( unsigned int MostIterations, bool Wit
 }
 
 //Make a cross-check with MC
-unsigned int XvsYNormalisedPlotMaker::MonteCarloCrossCheck( Distribution * ReferenceDistribution, bool WithSmoothing )
+unsigned int XvsYNormalisedPlotMaker::MonteCarloCrossCheck( Distribution * InputPriorDistribution, SmearingMatrix * InputSmearing, bool WithSmoothing )
 {
-	return XvsYUnfolder->MonteCarloCrossCheck( ReferenceDistribution, WithSmoothing );
+	return XvsYUnfolder->MonteCarloCrossCheck( InputPriorDistribution, InputSmearing, WithSmoothing );
 }
 
 //Return some plots
@@ -592,12 +592,16 @@ TH1F * XvsYNormalisedPlotMaker::MCTruthHistogram()
 }
 
 //Return a distribution for use in the cross-checks
-Distribution * XvsYNormalisedPlotMaker::MonteCarloTruthForCrossCheck()
+Distribution * XvsYNormalisedPlotMaker::PriorDistributionForCrossCheck()
 {
 	return XvsYUnfolder->GetTruthDistribution();
 }
+SmearingMatrix * XvsYNormalisedPlotMaker::SmearingMatrixForCrossCheck()
+{
+	return XvsYUnfolder->GetSmearingMatrix();
+}
 
-TH2F * XvsYNormalisedPlotMaker::SmearingMatrix()
+TH2F * XvsYNormalisedPlotMaker::SmearingHistogram()
 {
 	if ( finalised )
 	{

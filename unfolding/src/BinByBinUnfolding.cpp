@@ -231,7 +231,7 @@ bool BinByBinUnfolding::ClosureTest( unsigned int MostIterations, bool WithSmoot
 
 //Perform an unfolding cross-check
 //Just a dummy since there is no iteration
-unsigned int BinByBinUnfolding::MonteCarloCrossCheck( Distribution * ReferenceDistribution, bool WithSmoothing )
+unsigned int BinByBinUnfolding::MonteCarloCrossCheck( Distribution * InputPriorDistribution, SmearingMatrix * InputSmearing, bool WithSmoothing )
 {
 	return 1;
 }
@@ -243,7 +243,7 @@ TH1F * BinByBinUnfolding::GetCorrectedHistogram( string Name, string Title, bool
 }
 
 //Retrieve the smearing matrix used
-TH2F * BinByBinUnfolding::GetSmearingMatrix( string Name, string Title )
+TH2F * BinByBinUnfolding::GetSmearingHistogram( string Name, string Title )
 {
 	//Make a matrix to store the bin-by-bin ratios
 	TH2F * binByBinMatrix = new TH2F( Name.c_str(), Title.c_str(), truthBinSums.size(), 0.0, (double)truthBinSums.size(), truthBinSums.size(), 0.0, (double)truthBinSums.size() );
@@ -257,6 +257,10 @@ TH2F * BinByBinUnfolding::GetSmearingMatrix( string Name, string Title )
 	}
 
 	return binByBinMatrix;
+}
+SmearingMatrix * BinByBinUnfolding::GetSmearingMatrix()
+{
+	return NULL;
 }
 
 //Retrieve the truth distribution

@@ -13,8 +13,6 @@
 #include "IPlotMaker.h"
 #include "ICorrection.h"
 #include "IIndexCalculator.h"
-#include <vector>
-#include <string>
 
 using namespace std;
 
@@ -43,16 +41,17 @@ class XsubEventPlotMaker : public IPlotMaker
 		virtual bool ClosureTest( unsigned int MostIterations, bool WithSmoothing = false );
 
 		//Make a cross-check with MC
-		virtual unsigned int MonteCarloCrossCheck( Distribution * ReferenceDistribution, bool WithSmoothing = false );
+		virtual unsigned int MonteCarloCrossCheck( Distribution * InputPriorDistribution, SmearingMatrix * InputSmearing, bool WithSmoothing = false );
 
 		//Return a distribution for use in the cross-checks
-		virtual Distribution * MonteCarloTruthForCrossCheck();
+		virtual Distribution * PriorDistributionForCrossCheck();
+		virtual SmearingMatrix * SmearingMatrixForCrossCheck();
 
 		//Return some plots
 		virtual TH1F * CorrectedHistogram();
 		virtual TH1F * UncorrectedHistogram();
 		virtual TH1F * MCTruthHistogram();
-		virtual TH2F * SmearingMatrix();
+		virtual TH2F * SmearingHistogram();
 
 		//Copy the object
 		virtual XsubEventPlotMaker * Clone( string NewPriorName );

@@ -33,6 +33,8 @@ UEdeltaPhiPlotMaker::UEdeltaPhiPlotMaker()
 UEdeltaPhiPlotMaker::UEdeltaPhiPlotMaker( string XVariableName, string PriorName, unsigned int XBinNumber, double XMinimum, double XMaximum,
 		int CorrectionMode, vector< string > OtherVariableNames, double ScaleFactor, bool Normalise )
 {
+        cout << "WARNING: UEdeltaPhiPlotMaker is an experiment that I deem failed. Feel free to try it out, but I don't think it gives useful results" << endl;
+
 	correctionType = CorrectionMode;
 	xName = XVariableName;
 	priorName = PriorName;
@@ -63,6 +65,8 @@ UEdeltaPhiPlotMaker::UEdeltaPhiPlotMaker( string XVariableName, string PriorName
 UEdeltaPhiPlotMaker::UEdeltaPhiPlotMaker( string XVariableName, string PriorName, vector< double > BinLowEdges,
 		int CorrectionMode, vector< string > OtherVariableNames, double ScaleFactor, bool Normalise )
 {
+        cout << "WARNING: UEdeltaPhiPlotMaker is an experiment that I deem failed. Feel free to try it out, but I don't think it gives useful results" << endl;
+
 	correctionType = CorrectionMode;
 	xName = XVariableName;
 	priorName = PriorName;
@@ -90,6 +94,8 @@ UEdeltaPhiPlotMaker::UEdeltaPhiPlotMaker( string XVariableName, string PriorName
 UEdeltaPhiPlotMaker::UEdeltaPhiPlotMaker( vector< string > OtherVariableNames, string PriorName, IIndexCalculator * DistributionIndices,
 		unsigned int OriginalID, int CorrectionMode, double ScaleFactor, bool Normalise )
 {
+        cout << "WARNING: UEdeltaPhiPlotMaker is an experiment that I deem failed. Feel free to try it out, but I don't think it gives useful results" << endl;
+
 	correctionType = CorrectionMode;
 	xName = OtherVariableNames[ OtherVariableNames.size() - 1 ];
 	priorName = PriorName;
@@ -311,7 +317,7 @@ void UEdeltaPhiPlotMaker::Correct( unsigned int MostIterations, bool SkipUnfoldi
 		//Retrieve some other bits for debug
 		TH1F * XUncorrected = XUnfolder->GetUncorrectedHistogram( XFullName + "Uncorrected", XFullTitle + " Uncorrected Distribution", normalise );
 		TH1F * XTruth = XUnfolder->GetTruthHistogram( XFullName + "Truth", XFullTitle + " Truth Distribution", normalise );
-		TH2F * XSmearing = XUnfolder->GetSmearingMatrix( XFullName + "Smearing", XFullTitle + " Smearing Matrix" );
+		TH2F * XSmearing = XUnfolder->GetSmearingHistogram( XFullName + "Smearing", XFullTitle + " Smearing Matrix" );
 		if ( ErrorMode > 1 && !SkipUnfolding )
 		{
 			covarianceMatrix = XUnfolder->DAgostiniCovariance( XFullName + "Covariance", XFullTitle + " Covariance Matrix" );
@@ -419,9 +425,9 @@ bool UEdeltaPhiPlotMaker::ClosureTest( unsigned int MostIterations, bool WithSmo
 }
 
 //Make a cross-check with MC
-unsigned int UEdeltaPhiPlotMaker::MonteCarloCrossCheck( Distribution * ReferenceDistribution, bool WithSmoothing )
+unsigned int UEdeltaPhiPlotMaker::MonteCarloCrossCheck( Distribution * InputPriorDistribution, SmearingMatrix * InputSmearing, bool WithSmoothing )
 {
-	return XUnfolder->MonteCarloCrossCheck( ReferenceDistribution, WithSmoothing );
+	return XUnfolder->MonteCarloCrossCheck( InputPriorDistribution, InputSmearing, WithSmoothing );
 }
 
 //Return some plots
@@ -463,12 +469,16 @@ TH1F * UEdeltaPhiPlotMaker::MCTruthHistogram()
 }
 
 //Return a distribution for use in the cross-checks
-Distribution * UEdeltaPhiPlotMaker::MonteCarloTruthForCrossCheck()
+Distribution * UEdeltaPhiPlotMaker::PriorDistributionForCrossCheck()
 {
 	return XUnfolder->GetTruthDistribution();
 }
+SmearingMatrix * UEdeltaPhiPlotMaker::SmearingMatrixForCrossCheck()
+{
+	return XUnfolder->GetSmearingMatrix();
+}
 
-TH2F * UEdeltaPhiPlotMaker::SmearingMatrix()
+TH2F * UEdeltaPhiPlotMaker::SmearingHistogram()
 {
 	if ( finalised )
 	{

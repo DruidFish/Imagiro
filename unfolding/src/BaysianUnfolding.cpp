@@ -270,7 +270,7 @@ bool BayesianUnfolding::ClosureTest( unsigned int MostIterations, bool WithSmoot
 //Use MC truth A as a prior to unfold MC reco B
 //Iterations cease when result is sufficiently close to MC truth B (passed as argument)
 //Returns the number of iterations required. Convergence criteria as output arguments
-unsigned int BayesianUnfolding::MonteCarloCrossCheck( Distribution * InputPriorDistribution, bool WithSmoothing )
+unsigned int BayesianUnfolding::MonteCarloCrossCheck( Distribution * InputPriorDistribution, SmearingMatrix * InputSmearing, bool WithSmoothing )
 {
 	//Extrapolate the number of missed events in the data - Not needed, using reco
 	//dataDistribution->SetBadBin( totalMissed / ( totalPaired + totalFake ) );
@@ -279,7 +279,7 @@ unsigned int BayesianUnfolding::MonteCarloCrossCheck( Distribution * InputPriorD
 	Distribution * priorDistribution = InputPriorDistribution;
 
 	//Finalise the smearing matrix
-	inputSmearing->Finalise();
+	InputSmearing->Finalise();
 
 	//Compare the uncorrected reco to the truth
 	double lastChiSquared, lastKolmogorov;
@@ -299,7 +299,7 @@ unsigned int BayesianUnfolding::MonteCarloCrossCheck( Distribution * InputPriorD
 		}
 
 		//Iterate
-		lastUnfoldingMatrix = new UnfoldingMatrix( inputSmearing, priorDistribution );
+		lastUnfoldingMatrix = new UnfoldingMatrix( InputSmearing, priorDistribution );
 		adjustedDistribution = new Distribution( reconstructedDistribution, lastUnfoldingMatrix );
 		delete lastUnfoldingMatrix;
 
@@ -353,9 +353,13 @@ TH1F * BayesianUnfolding::GetCorrectedHistogram( string Name, string Title, bool
 }
 
 //Retrieve the smearing matrix used
-TH2F * BayesianUnfolding::GetSmearingMatrix( string Name, string Title )
+TH2F * BayesianUnfolding::GetSmearingHistogram( string Name, string Title )
 {
 	return inputSmearing->MakeRootHistogram( Name, Title );
+}
+SmearingMatrix * BayesianUnfolding::GetSmearingMatrix()
+{
+	return inputSmearing;
 }
 
 //Retrieve the truth distribution

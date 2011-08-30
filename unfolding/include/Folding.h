@@ -12,7 +12,6 @@
 
 #include "ICorrection.h"
 #include "IIndexCalculator.h"
-#include "Distribution.h"
 #include "Comparison.h"
 
 using namespace std;
@@ -63,7 +62,7 @@ class Folding : public ICorrection
 
 		//Perform an unfolding cross-check
 		//Dummy - no iterations
-		virtual unsigned int MonteCarloCrossCheck( Distribution * ReferenceDistribution, bool WithSmoothing = false );
+		virtual unsigned int MonteCarloCrossCheck( Distribution * ReferenceDistribution, SmearingMatrix * InputSmearing, bool WithSmoothing = false );
 
 		//Retrieve a TH1F* containing the unfolded data
 		//distribution, with or without errors
@@ -72,7 +71,8 @@ class Folding : public ICorrection
 		virtual TH1F * GetCorrectedHistogram( string Name, string Title, bool Normalise = false );
 
 		//Retrieve the smearing matrix used
-		virtual	TH2F * GetSmearingMatrix( string Name, string Title );
+		virtual	TH2F * GetSmearingHistogram( string Name, string Title );
+		virtual SmearingMatrix * GetSmearingMatrix();
 
 		//Retrieve the reconstructed distribution (since the "true" folded value is the reconstructed one)
 		virtual TH1F * GetTruthHistogram( string Name, string Title, bool Normalise = false );

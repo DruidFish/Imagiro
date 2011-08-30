@@ -63,13 +63,14 @@ class BinByBinUnfolding : public ICorrection
 		//Use MC truth A as a prior to unfold MC reco B
 		//Iterations cease when result is sufficiently close to MC truth B (passed as argument)
 		//Returns the number of iterations required
-		virtual unsigned int MonteCarloCrossCheck( Distribution * ReferenceDistribution, bool WithSmoothing = false );
+		virtual unsigned int MonteCarloCrossCheck( Distribution * ReferenceDistribution, SmearingMatrix * InputSmearing, bool WithSmoothing = false );
 
 		//Retrieve a TH1F* containing the corrected data distribution
 		virtual TH1F * GetCorrectedHistogram( string Name, string Title, bool Normalise = false );
 
 		//Retrieve the smearing matrix used
-		virtual TH2F * GetSmearingMatrix( string Name, string Title );
+		virtual TH2F * GetSmearingHistogram( string Name, string Title );
+		virtual SmearingMatrix * GetSmearingMatrix();
 
 		//Retrieve the truth distribution
 		virtual TH1F * GetTruthHistogram( string Name, string Title, bool Normalise = false );

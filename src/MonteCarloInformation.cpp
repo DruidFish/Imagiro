@@ -77,7 +77,7 @@ MonteCarloInformation::MonteCarloInformation()
 	internalReco.push_back( "benTuple" );
 
 	//Herwig++
-/*	combineFiles.push_back( true );
+	combineFiles.push_back( true );
 
 	truthPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version7/J0_Herwig/combined.Truth.AntiKt4TopoEM.root" );
 	vector< string > herwigExtraTruth;
@@ -114,7 +114,7 @@ MonteCarloInformation::MonteCarloInformation()
 	styles.push_back( 8 );
 	inputTypes.push_back( "TriggerChoosingInput" );
 	internalTruth.push_back( "benTuple" );
-	internalReco.push_back( "benTuple" );*/
+	internalReco.push_back( "benTuple" );
 
 	//Pythia 6 Perugia 2010
 	combineFiles.push_back( true );

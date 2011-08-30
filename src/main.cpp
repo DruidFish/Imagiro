@@ -100,6 +100,7 @@ int main ( int argc, char * argv[] )
 	cout << "If you use Imagiro in an analysis, please cite:" << endl;
 	cout << "ATL-COM-PHYS-2011-674 (rather unfinished)" << endl;
 	cout << "<http://cdsweb.cern.ch/record/1357548>" << endl;
+	cout << endl;
 
 	////////////////////////////////////////////////////////////
 	//                                                        //
@@ -329,12 +330,12 @@ int main ( int argc, char * argv[] )
 	////////////////////////////////////////////////////////////
 
 	//MC
-	//IFileInput * dataInput = mcInfo->MakeReconstructedInput( 0, relevanceChecker );
+	//IFileInput * dataInput = mcInfo->MakeReconstructedInput( 1, relevanceChecker );
 	//IFileInput * dataInput = mcInfo->MakeTruthInput( 0, relevanceChecker );
 
 	//Full dataset
-	//IFileInput * dataInput = new TriggerChoosingInput( "/Disk/speyside7/Grid/grid-files/bwynne/Version7/periodD/combined.TriggerName.AntiKt4TopoEM.root",
-	//		"benTuple", "Period D (2010)", mcInfo->NumberOfSources(), relevanceChecker );
+	IFileInput * dataInput = new TriggerChoosingInput( "/Disk/speyside7/Grid/grid-files/bwynne/Version8/periodA/combined.TriggerName.AntiKt4TrackZ.root",
+			"benTuple", "Period A TrackJets", mcInfo->NumberOfSources(), relevanceChecker );
 	//IFileInput * dataInput = new TriggerChoosingInput( "/Disk/speyside7/Grid/grid-files/bwynne/Version7/AMBT1.J2/combined.TriggerName.AntiKt4TopoEM.root",
 	//		"benTuple", "AMBT1 J2", mcInfo->NumberOfSources(), relevanceChecker );
 
@@ -345,7 +346,7 @@ int main ( int argc, char * argv[] )
 	//		"benTuple", "AMBT1 J2 J5", mcInfo->NumberOfSources(), relevanceChecker );
 
 	//All A to F
-	vector< string > dataPaths;
+	/*vector< string > dataPaths;
 	dataPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version7/periodA/combined.TriggerName.AntiKt6TopoEM.root" );
 	dataPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version7/periodB/combined.TriggerName.AntiKt6TopoEM.root" );
 	dataPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version7/periodC/combined.TriggerName.AntiKt6TopoEM.root" );
@@ -353,7 +354,7 @@ int main ( int argc, char * argv[] )
 	dataPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version7/periodE/combined.TriggerName.AntiKt6TopoEM.root" );
 	dataPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version7/periodF/combined.TriggerName.AntiKt6TopoEM.root" );
 	vector< double > dataWeights( 6, 1.0 );
-	IFileInput * dataInput = new CombinedFileInput( dataPaths, dataWeights, "benTuple", "TriggerChoosingInput", "Periods A-F (2010)", mcInfo->NumberOfSources(), relevanceChecker );
+	IFileInput * dataInput = new CombinedFileInput( dataPaths, dataWeights, "benTuple", "TriggerChoosingInput", "Periods A-F (2010)", mcInfo->NumberOfSources(), relevanceChecker );*/
 
 	//Unfold!
 	DoTheUnfolding( dataInput );

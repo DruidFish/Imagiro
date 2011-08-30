@@ -146,7 +146,7 @@ bool NoCorrection::ClosureTest( unsigned int MostIterations, bool WithSmoothing 
 
 //Perform an unfolding cross-check
 //Dummy, since folding is not iterative
-unsigned int NoCorrection::MonteCarloCrossCheck( Distribution * ReferenceDistribution, bool WithSmoothing )
+unsigned int NoCorrection::MonteCarloCrossCheck( Distribution * InputPriorDistribution, SmearingMatrix * InputSmearing, bool WithSmoothing )
 {
 	return 1;
 }
@@ -158,9 +158,13 @@ TH1F * NoCorrection::GetCorrectedHistogram( string Name, string Title, bool Norm
 }
 
 //Retrieve the smearing matrix used
-TH2F * NoCorrection::GetSmearingMatrix( string Name, string Title )
+TH2F * NoCorrection::GetSmearingHistogram( string Name, string Title )
 {
 	return inputSmearing->MakeRootHistogram( Name, Title );
+}
+SmearingMatrix * NoCorrection::GetSmearingMatrix()
+{
+	return inputSmearing;
 }
 
 //Retrieve the reconstructed distribution

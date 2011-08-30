@@ -12,6 +12,7 @@
 
 #include "IFileInput.h"
 #include "Distribution.h"
+#include "SmearingMatrix.h"
 #include "TH1F.h"
 #include "TH2F.h"
 #include <string>
@@ -40,16 +41,17 @@ class IPlotMaker
 	        virtual bool ClosureTest( unsigned int MostIterations, bool WithSmoothing = false ) = 0;
 
 		//Make a cross-check with MC
-		virtual unsigned int MonteCarloCrossCheck( Distribution * ReferenceDistribution, bool WithSmoothing = false ) = 0;
+		virtual unsigned int MonteCarloCrossCheck( Distribution * InputPriorDistribution, SmearingMatrix * InputSmearing, bool WithSmoothing = false ) = 0;
 
 		//Return a distribution for use in the cross-checks
-		virtual Distribution * MonteCarloTruthForCrossCheck() = 0;
+		virtual Distribution * PriorDistributionForCrossCheck() = 0;
+		virtual SmearingMatrix * SmearingMatrixForCrossCheck() = 0;
 
 		//Return some plots
 		virtual TH1F * CorrectedHistogram() = 0;
 		virtual TH1F * UncorrectedHistogram() = 0;
 		virtual TH1F * MCTruthHistogram() = 0;
-		virtual TH2F * SmearingMatrix() = 0;
+		virtual TH2F * SmearingHistogram() = 0;
 
 		//Copy the object
 		virtual IPlotMaker * Clone( string NewPriorName ) = 0;

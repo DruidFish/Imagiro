@@ -10,14 +10,12 @@
 #ifndef I_CORRECTION_H
 #define I_CORRECTION_H
 
-#include "CovarianceMatrix.h"
-#include "Comparison.h"
 #include "SmearingMatrix.h"
-#include "IIndexCalculator.h"
 #include "Distribution.h"
 #include <vector>
 #include <string>
 #include "TH1F.h"
+#include "TH2F.h"
 
 using namespace std;
 
@@ -65,13 +63,14 @@ class ICorrection
 		//Use MC truth A as a prior to unfold MC reco B
 		//Iterations cease when result is sufficiently close to MC truth B (passed as argument)
 		//Returns the number of iterations required
-		virtual unsigned int MonteCarloCrossCheck( Distribution * InputPriorDistribution, bool WithSmoothing = false ) = 0;
+		virtual unsigned int MonteCarloCrossCheck( Distribution * InputPriorDistribution, SmearingMatrix * InputSmearing, bool WithSmoothing = false ) = 0;
 
 		//Retrieve a TH1F* containing the corrected data distribution
 		virtual TH1F * GetCorrectedHistogram( string Name, string Title, bool Normalise = false ) = 0;
 
 		//Retrieve the smearing matrix used
-		virtual TH2F * GetSmearingMatrix( string Name, string Title ) = 0;
+		virtual TH2F * GetSmearingHistogram( string Name, string Title ) = 0;
+		virtual SmearingMatrix * GetSmearingMatrix() = 0;
 
 		//Retrieve the truth distribution
 		virtual TH1F * GetTruthHistogram( string Name, string Title, bool Normalise = false ) = 0;

@@ -249,14 +249,15 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 			for ( unsigned int mcIndex = 0; mcIndex < allPlots.size(); mcIndex++ )
 			{
 				//Get a distribution to use as a prior
-				Distribution * priorDistribution = allPlots[ mcIndex ]->MonteCarloTruthForCrossCheck();
+				Distribution * priorDistribution = allPlots[ mcIndex ]->PriorDistributionForCrossCheck();
+				SmearingMatrix * crossCheckSmearing = allPlots[ mcIndex ]->SmearingMatrixForCrossCheck();
 
 				//Unfold each other distribution with that as a prior
 				for ( unsigned int checkOffset = 1; checkOffset < allPlots.size(); checkOffset++ )
 				{
 					int nextIndex = ( mcIndex + checkOffset ) % allPlots.size();
 					cout << endl << "Cross check - MC " << nextIndex << " reco with MC " << mcIndex << " prior" << endl;
-					mostIterations += allPlots[ nextIndex ]->MonteCarloCrossCheck( priorDistribution, WithSmoothing );
+					mostIterations += allPlots[ nextIndex ]->MonteCarloCrossCheck( priorDistribution, crossCheckSmearing, WithSmoothing );
 				}
 			}
 
@@ -393,11 +394,11 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 
 					//Copy a smearing matrix if it exists
 					smearingMatrix = NULL;
-					if ( allPlots[ plotIndex ]->SmearingMatrix() )
+					if ( allPlots[ plotIndex ]->SmearingHistogram() )
 					{
 						string smearingName = allPlots[ plotIndex ]->Description( false ) + "SmearingMatrix";
 						string smearingTitle = allPlots[ plotIndex ]->Description( true ) + " Smearing Matrix";
-						smearingMatrix = ( TH2F* )allPlots[ plotIndex ]->SmearingMatrix()->Clone( smearingName.c_str() );
+						smearingMatrix = ( TH2F* )allPlots[ plotIndex ]->SmearingHistogram()->Clone( smearingName.c_str() );
 						smearingMatrix->SetTitle( smearingTitle.c_str() );
 					}
 

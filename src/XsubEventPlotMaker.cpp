@@ -30,6 +30,8 @@ XsubEventPlotMaker::XsubEventPlotMaker()
 XsubEventPlotMaker::XsubEventPlotMaker( string XVariableName, string PriorName, unsigned int XBinNumber, double XMinimum, double XMaximum,
 		int CorrectionMode, vector< string > OtherVariableNames, double ScaleFactor, bool Normalise )
 {
+	cout << "WARNING: XsubEventPlotMaker is an experiment that I deem failed. Feel free to try it out, but I don't think it gives useful results" << endl;
+
 	correctionType = CorrectionMode;
 	xName = XVariableName;
 	priorName = PriorName;
@@ -60,6 +62,8 @@ XsubEventPlotMaker::XsubEventPlotMaker( string XVariableName, string PriorName, 
 XsubEventPlotMaker::XsubEventPlotMaker( string XVariableName, string PriorName, vector< double > BinLowEdges,
 		int CorrectionMode, vector< string > OtherVariableNames, double ScaleFactor, bool Normalise )
 {
+	cout << "WARNING: XsubEventPlotMaker is an experiment that I deem failed. Feel free to try it out, but I don't think it gives useful results" << endl;
+
 	correctionType = CorrectionMode;
 	xName = XVariableName;
 	priorName = PriorName;
@@ -87,6 +91,8 @@ XsubEventPlotMaker::XsubEventPlotMaker( string XVariableName, string PriorName, 
 XsubEventPlotMaker::XsubEventPlotMaker( vector< string > OtherVariableNames, string PriorName, IIndexCalculator * DistributionIndices,
 		unsigned int OriginalID, int CorrectionMode, double ScaleFactor, bool Normalise )
 {
+	cout << "WARNING: XsubEventPlotMaker is an experiment that I deem failed. Feel free to try it out, but I don't think it gives useful results" << endl;
+
 	correctionType = CorrectionMode;
 	xName = OtherVariableNames[ OtherVariableNames.size() - 1 ];
 	priorName = PriorName;
@@ -292,7 +298,7 @@ void XsubEventPlotMaker::Correct( unsigned int MostIterations, bool SkipUnfoldin
 		//Retrieve some other bits for debug
 		TH1F * XUncorrected = XUnfolder->GetUncorrectedHistogram( XFullName + "Uncorrected", XFullTitle + " Uncorrected Distribution", normalise );
 		TH1F * XTruth = XUnfolder->GetTruthHistogram( XFullName + "Truth", XFullTitle + " Truth Distribution", normalise );
-		TH2F * XSmearing = XUnfolder->GetSmearingMatrix( XFullName + "Smearing", XFullTitle + " Smearing Matrix" );
+		TH2F * XSmearing = XUnfolder->GetSmearingHistogram( XFullName + "Smearing", XFullTitle + " Smearing Matrix" );
 		if ( ErrorMode > 1 && !SkipUnfolding )
 		{
 			covarianceMatrix = XUnfolder->DAgostiniCovariance( XFullName + "Covariance", XFullTitle + " Covariance Matrix" );
@@ -400,9 +406,9 @@ bool XsubEventPlotMaker::ClosureTest( unsigned int MostIterations, bool WithSmoo
 }
 
 //Make a cross-check with MC
-unsigned int XsubEventPlotMaker::MonteCarloCrossCheck( Distribution * ReferenceDistribution, bool WithSmoothing )
+unsigned int XsubEventPlotMaker::MonteCarloCrossCheck( Distribution * InputPriorDistribution, SmearingMatrix * InputSmearing, bool WithSmoothing )
 {
-	return XUnfolder->MonteCarloCrossCheck( ReferenceDistribution, WithSmoothing );
+	return XUnfolder->MonteCarloCrossCheck( InputPriorDistribution, InputSmearing, WithSmoothing );
 }
 
 //Return some plots
@@ -444,12 +450,16 @@ TH1F * XsubEventPlotMaker::MCTruthHistogram()
 }
 
 //Return a distribution for use in the cross-checks
-Distribution * XsubEventPlotMaker::MonteCarloTruthForCrossCheck()
+Distribution * XsubEventPlotMaker::PriorDistributionForCrossCheck()
 {
 	return XUnfolder->GetTruthDistribution();
 }
+SmearingMatrix * XsubEventPlotMaker::SmearingMatrixForCrossCheck()
+{
+	return XUnfolder->GetSmearingMatrix();
+}
 
-TH2F * XsubEventPlotMaker::SmearingMatrix()
+TH2F * XsubEventPlotMaker::SmearingHistogram()
 {
 	if ( finalised )
 	{

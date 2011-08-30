@@ -244,7 +244,7 @@ void XPlotMaker::Correct( unsigned int MostIterations, bool SkipUnfolding, unsig
 		//Retrieve some other bits for debug
 		TH1F * XUncorrected = XUnfolder->GetUncorrectedHistogram( XFullName + "Uncorrected", XFullTitle + " Uncorrected Distribution", normalise );
 		TH1F * XTruth = XUnfolder->GetTruthHistogram( XFullName + "Truth", XFullTitle + " Truth Distribution", normalise );
-		TH2F * XSmearing = XUnfolder->GetSmearingMatrix( XFullName + "Smearing", XFullTitle + " Smearing Matrix" );
+		TH2F * XSmearing = XUnfolder->GetSmearingHistogram( XFullName + "Smearing", XFullTitle + " Smearing Matrix" );
 		if ( ErrorMode > 1 && !SkipUnfolding )
 		{
 			covarianceMatrix = XUnfolder->DAgostiniCovariance( XFullName + "Covariance", XFullTitle + " Covariance Matrix" );
@@ -352,9 +352,9 @@ bool XPlotMaker::ClosureTest( unsigned int MostIterations, bool WithSmoothing )
 }
 
 //Make a cross-check with MC
-unsigned int XPlotMaker::MonteCarloCrossCheck( Distribution * ReferenceDistribution, bool WithSmoothing )
+unsigned int XPlotMaker::MonteCarloCrossCheck( Distribution * InputPriorDistribution, SmearingMatrix * InputSmearing, bool WithSmoothing )
 {
-	return XUnfolder->MonteCarloCrossCheck( ReferenceDistribution, WithSmoothing );
+	return XUnfolder->MonteCarloCrossCheck( InputPriorDistribution, InputSmearing, WithSmoothing );
 }
 
 //Return some plots
@@ -396,12 +396,16 @@ TH1F * XPlotMaker::MCTruthHistogram()
 }
 
 //Return a distribution for use in the cross-checks
-Distribution * XPlotMaker::MonteCarloTruthForCrossCheck()
+Distribution * XPlotMaker::PriorDistributionForCrossCheck()
 {
 	return XUnfolder->GetTruthDistribution();
 }
+SmearingMatrix * XPlotMaker::SmearingMatrixForCrossCheck()
+{
+	return XUnfolder->GetSmearingMatrix();
+}
 
-TH2F * XPlotMaker::SmearingMatrix()
+TH2F * XPlotMaker::SmearingHistogram()
 {
 	if ( finalised )
 	{
