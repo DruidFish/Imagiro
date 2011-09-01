@@ -16,6 +16,7 @@
 #include "TH1F.h"
 #include "TH2F.h"
 #include <string>
+#include <vector>
 
 using namespace std;
 
@@ -26,6 +27,9 @@ class IPlotMaker
 		virtual ~IPlotMaker()
 		{
 		}
+
+		//Set up a systematic error study
+		virtual void AddSystematic( vector< double > SystematicOffset, vector< double > SystematicWidth, unsigned int NumberOfPseudoExperiments ) = 0;
 
 		//Take input values from ntuples
 		//To reduce file access, the appropriate row must already be in memory, the method does not change row
@@ -52,6 +56,7 @@ class IPlotMaker
 		virtual TH1F * UncorrectedHistogram() = 0;
 		virtual TH1F * MCTruthHistogram() = 0;
 		virtual TH2F * SmearingHistogram() = 0;
+		virtual vector< TH1F* > SystematicHistograms() = 0;
 
 		//Copy the object
 		virtual IPlotMaker * Clone( string NewPriorName ) = 0;

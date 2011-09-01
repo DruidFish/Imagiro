@@ -86,7 +86,7 @@ Folding::~Folding()
 //Make another instance of the ICorrection which shares the smearing matrix
 Folding * Folding::CloneShareSmearingMatrix()
 {
-	return new Folding( indexCalculator->Clone(), name, uniqueID + 1, distributionComparison, reconstructedDistribution, inputSmearing, totalPaired, totalMissed, totalFake );
+	return new Folding( indexCalculator, name, uniqueID + 1, distributionComparison, reconstructedDistribution, inputSmearing, totalPaired, totalMissed, totalFake );
 }
 
 //Use this method to supply a value from the truth

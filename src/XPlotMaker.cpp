@@ -40,6 +40,7 @@ XPlotMaker::XPlotMaker( string XVariableName, string PriorName, unsigned int XBi
 	normalise = Normalise;
 	vector< double > minima, maxima;
 	vector< unsigned int > binNumbers;
+	systematicRandom = 0;
 
 	//Set up a variable to keep track of the number of plots - used to prevent Root from complaining about making objects with the same names
 	static unsigned int uniqueID = 0;
@@ -66,6 +67,7 @@ XPlotMaker::XPlotMaker( string XVariableName, string PriorName, vector< double >
 	scaleFactor = ScaleFactor;
 	normalise = Normalise;
 	vector< vector< double > > binEdges;
+	systematicRandom = 0;
 
 	//Set up a variable to keep track of the number of plots - used to prevent Root from complaining about making objects with the same names
 	static unsigned int uniqueID = 0;
@@ -82,7 +84,7 @@ XPlotMaker::XPlotMaker( string XVariableName, string PriorName, vector< double >
 
 //For use with Clone
 XPlotMaker::XPlotMaker( string XVariableName, string PriorName, IIndexCalculator * DistributionIndices,
-		unsigned int OriginalID, int CorrectionMode, double ScaleFactor, bool Normalise )
+		unsigned int OriginalID, int CorrectionMode, double ScaleFactor, bool Normalise, vector< double > InputOffsets, vector< double > InputWidths )
 {
 	correctionType = CorrectionMode;
 	xName = XVariableName;
@@ -90,6 +92,18 @@ XPlotMaker::XPlotMaker( string XVariableName, string PriorName, IIndexCalculator
 	finalised = false;
 	scaleFactor = ScaleFactor;
 	normalise = Normalise;
+
+	//Set up for systematics
+	systematicOffsets = InputOffsets;
+	systematicWidths = InputWidths;
+	if ( InputOffsets.size() == 0 )
+	{
+		systematicRandom = 0;
+	}
+	else
+	{
+		systematicRandom = new TRandom3(0);
+	}
 
 	//Set up a variable to keep track of the number of plots - used to prevent Root from complaining about making objects with the same names
 	static unsigned int uniqueID = 0;
@@ -99,6 +113,9 @@ XPlotMaker::XPlotMaker( string XVariableName, string PriorName, IIndexCalculator
 	//Make the x unfolder
 	distributionIndices = DistributionIndices;
 	XUnfolder = MakeCorrector( correctionType );
+
+	//Make the systematic unfolders too
+	systematicUnfolders = vector< ICorrection* >( systematicOffsets.size(), XUnfolder->CloneShareSmearingMatrix() );
 }
 
 //Destructor
@@ -106,19 +123,69 @@ XPlotMaker::~XPlotMaker()
 {
 	delete distributionIndices;
 	delete XUnfolder;
+	for ( unsigned int experimentIndex = 0; experimentIndex < systematicUnfolders.size(); experimentIndex++ )
+	{
+		delete systematicUnfolders[ experimentIndex ];
+	}
 	if ( finalised )
 	{
 		delete correctedDistribution;
 		delete uncorrectedDistribution;
 		delete mcTruthDistribution;
 		delete smearingMatrix;
+		for ( unsigned int experimentIndex = 0; experimentIndex < systematicResults.size(); experimentIndex++ )
+		{
+			delete systematicResults[ experimentIndex ];
+		}
+	}
+	if ( systematicRandom )
+	{
+		delete systematicRandom;
+	}
+}
+
+//Set up a systematic error study
+void XPlotMaker::AddSystematic( vector< double > SystematicOffset, vector< double > SystematicWidth, unsigned int NumberOfPseudoExperiments )
+{
+	//Check for correct number of observables
+	if ( SystematicOffset.size() != 1 || SystematicWidth.size() != 1 )
+	{
+		cerr << "ERROR: There's only one observable in an XPlotmaker, so don't try sending multiple systematic offsets or widths at once" << endl;
+		exit(1);
+	}
+
+	//Check for sensible pseudoexperiment number
+	double experimentNumber = NumberOfPseudoExperiments;
+	if ( SystematicWidth[0] == 0.0 && NumberOfPseudoExperiments > 1 )
+	{
+		cout << "INFO: There's no point doing many pseudoexperiments for a single systematic offset - using 1" << endl;
+		experimentNumber = 1;
+	}
+	if ( SystematicWidth[0] != 0.0 && NumberOfPseudoExperiments < 1 )
+	{
+		cerr << "ERROR: You need to pick a number of pseudoexperiments to propagate this systematic width" << endl;
+		exit(1);
+	}
+
+	//Make the random number generator
+	if ( !systematicRandom && SystematicWidth[0] != 0.0 )
+	{
+		systematicRandom = new TRandom3(0);
+	}
+
+	//Make the extra experiments
+	for ( unsigned int experimentIndex = 0; experimentIndex < experimentNumber; experimentIndex++ )
+	{
+		systematicUnfolders.push_back( XUnfolder->CloneShareSmearingMatrix() );
+		systematicOffsets.push_back( SystematicOffset[0] );
+		systematicWidths.push_back( SystematicWidth[0] );
 	}
 }
 
 //Copy the object
 XPlotMaker * XPlotMaker::Clone( string NewPriorName )
 {
-	return new XPlotMaker( xName, NewPriorName, distributionIndices->Clone(), thisPlotID, correctionType, scaleFactor, normalise );
+	return new XPlotMaker( xName, NewPriorName, distributionIndices->Clone(), thisPlotID, correctionType, scaleFactor, normalise, systematicOffsets, systematicWidths );
 }
 
 //Take input values from ntuples
@@ -205,6 +272,7 @@ void XPlotMaker::StoreData( IFileInput * DataInput )
 	else
 	{
 		vector< double > dataValues;
+		double randomOne, randomTwo;
 
 		//Retrieve the values from the Ntuple
 		double xDataValue = DataInput->GetValue( xName );
@@ -213,6 +281,20 @@ void XPlotMaker::StoreData( IFileInput * DataInput )
 		//Store the x value
 		dataValues.push_back( xDataValue );
 		XUnfolder->StoreDataValue( dataValues, dataWeight );
+
+		//Do all the systematic error experiments
+		for ( unsigned int experimentIndex = 0; experimentIndex < systematicOffsets.size(); experimentIndex++ )
+		{
+			dataValues[0] = xDataValue + systematicOffsets[ experimentIndex ];
+
+			if ( systematicWidths[ experimentIndex ] != 0.0 )
+			{
+				systematicRandom->Rannor( randomOne, randomTwo );
+				dataValues[0] += ( randomOne * systematicWidths[ experimentIndex ] );
+			}
+
+			systematicUnfolders[ experimentIndex ]->StoreDataValue( dataValues, dataWeight );
+		}
 	} 
 }
 
@@ -230,6 +312,12 @@ void XPlotMaker::Correct( unsigned int MostIterations, bool SkipUnfolding, unsig
 		if ( !SkipUnfolding )
 		{
 			XUnfolder->Correct( MostIterations, ErrorMode, WithSmoothing );
+
+			//Systematics
+			for ( unsigned int experimentIndex = 0; experimentIndex < systematicUnfolders.size(); experimentIndex++ )
+			{
+				systematicUnfolders[ experimentIndex ]->Correct( MostIterations, ErrorMode, WithSmoothing );
+			}
 		}
 
 		//Make some plot titles
@@ -240,6 +328,15 @@ void XPlotMaker::Correct( unsigned int MostIterations, bool SkipUnfolding, unsig
 
 		//Retrieve the results
 		TH1F * XCorrected = XUnfolder->GetCorrectedHistogram( XFullName + "Corrected", XFullTitle + " Corrected Distribution", normalise );
+
+		//And the systematics
+		for ( unsigned int experimentIndex = 0; experimentIndex < systematicUnfolders.size(); experimentIndex++ )
+		{
+			stringstream systematicString;
+			systematicString << thisPlotID << xName << priorName << "Systematic" << experimentIndex;
+
+			systematicResults.push_back( systematicUnfolders[ experimentIndex ]->GetCorrectedHistogram( systematicString.str(), systematicString.str() ) );
+		}
 
 		//Retrieve some other bits for debug
 		TH1F * XUncorrected = XUnfolder->GetUncorrectedHistogram( XFullName + "Uncorrected", XFullTitle + " Uncorrected Distribution", normalise );
@@ -463,6 +560,12 @@ vector< string > XPlotMaker::VariableNames()
 int XPlotMaker::CorrectionMode()
 {
 	return correctionType;
+}
+
+//Return the results of the systematic experiments
+vector< TH1F* > XPlotMaker::SystematicHistograms()
+{
+	return systematicResults;
 }
 
 //Instantiate an object to correct the data

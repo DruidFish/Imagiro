@@ -13,6 +13,7 @@
 #include "IPlotMaker.h"
 #include "ICorrection.h"
 #include "IIndexCalculator.h"
+#include "TRandom3.h"
 #include <string>
 
 using namespace std;
@@ -25,6 +26,9 @@ class XPlotMaker : public IPlotMaker
 		XPlotMaker( string XVariableName, string PriorName, vector< double > BinLowEdges, int CorrectionMode = 2, double ScaleFactor = 1.0, bool Normalise = false );
 
 		virtual ~XPlotMaker();
+
+		//Set up a systematic error study
+		virtual void AddSystematic( vector< double > SystematicOffset, vector< double > SystematicWidth, unsigned int NumberOfPseudoExperiments );
 
 		//Take input values from ntuples
 		//To reduce file access, the appropriate row must already be in memory, the method does not change row
@@ -51,6 +55,7 @@ class XPlotMaker : public IPlotMaker
 		virtual TH1F * UncorrectedHistogram();
 		virtual TH1F * MCTruthHistogram();
 		virtual TH2F * SmearingHistogram();
+		virtual vector< TH1F* > SystematicHistograms();
 
 		//Copy the object
 		virtual XPlotMaker * Clone( string NewPriorName );
@@ -72,7 +77,7 @@ class XPlotMaker : public IPlotMaker
 	private:
 		//To be used with Clone
 		XPlotMaker( string XVariableName, string PriorName, IIndexCalculator * DistributionIndices,
-				unsigned int OriginalID, int CorrectionMode, double ScaleFactor, bool Normalise);
+				unsigned int OriginalID, int CorrectionMode, double ScaleFactor, bool Normalise, vector<double> InputOffsets, vector<double> InputWidths );
 
 		//Instantiate the corrector
 		ICorrection * MakeCorrector( int CorrectionMode );
@@ -80,13 +85,17 @@ class XPlotMaker : public IPlotMaker
 		int correctionType;
 		unsigned int thisPlotID;
 		ICorrection * XUnfolder;
+		vector< ICorrection* > systematicUnfolders;
+		vector< double > systematicOffsets, systematicWidths;
 		IIndexCalculator * distributionIndices;
+		TRandom3 * systematicRandom;
 		string xName, priorName;
 		bool finalised, normalise;
 		double scaleFactor;
 		vector< double > correctedDataErrors;
 		TH1F *correctedDistribution, *uncorrectedDistribution, *mcTruthDistribution;
 		TH2F *smearingMatrix, *covarianceMatrix;
+		vector< TH1F* > systematicResults;
 };
 
 #endif

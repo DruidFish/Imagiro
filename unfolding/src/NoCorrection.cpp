@@ -74,7 +74,7 @@ NoCorrection::~NoCorrection()
 //Make another instance of the ICorrection which sihares the smearing matrix
 NoCorrection * NoCorrection::CloneShareSmearingMatrix()
 {
-	return new NoCorrection( indexCalculator->Clone(), name, uniqueID + 1, reconstructedDistribution, inputSmearing, totalPaired, totalFake, totalMissed );
+	return new NoCorrection( indexCalculator, name, uniqueID + 1, reconstructedDistribution, inputSmearing, totalPaired, totalFake, totalMissed );
 }
 
 //Use this method to supply a value from the truth

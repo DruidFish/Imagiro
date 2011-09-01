@@ -43,6 +43,7 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	scaleFactor = ScaleFactor;
 	vector< double > minima, maxima;
 	vector< unsigned int > binNumbers;
+	systematicRandom = 0;
 
 	//Set up a variable to keep track of the number of plots - used to prevent Root from complaining about making objects with the same names
 	static unsigned int uniqueID = 0;
@@ -94,6 +95,7 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	finalised = false;
 	scaleFactor = ScaleFactor;
 	vector< vector< double > > binEdges;
+	systematicRandom = 0;
 
 	//Set up a variable to keep track of the number of plots - used to prevent Root from complaining about making objects with the same names
 	static unsigned int uniqueID = 0;
@@ -132,7 +134,7 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 
 //To be used only with Clone
 XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string YVariableName, string PriorName,
-		IIndexCalculator * DistributionIndices, int CorrectionMode, unsigned int OriginalID, double ScaleFactor )
+		IIndexCalculator * DistributionIndices, int CorrectionMode, unsigned int OriginalID, double ScaleFactor, vector< vector< double > > InputOffsets, vector< vector< double > > InputWidths )
 {
 	correctionType = CorrectionMode;
 	xName = XVariableName;
@@ -140,6 +142,17 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	priorName = PriorName;
 	finalised = false;
 	scaleFactor = ScaleFactor;
+
+	systematicOffsets = InputOffsets;
+	systematicWidths = InputWidths;
+	if ( systematicWidths.size() == 0 )
+	{
+		systematicRandom = 0;
+	}
+	else
+	{
+		systematicRandom = new TRandom3(0);
+	}
 
 	//Set up a variable to keep track of the number of plots - used to prevent Root from complaining about making objects with the same names
 	static unsigned int uniqueID = 0;
@@ -149,6 +162,12 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	//Make the x vs y unfolder
 	distributionIndices = DistributionIndices;
 	XvsYUnfolder = MakeCorrector( correctionType, distributionIndices, xName + "vs" + yName + priorName, thisPlotID );
+
+	//Make the systematics too
+	for ( unsigned int experimentIndex = 0; experimentIndex < systematicWidths.size(); experimentIndex++ )
+	{
+		systematicUnfolders.push_back( XvsYUnfolder->CloneShareSmearingMatrix() );
+	}
 
 	//Set up the cross-check for data loss in delinearisation
 	stringstream idString;
@@ -177,6 +196,10 @@ XvsYNormalisedPlotMaker::~XvsYNormalisedPlotMaker()
 	delete xTruthCheck;
 	delete distributionIndices;
 	delete XvsYUnfolder;
+	for ( unsigned int experimentIndex = 0; experimentIndex < systematicUnfolders.size(); experimentIndex++ )
+	{
+		delete systematicUnfolders[ experimentIndex ];
+	}
 	delete simpleDataProfile;
 	if ( finalised )
 	{
@@ -191,13 +214,60 @@ XvsYNormalisedPlotMaker::~XvsYNormalisedPlotMaker()
 		{
 			delete covarianceMatrix;
 		}
+
+		for ( unsigned int experimentIndex = 0; experimentIndex < systematicResults.size(); experimentIndex++ )
+		{
+			delete systematicResults[ experimentIndex ];
+		}
+	}
+	if ( systematicRandom )
+	{
+		delete systematicRandom;
 	}
 }
 
 //Copy the object
 XvsYNormalisedPlotMaker * XvsYNormalisedPlotMaker::Clone( string NewPriorName )
 {
-	return new XvsYNormalisedPlotMaker( xName, yName, NewPriorName, distributionIndices->Clone(), correctionType, thisPlotID, scaleFactor );
+	return new XvsYNormalisedPlotMaker( xName, yName, NewPriorName, distributionIndices->Clone(), correctionType, thisPlotID, scaleFactor, systematicOffsets, systematicWidths );
+}
+
+//Set up a systematic error study
+void XvsYNormalisedPlotMaker::AddSystematic( vector< double > SystematicOffset, vector< double > SystematicWidth, unsigned int NumberOfPseudoExperiments )
+{
+	//Check for correct number of observables
+	if ( SystematicOffset.size() != 2 || SystematicWidth.size() != 2 )
+	{
+		cerr << "ERROR: There's two observables in an XvsYNormalisedPlotmaker, please define systematic errors on both, even if one is just 0.0"<< endl;
+		exit(1);
+	}
+
+	//Check for sensible pseudoexperiment number
+	double experimentNumber = NumberOfPseudoExperiments;
+	if ( SystematicWidth[0] == 0.0 && SystematicWidth[1] == 0.0 && NumberOfPseudoExperiments > 1 )
+	{
+		cout << "INFO: There's no point doing many pseudoexperiments for just a systematic offset - using 1" << endl;
+		experimentNumber = 1;
+	}
+	if ( ( SystematicWidth[0] != 0.0 || SystematicWidth[1] != 0.0 ) && NumberOfPseudoExperiments < 1 )
+	{
+		cerr << "ERROR: You need to pick a number of pseudoexperiments to propagate this systematic width" << endl;
+		exit(1);
+	}
+
+	//Make the random number generator
+	if ( !systematicRandom && ( SystematicWidth[0] != 0.0 || SystematicWidth[1] != 0.0 ) )
+	{
+		systematicRandom = new TRandom3(0);
+	}
+
+	//Make the extra experiments
+	for ( unsigned int experimentIndex = 0; experimentIndex < experimentNumber; experimentIndex++ )
+	{
+		systematicUnfolders.push_back( XvsYUnfolder->CloneShareSmearingMatrix() );
+		systematicOffsets.push_back( SystematicOffset );
+		systematicWidths.push_back( SystematicWidth );
+	}
 }
 
 //Take input values from ntuples
@@ -327,6 +397,7 @@ void XvsYNormalisedPlotMaker::StoreData( IFileInput * DataInput )
 	}       
 	else
 	{
+		double randomOne, randomTwo;
 		vector<double> dataValues;
 
 		//Retrieve the values from the Ntuple
@@ -347,6 +418,22 @@ void XvsYNormalisedPlotMaker::StoreData( IFileInput * DataInput )
 
 		//Store the values for error calculation
 		simpleDataProfile->Fill( xDataValue, yDataValue, dataWeight );
+
+		//Do the systematic experiments too
+		for ( unsigned int experimentIndex = 0; experimentIndex < systematicOffsets.size(); experimentIndex++ )
+		{
+			dataValues[0] = xDataValue + systematicOffsets[ experimentIndex ][0];
+			dataValues[1] = yDataValue + systematicOffsets[ experimentIndex ][1];
+
+			if ( systematicWidths[ experimentIndex ][0] != 0.0 || systematicWidths[ experimentIndex ][1] != 0.0 )
+			{
+				systematicRandom->Rannor( randomOne, randomTwo );
+				dataValues[0] += ( randomOne * systematicWidths[ experimentIndex ][0] );
+				dataValues[1] += ( randomTwo * systematicWidths[ experimentIndex ][1] );
+			}
+
+			systematicUnfolders[ experimentIndex ]->StoreDataValue( dataValues, dataWeight );
+		}
 	} 
 }
 
@@ -364,6 +451,12 @@ void XvsYNormalisedPlotMaker::Correct( unsigned int MostIterations, bool SkipUnf
 		if ( !SkipUnfolding )
 		{
 			XvsYUnfolder->Correct( MostIterations, ErrorMode, WithSmoothing );
+
+			//Systematics
+			for ( unsigned int experimentIndex = 0; experimentIndex < systematicUnfolders.size(); experimentIndex++ )
+			{
+				systematicUnfolders[ experimentIndex ]->Correct( MostIterations, ErrorMode, WithSmoothing );
+			}
 		}
 
 		//Make some plot titles
@@ -385,6 +478,16 @@ void XvsYNormalisedPlotMaker::Correct( unsigned int MostIterations, bool SkipUnf
 		TH1F * DelinearisedXvsYCorrected = MakeProfile( XvsYCorrected );
 		TH1F * DelinearisedXvsYUncorrected = MakeProfile( XvsYUncorrected );
 		TH1F * DelinearisedXvsYTruth = MakeProfile( XvsYTruth );
+
+		//And the systematics
+		for ( unsigned int experimentIndex = 0; experimentIndex < systematicUnfolders.size(); experimentIndex++ )
+		{
+			stringstream systematicString;
+			systematicString << thisPlotID << XvsYName << priorName << "Systematic" << experimentIndex;
+
+			TH1F * systematicPlot = systematicUnfolders[ experimentIndex ]->GetCorrectedHistogram( systematicString.str(), systematicString.str() );
+			systematicResults.push_back( MakeProfile( systematicPlot ) );
+		}
 
 		//Make a vector of bin error values
 		if ( correctionType != BAYESIAN_MODE || ErrorMode < 1 )
@@ -620,6 +723,12 @@ TH2F * XvsYNormalisedPlotMaker::SmearingHistogram()
 		cerr << "Trying to retrieve smearing matrix from unfinalised XvsYNormalisedPlotMaker" << endl;
 		exit(1);
 	}
+}
+
+//Return the results of the systematic experiments
+vector< TH1F* > XvsYNormalisedPlotMaker::SystematicHistograms()
+{
+	return systematicResults;
 }
 
 //Convert from an X*Y linearised distribution to an X vs Y plot

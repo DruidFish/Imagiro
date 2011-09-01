@@ -17,6 +17,7 @@
 #include "ICorrection.h"
 #include "IIndexCalculator.h"
 #include "TProfile.h"
+#include "TRandom3.h"
 
 using namespace std;
 
@@ -31,6 +32,9 @@ class XvsYNormalisedPlotMaker : public IPlotMaker
 				vector< double > XBinLowEdges, vector< double > YBinLowEdges, int CorrectionMode = 2, double ScaleFactor = 1.0 );
 
 		virtual ~XvsYNormalisedPlotMaker();
+
+		//Set up a systematic error study
+                virtual void AddSystematic( vector< double > SystematicOffset, vector< double > SystematicWidth, unsigned int NumberOfPseudoExperiments );
 
 		//Take input values from ntuples
 		//To reduce file access, the appropriate row must already be in memory, the method does not change row
@@ -57,6 +61,7 @@ class XvsYNormalisedPlotMaker : public IPlotMaker
 		virtual TH1F * UncorrectedHistogram();
 		virtual TH1F * MCTruthHistogram();
 		virtual TH2F * SmearingHistogram();
+		virtual vector< TH1F* > SystematicHistograms();
 
 		//Copy the object
 		virtual XvsYNormalisedPlotMaker * Clone( string NewPriorName );
@@ -78,7 +83,7 @@ class XvsYNormalisedPlotMaker : public IPlotMaker
 	private:
 		//To be used only with Clone
 		XvsYNormalisedPlotMaker( string XVariableName, string YVariableName, string PriorName,
-				IIndexCalculator * DistributionIndices, int CorrectionMode, unsigned int OriginalID, double ScaleFactor = 1.0 );
+				IIndexCalculator * DistributionIndices, int CorrectionMode, unsigned int OriginalID, double ScaleFactor, vector< vector < double > > InputOffsets, vector< vector< double > > InputWidths );
 
 		//Instantiate an object to correct the data
 		ICorrection * MakeCorrector( int CorrectionMode, IIndexCalculator * CorrectionIndices, string CorrectionName, unsigned int CorrectionID );
@@ -91,14 +96,18 @@ class XvsYNormalisedPlotMaker : public IPlotMaker
 		int correctionType;
 		unsigned int thisPlotID, xBinNumber, yBinNumber;
 		ICorrection *XvsYUnfolder;
+		vector< ICorrection* > systematicUnfolders;
 		IIndexCalculator *distributionIndices;
 		string xName, yName, priorName;
 		bool finalised, doPlotSmearing;
 		double scaleFactor, xMinimum, yMinimum, xMaximum, yMaximum;
 		vector< double > correctedDataErrors;
+	       	vector< vector< double > > systematicOffsets, systematicWidths;
 		StatisticsSummary * yValueSummary;
 		TH1F *correctedDistribution, *uncorrectedDistribution, *mcTruthDistribution, *xvsyTruthCheck, *xTruthCheck;
 		TH2F *smearingMatrix, *covarianceMatrix;
+		vector< TH1F* > systematicResults;
+		TRandom3 * systematicRandom;
 };
 
 #endif

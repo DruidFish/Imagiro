@@ -335,7 +335,7 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 		}
 
 		//Unfold each plot and retrieve the information
-		vector<double> combinedCorrectedData, minimumCorrectedData, maximumCorrectedData, combinedStatisticErrors;
+		vector< double > sumCorrectedData, sumSquareCorrectedData, combinedStatisticErrors;
 		TH1F *combinedCorrectedHistogramWithSystematics, *combinedCorrectedHistogramWithStatistics;
 		allTruthPlots = vector< TH1F* >( allPlots.size(), NULL );
 		bool firstPlot = true;
@@ -357,6 +357,7 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 
 				//Load the corrected data into the combined distribution
 				TH1F * correctedHistogram = allPlots[ plotIndex ]->CorrectedHistogram();
+				vector< TH1F* > systematicHistograms = allPlots[ plotIndex ]->SystematicHistograms();
 				for ( int binIndex = 0; binIndex < correctedHistogram->GetNbinsX() + 2; binIndex++ )
 				{
 					double binContent = correctedHistogram->GetBinContent( binIndex );
@@ -364,24 +365,24 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 					if ( firstPlot )
 					{
 						//Initialise the distribution
-						combinedCorrectedData.push_back( binContent );
-						minimumCorrectedData.push_back( binContent );
-						maximumCorrectedData.push_back( binContent );
+						sumCorrectedData.push_back( binContent );
+						sumSquareCorrectedData.push_back( binContent * binContent );
 						combinedStatisticErrors.push_back( plotErrors[ binIndex ] );
 					}
 					else
 					{
 						//Populate the distribution
-						combinedCorrectedData[ binIndex ] += binContent;
+						sumCorrectedData[ binIndex ] += binContent;
+						sumSquareCorrectedData[ binIndex ] += ( binContent * binContent );
 						combinedStatisticErrors[ binIndex ] += plotErrors[ binIndex ];
-						if ( binContent < minimumCorrectedData[ binIndex ] )
-						{
-							minimumCorrectedData[ binIndex ] = binContent;
-						}
-						if ( binContent > maximumCorrectedData[ binIndex ] )
-						{
-							maximumCorrectedData[ binIndex ] = binContent;
-						}
+					}
+
+					//Do the systematic histograms as well
+					for ( unsigned int experimentIndex = 0; experimentIndex < systematicHistograms.size(); experimentIndex++ )
+					{
+						binContent = systematicHistograms[ experimentIndex ]->GetBinContent( binIndex );
+						sumCorrectedData[ binIndex ] += binContent;
+						sumSquareCorrectedData[ binIndex ] += binContent;
 					}
 				}
 
@@ -424,7 +425,7 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 		}
 
 		//Make a TGraph for the asymmetric errors
-		int graphSize = combinedCorrectedData.size();
+		int graphSize = sumCorrectedData.size();
 		Double_t xValues[ graphSize ];
 		Double_t yValues[ graphSize ];
 		Double_t xError[ graphSize ];
@@ -437,8 +438,13 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 			xValues[ binIndex ] = combinedCorrectedHistogramWithStatistics->GetBinCenter( binIndex );
 			xError[ binIndex ] = xValues[ binIndex ] - combinedCorrectedHistogramWithStatistics->GetBinLowEdge( binIndex );
 
+			//Calculate the mean and standard deviation
+			double mean = sumCorrectedData[ binIndex ] / ( double )( allPlots.size() - numberRemoved );
+			double sigma = sumSquareCorrectedData[ binIndex ] / ( double )( allPlots.size() - numberRemoved );
+			sigma -= mean * mean;
+
 			//Get the y-values by taking the means of the corrected distributions
-			yValues[ binIndex ] = combinedCorrectedData[ binIndex ] / (double)( allPlots.size() - numberRemoved );
+			yValues[ binIndex ] = mean;
 			combinedCorrectedHistogramWithStatistics->SetBinContent( binIndex, yValues[ binIndex ] );
 
 			//Get the mean statistical error
@@ -446,8 +452,8 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 			yStatError[ binIndex ] = statistic;
 
 			//The systematic errors come from the range of the corrected distributions
-			double systematicLow = yValues[ binIndex ] - minimumCorrectedData[ binIndex ];
-			double systematicHigh = maximumCorrectedData[ binIndex ] - yValues[ binIndex ];
+			double systematicLow = sigma;//yValues[ binIndex ] - minimumCorrectedData[ binIndex ];
+			double systematicHigh = sigma;//maximumCorrectedData[ binIndex ] - yValues[ binIndex ];
 
 			//Combine the statistical and systematic errors in quadrature
 			yBothErrorLow[ binIndex ] = sqrt( ( systematicLow * systematicLow ) + ( statistic * statistic ) );
@@ -457,9 +463,9 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 		//Get rid of the overflow bins
 		double lowEdge = combinedCorrectedHistogramWithSystematics->GetBinLowEdge( 1 );
 		double highEdge = combinedCorrectedHistogramWithSystematics->GetBinLowEdge( graphSize - 1 );
-		double gap = highEdge - lowEdge;
-		xValues[ 0 ] = lowEdge - gap;
-		xValues[ graphSize - 1 ] = highEdge + gap;
+		//double gap = highEdge - lowEdge;
+		//xValues[ 0 ] = lowEdge - gap;
+		//xValues[ graphSize - 1 ] = highEdge + gap;
 
 		//Draw the combined error graph - asymmetric errors
 		TGraphAsymmErrors * graphWithSystematics = new TGraphAsymmErrors( graphSize, xValues, yValues, xError, xError, yBothErrorLow, yBothErrorHigh );

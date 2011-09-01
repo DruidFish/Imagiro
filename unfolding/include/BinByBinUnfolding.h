@@ -89,13 +89,13 @@ class BinByBinUnfolding : public ICorrection
 	private:
 		//To be used with Clone
 		BinByBinUnfolding( IIndexCalculator * DistributionIndices, string Name, unsigned int UniqueID,
-				                Comparison * SharedComparison, Distribution * SharedTruth, vector< double > & SharedTruthSums, vector< double > & SharedRecoSums, double PairedMC, double MissedMC, double FakeMC );
+				                Comparison * SharedComparison, Distribution * SharedTruth, vector< double > * SharedTruthSums, vector< double > * SharedRecoSums, double PairedMC, double MissedMC, double FakeMC );
 
 		bool isClone;
 		Comparison * distributionComparison;
 		unsigned int uniqueID;
 		string name;
-		vector< double > sumOfDataWeightSquares, truthBinSums, recoBinSums;
+		vector< double > sumOfDataWeightSquares, *truthBinSums, *recoBinSums;
 		IIndexCalculator * indexCalculator;
 		Distribution *dataDistribution, *unfoldedDistribution, *truthDistribution, *reconstructedDistribution;
 		double totalPaired, totalFake, totalMissed;

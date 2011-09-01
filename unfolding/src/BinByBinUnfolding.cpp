@@ -36,13 +36,13 @@ BinByBinUnfolding::BinByBinUnfolding( IIndexCalculator * DistributionIndices, st
 	distributionComparison = new Comparison( Name, UniqueID );
 
 	//Make the vectors for storing the bin-by-bin correction ratios (include bad bins)
-	truthBinSums = vector< double >( indexCalculator->GetBinNumber() + 1, 0.0 );
-	recoBinSums = vector< double >( indexCalculator->GetBinNumber() + 1, 0.0 );
+	truthBinSums = new vector< double >( indexCalculator->GetBinNumber() + 1, 0.0 );
+	recoBinSums = new vector< double >( indexCalculator->GetBinNumber() + 1, 0.0 );
 }
 
 //To be used with Clone
 BinByBinUnfolding::BinByBinUnfolding( IIndexCalculator * DistributionIndices, string Name, unsigned int UniqueID,
-		Comparison * SharedComparison, Distribution * SharedTruth, vector< double > & SharedTruthSums, vector< double > & SharedRecoSums, double PairedMC, double MissedMC, double FakeMC )
+		Comparison * SharedComparison, Distribution * SharedTruth, vector< double > * SharedTruthSums, vector< double > * SharedRecoSums, double PairedMC, double MissedMC, double FakeMC )
 {
 	name = Name;
 	uniqueID = UniqueID;
@@ -85,14 +85,14 @@ BinByBinUnfolding::~BinByBinUnfolding()
 	}
 
 	sumOfDataWeightSquares.clear();
-	truthBinSums.clear();
-	recoBinSums.clear();
+	delete truthBinSums;
+	delete recoBinSums;
 }
 
 //Make another instance of the ICorrection which shares the smearing matrix
 BinByBinUnfolding * BinByBinUnfolding::CloneShareSmearingMatrix()
 {
-	return new BinByBinUnfolding( indexCalculator->Clone(), name, uniqueID + 1, distributionComparison, truthDistribution, truthBinSums, recoBinSums, totalPaired, totalMissed, totalFake );
+	return new BinByBinUnfolding( indexCalculator, name, uniqueID + 1, distributionComparison, truthDistribution, truthBinSums, recoBinSums, totalPaired, totalMissed, totalFake );
 }
 
 //Use this method to supply a value from the truth
@@ -109,8 +109,8 @@ void BinByBinUnfolding::StoreTruthRecoPair( vector< double > Truth, vector< doub
 	}
 
 	totalPaired += TruthWeight;
-	truthBinSums[ indexCalculator->GetIndex( Truth ) ] += TruthWeight;
-	recoBinSums[ indexCalculator->GetIndex( Reco ) ] += RecoWeight;
+	( *truthBinSums )[ indexCalculator->GetIndex( Truth ) ] += TruthWeight;
+	( *recoBinSums )[ indexCalculator->GetIndex( Reco ) ] += RecoWeight;
 }
 
 //If an MC event is not reconstructed at all, use this
@@ -124,8 +124,8 @@ void BinByBinUnfolding::StoreUnreconstructedTruth( vector< double > Truth, doubl
 	}
 
 	totalMissed += Weight;
-	truthBinSums[ indexCalculator->GetIndex( Truth ) ] += Weight;
-	recoBinSums[ recoBinSums.size() - 1 ] += Weight;
+	( *truthBinSums )[ indexCalculator->GetIndex( Truth ) ] += Weight;
+	( *recoBinSums )[ recoBinSums->size() - 1 ] += Weight;
 }
 
 //If there is a fake reconstructed event with no
@@ -139,8 +139,8 @@ void BinByBinUnfolding::StoreReconstructedFake( vector< double > Reco, double We
 	}
 
 	totalFake += Weight;
-	truthBinSums[ truthBinSums.size() - 1 ] += Weight;
-	recoBinSums[ indexCalculator->GetIndex( Reco ) ] += Weight;
+	( *truthBinSums )[ truthBinSums->size() - 1 ] += Weight;
+	( *recoBinSums )[ indexCalculator->GetIndex( Reco ) ] += Weight;
 }
 
 //Store a value from the uncorrected data distribution
@@ -158,20 +158,20 @@ void BinByBinUnfolding::Correct( unsigned int MostIterations, unsigned int Error
 	dataDistribution->SetBadBin( totalMissed / ( totalPaired + totalFake ) );	
 
 	//Work out the truth/reco ratios
-	vector< double > binWeights( truthBinSums.size(), 0.0 );
-	for ( unsigned int binIndex = 0; binIndex < truthBinSums.size(); binIndex++ )
+	vector< double > binWeights( truthBinSums->size(), 0.0 );
+	for ( unsigned int binIndex = 0; binIndex < truthBinSums->size(); binIndex++ )
 	{
-		if ( truthBinSums[ binIndex ] == 0.0 )
+		if ( ( *truthBinSums )[ binIndex ] == 0.0 )
 		{
 			binWeights[ binIndex ] = 0.0;
 		}
-		else if ( recoBinSums[ binIndex ] == 0.0 )
+		else if ( ( *recoBinSums )[ binIndex ] == 0.0 )
 		{
 			binWeights[ binIndex ] = 1.0;
 		}
 		else
 		{
-			binWeights[ binIndex ] = truthBinSums[ binIndex ] / recoBinSums[ binIndex ];
+			binWeights[ binIndex ] = ( *truthBinSums )[ binIndex ] / ( *recoBinSums )[ binIndex ];
 		}
 	}
 
@@ -185,20 +185,20 @@ void BinByBinUnfolding::Correct( unsigned int MostIterations, unsigned int Error
 bool BinByBinUnfolding::ClosureTest( unsigned int MostIterations, bool WithSmoothing )
 {
 	//Work out the truth/reco ratios
-	vector< double > binWeights( truthBinSums.size(), 0.0 );
-	for ( unsigned int binIndex = 0; binIndex < truthBinSums.size(); binIndex++ )
+	vector< double > binWeights( truthBinSums->size(), 0.0 );
+	for ( unsigned int binIndex = 0; binIndex < truthBinSums->size(); binIndex++ )
 	{
-		if ( truthBinSums[ binIndex ] == 0.0 )
+		if ( ( *truthBinSums )[ binIndex ] == 0.0 )
 		{
 			binWeights[ binIndex ] = 0.0;
 		}       
-		else if ( recoBinSums[ binIndex ] == 0.0 )
+		else if ( ( *recoBinSums )[ binIndex ] == 0.0 )
 		{
 			binWeights[ binIndex ] = 1.0;
 		}       
 		else
 		{
-			binWeights[ binIndex ] = truthBinSums[ binIndex ] / recoBinSums[ binIndex ];
+			binWeights[ binIndex ] = ( *truthBinSums )[ binIndex ] / ( *recoBinSums )[ binIndex ];
 		}
 	}
 
@@ -246,14 +246,14 @@ TH1F * BinByBinUnfolding::GetCorrectedHistogram( string Name, string Title, bool
 TH2F * BinByBinUnfolding::GetSmearingHistogram( string Name, string Title )
 {
 	//Make a matrix to store the bin-by-bin ratios
-	TH2F * binByBinMatrix = new TH2F( Name.c_str(), Title.c_str(), truthBinSums.size(), 0.0, (double)truthBinSums.size(), truthBinSums.size(), 0.0, (double)truthBinSums.size() );
+	TH2F * binByBinMatrix = new TH2F( Name.c_str(), Title.c_str(), truthBinSums->size(), 0.0, (double)truthBinSums->size(), truthBinSums->size(), 0.0, (double)truthBinSums->size() );
 
 	//Work out the truth/reco ratios and store
-	for ( unsigned int binIndex = 0; binIndex < truthBinSums.size(); binIndex++ )
+	for ( unsigned int binIndex = 0; binIndex < truthBinSums->size(); binIndex++ )
 	{
 		int twoDimIndex = binByBinMatrix->GetBin( binIndex, binIndex, 0 );
 
-		binByBinMatrix->SetBinContent( twoDimIndex, truthBinSums[ binIndex ] / recoBinSums[ binIndex ] );
+		binByBinMatrix->SetBinContent( twoDimIndex, ( *truthBinSums )[ binIndex ] / ( *recoBinSums )[ binIndex ] );
 	}
 
 	return binByBinMatrix;

@@ -69,11 +69,7 @@ BayesianUnfolding::~BayesianUnfolding()
 	delete unfoldedDistribution;
 	delete reconstructedDistribution;
 
-	if ( isClone )
-	{
-		delete indexCalculator;
-	}
-	else
+	if ( !isClone )
 	{
 		delete distributionComparison;
 		delete truthDistribution;
@@ -84,7 +80,7 @@ BayesianUnfolding::~BayesianUnfolding()
 //Make another instance of the ICorrection which shares the smearing matrix
 BayesianUnfolding * BayesianUnfolding::CloneShareSmearingMatrix()
 {
-	return new BayesianUnfolding( indexCalculator->Clone(), name, uniqueID + 1, distributionComparison, truthDistribution, inputSmearing, totalPaired, totalMissed, totalFake );
+	return new BayesianUnfolding( indexCalculator, name, uniqueID + 1, distributionComparison, truthDistribution, inputSmearing, totalPaired, totalMissed, totalFake );
 }
 
 //Use this method to supply a value from the truth
