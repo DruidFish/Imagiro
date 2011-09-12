@@ -96,7 +96,7 @@ class BayesianUnfolding : public ICorrection
 	private:
 		//For use with Clone
 		BayesianUnfolding( IIndexCalculator * DistributionIndices, string Name, unsigned int UniqueID,
-				Comparison * SharedComparison, Distribution * SharedTruthDistribution, SmearingMatrix * SharedSmearingMatrix, double PairedMC, double MissedMC, double FakeMC );
+				Comparison * SharedComparison, Distribution * SharedTruthDistribution, SmearingMatrix * SharedSmearingMatrix );
 
 		Comparison * distributionComparison;
 		unsigned int uniqueID;
@@ -106,7 +106,6 @@ class BayesianUnfolding : public ICorrection
 		Distribution *dataDistribution, *unfoldedDistribution, *truthDistribution, *reconstructedDistribution;
 		CovarianceMatrix * fullErrors;
 		SmearingMatrix * inputSmearing;
-		double totalPaired, totalFake, totalMissed;
 		bool isClone;
 };
 

@@ -22,9 +22,9 @@ BinByBinUnfolding::BinByBinUnfolding( IIndexCalculator * DistributionIndices, st
 {
 	name = Name;
 	uniqueID = UniqueID;
-	totalPaired = 0.0;
-	totalFake = 0.0;
-	totalMissed = 0.0;
+	( *totalPaired ) = 0;
+	( *totalMissed ) = 0;
+	( *totalFake ) = 0;
 	isClone = false;
 
 	indexCalculator = DistributionIndices;
@@ -42,13 +42,13 @@ BinByBinUnfolding::BinByBinUnfolding( IIndexCalculator * DistributionIndices, st
 
 //To be used with Clone
 BinByBinUnfolding::BinByBinUnfolding( IIndexCalculator * DistributionIndices, string Name, unsigned int UniqueID,
-		Comparison * SharedComparison, Distribution * SharedTruth, vector< double > * SharedTruthSums, vector< double > * SharedRecoSums, double PairedMC, double MissedMC, double FakeMC )
+		Comparison * SharedComparison, Distribution * SharedTruth, vector< double > * SharedTruthSums, vector< double > * SharedRecoSums, double * PairedMC, double * MissedMC, double * FakeMC )
 {
 	name = Name;
 	uniqueID = UniqueID;
 	totalPaired = PairedMC;
-	totalFake = FakeMC;
 	totalMissed = MissedMC;
+	totalFake = FakeMC;
 	isClone = true;
 
 	indexCalculator = DistributionIndices;
@@ -108,7 +108,7 @@ void BinByBinUnfolding::StoreTruthRecoPair( vector< double > Truth, vector< doub
 		reconstructedDistribution->StoreEvent( Reco, RecoWeight );
 	}
 
-	totalPaired += TruthWeight;
+	( *totalPaired ) += TruthWeight;
 	( *truthBinSums )[ indexCalculator->GetIndex( Truth ) ] += TruthWeight;
 	( *recoBinSums )[ indexCalculator->GetIndex( Reco ) ] += RecoWeight;
 }
@@ -123,7 +123,7 @@ void BinByBinUnfolding::StoreUnreconstructedTruth( vector< double > Truth, doubl
 		reconstructedDistribution->StoreBadEvent( Weight );
 	}
 
-	totalMissed += Weight;
+	( *totalMissed ) += Weight;
 	( *truthBinSums )[ indexCalculator->GetIndex( Truth ) ] += Weight;
 	( *recoBinSums )[ recoBinSums->size() - 1 ] += Weight;
 }
@@ -138,7 +138,7 @@ void BinByBinUnfolding::StoreReconstructedFake( vector< double > Reco, double We
 		reconstructedDistribution->StoreEvent( Reco, Weight );
 	}
 
-	totalFake += Weight;
+	( *totalFake ) += Weight;
 	( *truthBinSums )[ truthBinSums->size() - 1 ] += Weight;
 	( *recoBinSums )[ indexCalculator->GetIndex( Reco ) ] += Weight;
 }
@@ -155,7 +155,7 @@ void BinByBinUnfolding::StoreDataValue( vector< double > Data, double Weight )
 void BinByBinUnfolding::Correct( unsigned int MostIterations, unsigned int ErrorMode, bool WithSmoothing )
 {
 	//Extrapolate the number of missed events in the data
-	dataDistribution->SetBadBin( totalMissed / ( totalPaired + totalFake ) );	
+	dataDistribution->SetBadBin( ( *totalMissed ) / ( ( *totalPaired ) + ( *totalFake ) ) );	
 
 	//Work out the truth/reco ratios
 	vector< double > binWeights( truthBinSums->size(), 0.0 );

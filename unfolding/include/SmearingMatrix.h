@@ -33,8 +33,12 @@ class SmearingMatrix : public SparseMatrix
 
                 double GetEfficiency( unsigned int CauseIndex );
 		double GetTruthTotal( unsigned int CauseIndex );
+		double GetTotalPaired();
+		double GetTotalMissed();
+		double GetTotalFake();
 
 	private:
+		double totalPaired, totalMissed, totalFake;
 		vector< double > normalisation, efficiencies;
 		IIndexCalculator * indexCalculator;
 		bool isFinalised;

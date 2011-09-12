@@ -91,7 +91,7 @@ class Folding : public ICorrection
 	private:
 		//For use with Clone
 		Folding( IIndexCalculator * DistributionIndices, string Name, unsigned int UniqueID,
-				Comparison * SharedComparison, Distribution * SharedReconstructed, SmearingMatrix * SharedSmearing, double PairedMC, double MissedMC, double FakeMC );
+				Comparison * SharedComparison, Distribution * SharedReconstructed, SmearingMatrix * SharedSmearing );
 
 		bool isClone;
 		Comparison * distributionComparison;
@@ -100,7 +100,6 @@ class Folding : public ICorrection
 		vector< double > sumOfInputWeightSquares;
 		IIndexCalculator * indexCalculator;
 		Distribution *inputDistribution, *smearedDistribution, *truthDistribution, *reconstructedDistribution;
-		double totalPaired, totalFake, totalMissed;
 		SmearingMatrix * inputSmearing;
 };
 

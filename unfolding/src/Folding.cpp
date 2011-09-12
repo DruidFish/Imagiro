@@ -22,9 +22,6 @@ Folding::Folding( IIndexCalculator * DistributionIndices, string Name, unsigned 
 	//Initialisations
 	name = Name;
 	uniqueID = UniqueID;
-	totalPaired = 0.0;
-	totalMissed = 0.0;
-	totalFake = 0.0;
 	isClone = false;
 
 	//Make new vectors just with the one entry
@@ -40,14 +37,11 @@ Folding::Folding( IIndexCalculator * DistributionIndices, string Name, unsigned 
 
 //For use with Clone
 Folding::Folding( IIndexCalculator * DistributionIndices, string Name, unsigned int UniqueID,
-		Comparison * SharedComparison, Distribution * SharedReconstructed, SmearingMatrix * SharedSmearing, double PairedMC, double MissedMC, double FakeMC )
+		Comparison * SharedComparison, Distribution * SharedReconstructed, SmearingMatrix * SharedSmearing )
 {
 	//Initialisations
 	name = Name;
 	uniqueID = UniqueID;
-	totalPaired = PairedMC;
-	totalMissed = MissedMC;
-	totalFake = FakeMC;
 	isClone = true;
 
 	//Make new vectors just with the one entry
@@ -86,7 +80,7 @@ Folding::~Folding()
 //Make another instance of the ICorrection which shares the smearing matrix
 Folding * Folding::CloneShareSmearingMatrix()
 {
-	return new Folding( indexCalculator, name, uniqueID + 1, distributionComparison, reconstructedDistribution, inputSmearing, totalPaired, totalMissed, totalFake );
+	return new Folding( indexCalculator, name, uniqueID + 1, distributionComparison, reconstructedDistribution, inputSmearing );
 }
 
 //Use this method to supply a value from the truth
@@ -102,7 +96,6 @@ void Folding::StoreTruthRecoPair( vector< double > Truth, vector< double > Reco,
 		reconstructedDistribution->StoreEvent( Reco, RecoWeight );
 	}
 
-	totalPaired += TruthWeight;
 	inputSmearing->StoreTruthRecoPair( Truth, Reco, TruthWeight, RecoWeight );
 }
 
@@ -116,7 +109,6 @@ void Folding::StoreUnreconstructedTruth( vector< double > Truth, double Weight, 
 		reconstructedDistribution->StoreBadEvent( Weight );
 	}
 
-	totalMissed += Weight;
 	inputSmearing->StoreUnreconstructedTruth( Truth, Weight );
 }
 
@@ -130,7 +122,6 @@ void Folding::StoreReconstructedFake( vector< double > Reco, double Weight, bool
 		reconstructedDistribution->StoreEvent( Reco, Weight );
 	}
 
-	totalFake += Weight;
 	inputSmearing->StoreReconstructedFake( Reco, Weight );
 }
 
@@ -148,7 +139,7 @@ void Folding::Correct( unsigned int MostIterations, unsigned int ErrorMode, bool
 	inputSmearing->Finalise();
 
 	//Extrapolate the number of fake events in the input distribution
-	inputDistribution->SetBadBin( totalFake / ( totalPaired + totalMissed ) );
+	inputDistribution->SetBadBin( inputSmearing->GetTotalFake() / ( inputSmearing->GetTotalPaired() + inputSmearing->GetTotalMissed() ) );
 
 	//Make the smeared distribution
 	smearedDistribution = new Distribution( inputDistribution, inputSmearing );

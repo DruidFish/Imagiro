@@ -434,7 +434,7 @@ void XvsYNormalisedPlotMaker::StoreData( IFileInput * DataInput )
 
 			systematicUnfolders[ experimentIndex ]->StoreDataValue( dataValues, dataWeight );
 		}
-	} 
+	}
 }
 
 //Do the unfolding
@@ -482,11 +482,21 @@ void XvsYNormalisedPlotMaker::Correct( unsigned int MostIterations, bool SkipUnf
 		//And the systematics
 		for ( unsigned int experimentIndex = 0; experimentIndex < systematicUnfolders.size(); experimentIndex++ )
 		{
+			//Name
 			stringstream systematicString;
 			systematicString << thisPlotID << XvsYName << priorName << "Systematic" << experimentIndex;
 
+			//Rerieve
 			TH1F * systematicPlot = systematicUnfolders[ experimentIndex ]->GetCorrectedHistogram( systematicString.str(), systematicString.str() );
-			systematicResults.push_back( MakeProfile( systematicPlot ) );
+
+			//Delinearise
+			systematicPlot = MakeProfile( systematicPlot );
+
+			//Scale
+			systematicPlot->Scale( scaleFactor );
+
+			//Store
+			systematicResults.push_back( systematicPlot );
 		}
 
 		//Make a vector of bin error values

@@ -13,6 +13,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <sstream>
+#include <cmath>
 
 const unsigned int MAX_ITERATIONS_FOR_CROSS_CHECK = 100;
 
@@ -26,9 +27,6 @@ BayesianUnfolding::BayesianUnfolding( IIndexCalculator * DistributionIndices, st
 {
 	name = Name;
 	uniqueID = UniqueID;
-	totalPaired = 0.0;
-	totalFake = 0.0;
-	totalMissed = 0.0;
 	isClone = false;
 
 	indexCalculator = DistributionIndices;
@@ -43,13 +41,10 @@ BayesianUnfolding::BayesianUnfolding( IIndexCalculator * DistributionIndices, st
 
 //For use with Clone
 BayesianUnfolding::BayesianUnfolding( IIndexCalculator * DistributionIndices, string Name, unsigned int UniqueID,
-		Comparison * SharedComparison, Distribution * SharedTruthDistribution, SmearingMatrix * SharedSmearingMatrix, double PairedMC, double MissedMC, double FakeMC )
+		Comparison * SharedComparison, Distribution * SharedTruthDistribution, SmearingMatrix * SharedSmearingMatrix )
 {
 	name = Name;
 	uniqueID = UniqueID;
-	totalPaired = PairedMC;
-	totalMissed = MissedMC;
-	totalFake = FakeMC;
 	isClone = true;
 
 	indexCalculator = DistributionIndices;
@@ -80,7 +75,7 @@ BayesianUnfolding::~BayesianUnfolding()
 //Make another instance of the ICorrection which shares the smearing matrix
 BayesianUnfolding * BayesianUnfolding::CloneShareSmearingMatrix()
 {
-	return new BayesianUnfolding( indexCalculator, name, uniqueID + 1, distributionComparison, truthDistribution, inputSmearing, totalPaired, totalMissed, totalFake );
+	return new BayesianUnfolding( indexCalculator, name, uniqueID + 1, distributionComparison, truthDistribution, inputSmearing );
 }
 
 //Use this method to supply a value from the truth
@@ -96,7 +91,6 @@ void BayesianUnfolding::StoreTruthRecoPair( vector< double > Truth, vector< doub
 		reconstructedDistribution->StoreEvent( Reco, RecoWeight );
 	}
 
-	totalPaired += TruthWeight;
 	inputSmearing->StoreTruthRecoPair( Truth, Reco, TruthWeight, RecoWeight );
 }
 
@@ -110,7 +104,6 @@ void BayesianUnfolding::StoreUnreconstructedTruth( vector< double > Truth, doubl
 		reconstructedDistribution->StoreBadEvent( Weight );
 	}
 
-	totalMissed += Weight;
 	inputSmearing->StoreUnreconstructedTruth( Truth, Weight );
 }
 
@@ -124,7 +117,6 @@ void BayesianUnfolding::StoreReconstructedFake( vector< double > Reco, double We
 		reconstructedDistribution->StoreEvent( Reco, Weight );
 	}
 
-	totalFake += Weight;
 	inputSmearing->StoreReconstructedFake( Reco, Weight );
 }
 
@@ -141,7 +133,7 @@ void BayesianUnfolding::StoreDataValue( vector< double > Data, double Weight )
 void BayesianUnfolding::Correct( unsigned int MostIterations, unsigned int ErrorMode, bool WithSmoothing )
 {
 	//Extrapolate the number of missed events in the data
-	dataDistribution->SetBadBin( totalMissed / ( totalPaired + totalFake ) );
+	dataDistribution->SetBadBin( inputSmearing->GetTotalMissed() / ( inputSmearing->GetTotalPaired() + inputSmearing->GetTotalFake() ) );
 
 	//Use the truth distribution as the prior
 	Distribution * priorDistribution = truthDistribution;
@@ -325,7 +317,7 @@ unsigned int BayesianUnfolding::MonteCarloCrossCheck( Distribution * InputPriorD
 			//Return the criteria
 			cout << endl << iteration + 1 << ": " << referenceChi2 << ", " << referenceKolmogorov << " <--" << endl;
 			cout << "Artificial iteration limit reached - change the code if you really want to go further" << endl;
-                        cout << "-------------------------------------" << endl;
+			cout << "-------------------------------------" << endl;
 			delete adjustedDistribution;
 			return MAX_ITERATIONS_FOR_CROSS_CHECK;
 		}
@@ -345,6 +337,7 @@ unsigned int BayesianUnfolding::MonteCarloCrossCheck( Distribution * InputPriorD
 //Retrieve a TH1F* containing the correctted data distribution
 TH1F * BayesianUnfolding::GetCorrectedHistogram( string Name, string Title, bool Normalise )
 {
+
 	return unfoldedDistribution->MakeRootHistogram( Name, Title, Normalise );
 }
 
@@ -379,7 +372,7 @@ vector< double > BayesianUnfolding::Variances()
 {
 	if ( dagostiniVariance.size() > 0 )
 	{
-        	return dagostiniVariance;
+		return dagostiniVariance;
 	}
 	else
 	{

@@ -90,7 +90,7 @@ class NoCorrection : public ICorrection
 	private:
 		//For use with Clone
 		NoCorrection( IIndexCalculator * DistributionIndices, string Name, unsigned int UniqueID,
-				Distribution * SharedReconstructed, SmearingMatrix * SharedSmearing, double PairedMC, double FakeMC, double MissedMC );
+				Distribution * SharedReconstructed, SmearingMatrix * SharedSmearing );
 
 		bool isClone;
 		unsigned int uniqueID;
@@ -98,7 +98,6 @@ class NoCorrection : public ICorrection
 		vector< double > sumOfInputWeightSquares;
 		IIndexCalculator * indexCalculator;
 		Distribution *inputDistribution, *reconstructedDistribution;
-		double totalPaired, totalFake, totalMissed;
 		SmearingMatrix * inputSmearing;
 };
 

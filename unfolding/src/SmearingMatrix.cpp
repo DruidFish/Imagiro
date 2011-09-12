@@ -25,6 +25,9 @@ SmearingMatrix::SmearingMatrix( IIndexCalculator * InputIndices )
 
 	//Initialise the normalisation
 	normalisation = vector< double >( indexCalculator->GetBinNumber() + 1, 0.0 );
+	totalPaired = 0.0;
+	totalMissed = 0.0;
+	totalFake = 0.0;
 }
 
 //Populate the matrix with values from events
@@ -37,6 +40,7 @@ void SmearingMatrix::StoreTruthRecoPair( vector< double > Truth, vector< double 
 	//Increment values
 	AddToEntry( truthIndex, recoIndex, RecoWeight );
 	normalisation[ truthIndex ] += TruthWeight;
+	totalPaired += TruthWeight;
 }
 void SmearingMatrix::StoreUnreconstructedTruth( vector< double > Truth, double Weight )
 {
@@ -47,6 +51,7 @@ void SmearingMatrix::StoreUnreconstructedTruth( vector< double > Truth, double W
 	//Increment values
 	AddToEntry( truthIndex, recoIndex, Weight );
 	normalisation[ truthIndex ] += Weight;
+	totalMissed += Weight;
 }
 void SmearingMatrix::StoreReconstructedFake( vector< double > Reco, double Weight )
 {
@@ -57,6 +62,7 @@ void SmearingMatrix::StoreReconstructedFake( vector< double > Reco, double Weigh
 	//Increment values
 	AddToEntry( truthIndex, recoIndex, Weight );
 	normalisation[ truthIndex ] += Weight;
+	totalFake += Weight;
 }
 
 //Do a bunch of extra calculations that aren't necessary if you just want the raw smearing matrix
@@ -115,4 +121,19 @@ double SmearingMatrix::GetEfficiency( unsigned int CauseIndex )
 double SmearingMatrix::GetTruthTotal( unsigned int CauseIndex )
 {
 	return normalisation[ CauseIndex ];
+}
+
+double SmearingMatrix::GetTotalPaired()
+{
+	return totalPaired;
+}
+
+double SmearingMatrix::GetTotalMissed()
+{
+	return totalMissed;
+}
+
+double SmearingMatrix::GetTotalFake()
+{
+	return totalFake;
 }

@@ -277,7 +277,6 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 		}
 
 		//Perform closure tests
-		int numberRemoved = 0;
 		unsigned int numberFailed = 0;
 		vector< bool > usePrior( allPlots.size(), true );
 		if ( correctionType != NO_CORRECTION_MODE )
@@ -296,7 +295,6 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 					//	//Remove priors that did not pass the closure test
 					//	cout << "Removing " << mcInfo->Description( plotIndex ) << " from available priors" << endl;
 					//	usePrior[ plotIndex ] = false;
-					//	numberRemoved++;
 					//}
 				}
 			}
@@ -339,6 +337,7 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 		TH1F *combinedCorrectedHistogramWithSystematics, *combinedCorrectedHistogramWithStatistics;
 		allTruthPlots = vector< TH1F* >( allPlots.size(), NULL );
 		bool firstPlot = true;
+		double meanDenominator = 0.0;
 		for ( unsigned int plotIndex = 0; plotIndex < allPlots.size(); plotIndex++ )
 		{
 			//Still need to run this to get the truth output
@@ -358,6 +357,7 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 				//Load the corrected data into the combined distribution
 				TH1F * correctedHistogram = allPlots[ plotIndex ]->CorrectedHistogram();
 				vector< TH1F* > systematicHistograms = allPlots[ plotIndex ]->SystematicHistograms();
+				meanDenominator += 1.0 + ( double )( systematicHistograms.size() );
 				for ( int binIndex = 0; binIndex < correctedHistogram->GetNbinsX() + 2; binIndex++ )
 				{
 					double binContent = correctedHistogram->GetBinContent( binIndex );
@@ -382,7 +382,7 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 					{
 						binContent = systematicHistograms[ experimentIndex ]->GetBinContent( binIndex );
 						sumCorrectedData[ binIndex ] += binContent;
-						sumSquareCorrectedData[ binIndex ] += binContent;
+						sumSquareCorrectedData[ binIndex ] += ( binContent * binContent );
 					}
 				}
 
@@ -439,33 +439,26 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 			xError[ binIndex ] = xValues[ binIndex ] - combinedCorrectedHistogramWithStatistics->GetBinLowEdge( binIndex );
 
 			//Calculate the mean and standard deviation
-			double mean = sumCorrectedData[ binIndex ] / ( double )( allPlots.size() - numberRemoved );
-			double sigma = sumSquareCorrectedData[ binIndex ] / ( double )( allPlots.size() - numberRemoved );
-			sigma -= mean * mean;
+			double mean = sumCorrectedData[ binIndex ] / meanDenominator;
+			double variance = sumSquareCorrectedData[ binIndex ] / meanDenominator;
+			variance -= mean * mean;
 
 			//Get the y-values by taking the means of the corrected distributions
 			yValues[ binIndex ] = mean;
 			combinedCorrectedHistogramWithStatistics->SetBinContent( binIndex, yValues[ binIndex ] );
 
 			//Get the mean statistical error
-			double statistic = combinedStatisticErrors[ binIndex ] / (double)( allPlots.size() - numberRemoved );
+			double statistic = combinedStatisticErrors[ binIndex ] / meanDenominator;
 			yStatError[ binIndex ] = statistic;
 
-			//The systematic errors come from the range of the corrected distributions
-			double systematicLow = sigma;//yValues[ binIndex ] - minimumCorrectedData[ binIndex ];
-			double systematicHigh = sigma;//maximumCorrectedData[ binIndex ] - yValues[ binIndex ];
-
 			//Combine the statistical and systematic errors in quadrature
-			yBothErrorLow[ binIndex ] = sqrt( ( systematicLow * systematicLow ) + ( statistic * statistic ) );
-			yBothErrorHigh[ binIndex ] = sqrt( ( systematicHigh * systematicHigh ) + ( statistic * statistic ) );
+			yBothErrorLow[ binIndex ] = sqrt( variance + ( statistic * statistic ) );
+			yBothErrorHigh[ binIndex ] = sqrt( variance + ( statistic * statistic ) );
 		}
 
 		//Get rid of the overflow bins
 		double lowEdge = combinedCorrectedHistogramWithSystematics->GetBinLowEdge( 1 );
 		double highEdge = combinedCorrectedHistogramWithSystematics->GetBinLowEdge( graphSize - 1 );
-		//double gap = highEdge - lowEdge;
-		//xValues[ 0 ] = lowEdge - gap;
-		//xValues[ graphSize - 1 ] = highEdge + gap;
 
 		//Draw the combined error graph - asymmetric errors
 		TGraphAsymmErrors * graphWithSystematics = new TGraphAsymmErrors( graphSize, xValues, yValues, xError, xError, yBothErrorLow, yBothErrorHigh );

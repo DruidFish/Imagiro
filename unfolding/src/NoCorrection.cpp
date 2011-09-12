@@ -22,9 +22,6 @@ NoCorrection::NoCorrection( IIndexCalculator * DistributionIndices, string Name,
 	//Initialisations
 	name = Name;
 	uniqueID = UniqueID;
-	totalPaired = 0.0;
-	totalFake = 0.0;
-	totalMissed = 0.0;
 	isClone = false;
 
 	//Make new vectors just with the one entry
@@ -37,14 +34,11 @@ NoCorrection::NoCorrection( IIndexCalculator * DistributionIndices, string Name,
 
 //For use with Clone
 NoCorrection::NoCorrection( IIndexCalculator * DistributionIndices, string Name, unsigned int UniqueID,
-	       Distribution * SharedReconstructed, SmearingMatrix * SharedSmearing, double PairedMC, double FakeMC, double MissedMC )
+	       Distribution * SharedReconstructed, SmearingMatrix * SharedSmearing )
 {
 	//Initialisations
 	name = Name;
 	uniqueID = UniqueID;
-	totalPaired = PairedMC;
-	totalFake = FakeMC;
-	totalMissed = MissedMC;
 	isClone = true;
 
 	//Make new vectors just with the one entry
@@ -74,7 +68,7 @@ NoCorrection::~NoCorrection()
 //Make another instance of the ICorrection which sihares the smearing matrix
 NoCorrection * NoCorrection::CloneShareSmearingMatrix()
 {
-	return new NoCorrection( indexCalculator, name, uniqueID + 1, reconstructedDistribution, inputSmearing, totalPaired, totalFake, totalMissed );
+	return new NoCorrection( indexCalculator, name, uniqueID + 1, reconstructedDistribution, inputSmearing );
 }
 
 //Use this method to supply a value from the truth
@@ -89,7 +83,6 @@ void NoCorrection::StoreTruthRecoPair( vector< double > Truth, vector< double > 
 		reconstructedDistribution->StoreEvent( Reco, RecoWeight );
 	}
 
-	totalPaired += TruthWeight;
 	inputSmearing->StoreTruthRecoPair( Truth, Reco, TruthWeight, RecoWeight );
 }
 
@@ -102,7 +95,6 @@ void NoCorrection::StoreUnreconstructedTruth( vector< double > Truth, double Wei
 		reconstructedDistribution->StoreBadEvent( Weight );
 	}
 
-	totalMissed += Weight;
 	inputSmearing->StoreUnreconstructedTruth( Truth, Weight );
 }
 
@@ -115,7 +107,6 @@ void NoCorrection::StoreReconstructedFake( vector< double > Reco, double Weight,
 		reconstructedDistribution->StoreEvent( Reco, Weight );
 	}
 
-	totalFake += Weight;
 	inputSmearing->StoreReconstructedFake( Reco, Weight );
 }
 
@@ -133,7 +124,7 @@ void NoCorrection::Correct( unsigned int MostIterations, unsigned int ErrorMode,
 	inputSmearing->Finalise();
 
 	//Extrapolate the number of missed events in the data
-	inputDistribution->SetBadBin( totalMissed / ( totalPaired + totalFake ) );	
+	inputDistribution->SetBadBin( inputSmearing->GetTotalMissed() / ( inputSmearing->GetTotalPaired() + inputSmearing->GetTotalFake() ) );	
 }
 
 //Perform a closure test
