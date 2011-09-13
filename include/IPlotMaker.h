@@ -55,6 +55,7 @@ class IPlotMaker
 		virtual TH1F * CorrectedHistogram() = 0;
 		virtual TH1F * UncorrectedHistogram() = 0;
 		virtual TH1F * MCTruthHistogram() = 0;
+		virtual TH1F * MCRecoHistogram() = 0;
 		virtual TH2F * SmearingHistogram() = 0;
 		virtual vector< TH1F* > SystematicHistograms() = 0;
 

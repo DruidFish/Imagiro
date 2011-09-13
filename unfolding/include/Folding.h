@@ -78,6 +78,9 @@ class Folding : public ICorrection
 		virtual TH1F * GetTruthHistogram( string Name, string Title, bool Normalise = false );
 		virtual Distribution * GetTruthDistribution();
 
+		//Retrieve the reconstructed distribution
+                virtual TH1F * GetReconstructedHistogram( string Name, string Title, bool Normalise = false );
+
 		//Retrieve the input distribution to fold
 		virtual TH1F * GetUncorrectedHistogram( string Name, string Title, bool Normalise = false );
 

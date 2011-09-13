@@ -76,6 +76,9 @@ class ICorrection
 		virtual TH1F * GetTruthHistogram( string Name, string Title, bool Normalise = false ) = 0;
 		virtual Distribution * GetTruthDistribution() = 0;
 
+		//Retrieve the reconstructed distribution
+		virtual TH1F * GetReconstructedHistogram( string Name, string Title, bool Normalise = false ) = 0;
+
 		//Retrieve the uncorrected data distribution
 		virtual TH1F * GetUncorrectedHistogram( string Name, string Title, bool Normalise = false ) = 0;
 

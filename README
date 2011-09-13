@@ -14,13 +14,13 @@ ________________________________
 Use
 
 	If you try and run the binary straight away (i.e. by just typing bin/imagiro) then chances are it will crash. First you must edit src/main.cpp and src/MonteCarloInformation.cpp to specify the locations of input files.
-Imagiro expects 2 input files per MC sample (one for truth, one for reconstructed), each containing an nTuple with branches called "EventNumber" and "EventWeight", and a branch for each variable to unfold.
+Imagiro expects 2 input TTrees per MC sample (one for truth, one for reconstructed), each containing branches called "EventNumber" and "EventWeight", and then a branch for each variable to unfold.
 There must also be a similar input file for the data to unfold. The code will look like this:
 
 InputNtuple * dataNtuple = new InputNtuple( "data/user.bwynne.LeadingJetModifiedv3.Data.CaloJet/mergedFile.root", "benTuple", "7TeVData" );
 
 	- The first argument is the path to the input file
-	- The second argument is the location of the nTuple within the file
+	- The second argument is the location of the TTree within the file
 	- The third argument should describe the input (for setting titles on plots, and debug messages)
 
 Also in src/main.cpp you must specify the plots you wish to make. The code will look like this:

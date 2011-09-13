@@ -29,6 +29,7 @@ NoCorrection::NoCorrection( IIndexCalculator * DistributionIndices, string Name,
 	inputSmearing = new SmearingMatrix( indexCalculator );
 	inputDistribution = new Distribution( indexCalculator );
 	reconstructedDistribution = new Distribution( indexCalculator );
+	truthDistribution = new Distribution( indexCalculator );
 	sumOfInputWeightSquares = vector< double >( indexCalculator->GetBinNumber(), 0.0 );
 }
 
@@ -46,6 +47,7 @@ NoCorrection::NoCorrection( IIndexCalculator * DistributionIndices, string Name,
 	inputSmearing = SharedSmearing;
 	inputDistribution = new Distribution( indexCalculator );
 	reconstructedDistribution = SharedReconstructed;
+	truthDistribution = new Distribution( indexCalculator );
 	sumOfInputWeightSquares = vector< double >( indexCalculator->GetBinNumber(), 0.0 );
 }
 
@@ -54,11 +56,9 @@ NoCorrection::NoCorrection( IIndexCalculator * DistributionIndices, string Name,
 NoCorrection::~NoCorrection()
 {
 	delete inputDistribution;
-	if ( isClone )
-	{
-		delete indexCalculator;
-	}
-	else
+	delete truthDistribution;
+
+	if ( !isClone )
 	{
 		delete reconstructedDistribution;
 		delete inputSmearing;
@@ -80,6 +80,7 @@ void NoCorrection::StoreTruthRecoPair( vector< double > Truth, vector< double > 
 {
 	if (UseInPrior)
 	{
+		truthDistribution->StoreEvent( Truth, TruthWeight );
 		reconstructedDistribution->StoreEvent( Reco, RecoWeight );
 	}
 
@@ -92,6 +93,7 @@ void NoCorrection::StoreUnreconstructedTruth( vector< double > Truth, double Wei
 {
 	if (UseInPrior)
 	{
+		truthDistribution->StoreEvent( Truth, Weight );
 		reconstructedDistribution->StoreBadEvent( Weight );
 	}
 
@@ -104,6 +106,7 @@ void NoCorrection::StoreReconstructedFake( vector< double > Reco, double Weight,
 {
 	if (UseInPrior)
 	{
+		truthDistribution->StoreBadEvent( Weight );
 		reconstructedDistribution->StoreEvent( Reco, Weight );
 	}
 
@@ -158,14 +161,20 @@ SmearingMatrix * NoCorrection::GetSmearingMatrix()
 	return inputSmearing;
 }
 
-//Retrieve the reconstructed distribution
+//Retrieve the truth distribution
 TH1F * NoCorrection::GetTruthHistogram( string Name, string Title, bool Normalise )
 {
-	return reconstructedDistribution->MakeRootHistogram( Name, Title, Normalise );
+	return truthDistribution->MakeRootHistogram( Name, Title, Normalise );
 }
 Distribution * NoCorrection::GetTruthDistribution()
 {
-	return reconstructedDistribution;
+	return truthDistribution;
+}
+
+//Retrieve the reconstructed distribution
+TH1F * NoCorrection::GetReconstructedHistogram( string Name, string Title, bool Normalise )
+{
+        return reconstructedDistribution->MakeRootHistogram( Name, Title, Normalise );
 }
 
 //Retrieve the uncorrected data distribution

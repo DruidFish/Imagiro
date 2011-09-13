@@ -17,7 +17,7 @@
 #include "IPlotMaker.h"
 #include "TCanvas.h"
 #include "TFile.h"
-#include "TStyle.h"
+#include "TGraph.h"
 #include <vector>
 #include <string>
 
@@ -48,9 +48,6 @@ class MonteCarloSummaryPlotMaker
 		//Save result to given file
 		void SaveResult( TFile * OutputFile );
 
-		//Create an ATLAS style object
-		TStyle * AtlasStyle( string Name );
-
 		//Return the names of the variables
 		vector< string > VariableNames();
 
@@ -63,8 +60,10 @@ class MonteCarloSummaryPlotMaker
 		TCanvas * plotCanvas;
 		bool finalised, combineMode, manualRange, manualLabels, logScale;
 		vector< IPlotMaker* > allPlots;
+		vector< TH1F* > truthHistograms, reconstructedHistograms;
+		TH1F *uncorrectedData, *correctedData, *statisticalErrors, *systematicErrors;
 		double yRangeMinimum, yRangeMaximum;
-		string dataDescription, xAxisLabel, yAxisLabel;
+		string dataDescription, xAxisLabel, yAxisLabel, plotDescription;
 		vector< string > variableNames;
 };
 

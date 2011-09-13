@@ -341,6 +341,7 @@ void XPlotMaker::Correct( unsigned int MostIterations, bool SkipUnfolding, unsig
 		//Retrieve some other bits for debug
 		TH1F * XUncorrected = XUnfolder->GetUncorrectedHistogram( XFullName + "Uncorrected", XFullTitle + " Uncorrected Distribution", normalise );
 		TH1F * XTruth = XUnfolder->GetTruthHistogram( XFullName + "Truth", XFullTitle + " Truth Distribution", normalise );
+		TH1F * XReco = XUnfolder->GetReconstructedHistogram( XFullName + "Reco", XFullTitle + " Reco Distribution", normalise );
 		TH2F * XSmearing = XUnfolder->GetSmearingHistogram( XFullName + "Smearing", XFullTitle + " Smearing Matrix" );
 		if ( ErrorMode > 1 && !SkipUnfolding )
 		{
@@ -350,6 +351,7 @@ void XPlotMaker::Correct( unsigned int MostIterations, bool SkipUnfolding, unsig
 		//Scale the histograms
 		XCorrected->Scale( scaleFactor );
 		XTruth->Scale( scaleFactor );
+		XReco->Scale( scaleFactor );
 		XUncorrected->Scale( scaleFactor );
 
 		//Get the error vectors
@@ -401,6 +403,11 @@ void XPlotMaker::Correct( unsigned int MostIterations, bool SkipUnfolding, unsig
 		mcTruthDistribution = XTruth;
 		mcTruthDistribution->SetXTitle( xName.c_str() );
 		mcTruthDistribution->SetYTitle( "Events" );
+
+		//Format and save the reco distribution
+		mcRecoDistribution = XReco;
+		mcRecoDistribution->SetXTitle( xName.c_str() );
+		mcRecoDistribution->SetYTitle( "Events" );
 
 		//Format and save the smearing matrix
 		smearingMatrix = XSmearing;
@@ -488,6 +495,18 @@ TH1F * XPlotMaker::MCTruthHistogram()
 	else
 	{
 		cerr << "Trying to retrieve MC truth plot from unfinalised XPlotMaker" << endl;
+		exit(1);
+	}
+}
+TH1F * XPlotMaker::MCRecoHistogram()
+{
+	if ( finalised )
+	{
+		return mcRecoDistribution;
+	}
+	else
+	{
+		cerr << "Trying to retrieve MC reco plot from unfinalised XPlotMaker" << endl;
 		exit(1);
 	}
 }

@@ -22,9 +22,9 @@ BinByBinUnfolding::BinByBinUnfolding( IIndexCalculator * DistributionIndices, st
 {
 	name = Name;
 	uniqueID = UniqueID;
-	( *totalPaired ) = 0;
-	( *totalMissed ) = 0;
-	( *totalFake ) = 0;
+	totalPaired = new double(0);
+	totalMissed = new double(0);
+	totalFake = new double(0);
 	isClone = false;
 
 	indexCalculator = DistributionIndices;
@@ -271,6 +271,12 @@ TH1F * BinByBinUnfolding::GetTruthHistogram( string Name, string Title, bool Nor
 Distribution * BinByBinUnfolding::GetTruthDistribution()
 {
 	return truthDistribution;
+}
+
+//Retrieve the reconstructed distribution
+TH1F * BinByBinUnfolding::GetReconstructedHistogram( string Name, string Title, bool Normalise )
+{
+        return reconstructedDistribution->MakeRootHistogram( Name, Title, Normalise );
 }
 
 //Retrieve the uncorrected data distribution

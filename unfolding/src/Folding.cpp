@@ -202,14 +202,20 @@ SmearingMatrix * Folding::GetSmearingMatrix()
 	return inputSmearing;
 }
 
-//Retrieve the reconstructed distribution
+//Retrieve the truth distribution
 TH1F * Folding::GetTruthHistogram( string Name, string Title, bool Normalise )
 {
-	return reconstructedDistribution->MakeRootHistogram( Name, Title, Normalise );
+	return truthDistribution->MakeRootHistogram( Name, Title, Normalise );
 }
 Distribution * Folding::GetTruthDistribution()
 {
-	return reconstructedDistribution;
+	return truthDistribution;
+}
+
+//Retrieve the reconstructed distribution
+TH1F * Folding::GetReconstructedHistogram( string Name, string Title, bool Normalise )
+{
+        return reconstructedDistribution->MakeRootHistogram( Name, Title, Normalise );
 }
 
 //Retrieve the uncorrected data distribution

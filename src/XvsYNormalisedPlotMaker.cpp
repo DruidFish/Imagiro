@@ -68,9 +68,7 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	stringstream idString;
 	idString << thisPlotID;
 	string xvsyTruthName = xName + yName + priorName + "TruthCheck" + idString.str();
-	string xTruthName = xName + "ButNot" + yName + priorName + "TruthCheck" + idString.str();
-	xvsyTruthCheck = new TH1F( xvsyTruthName.c_str(), xvsyTruthName.c_str(), distributionIndices->GetBinNumber(0) - 2, distributionIndices->GetBinLowEdgesForRoot(0) );
-	xTruthCheck = new TH1F( xTruthName.c_str(), xTruthName.c_str(), distributionIndices->GetBinNumber(0) - 2, distributionIndices->GetBinLowEdgesForRoot(0) );
+	xvsyTruthCheck = new TProfile( xvsyTruthName.c_str(), xvsyTruthName.c_str(), distributionIndices->GetBinNumber(0) - 2, distributionIndices->GetBinLowEdgesForRoot(0) );
 
 	//Make a summary for the y data values
 	yValueSummary = new StatisticsSummary();
@@ -116,9 +114,7 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	stringstream idString;
 	idString << thisPlotID;
 	string xvsyTruthName = xName + yName + priorName + "TruthCheck" + idString.str();
-	string xTruthName = xName + "ButNot" + yName + priorName + "TruthCheck" + idString.str();
-	xvsyTruthCheck = new TH1F( xvsyTruthName.c_str(), xvsyTruthName.c_str(), distributionIndices->GetBinNumber(0) - 2, distributionIndices->GetBinLowEdgesForRoot(0) );
-	xTruthCheck = new TH1F( xTruthName.c_str(), xTruthName.c_str(), distributionIndices->GetBinNumber(0) - 2, distributionIndices->GetBinLowEdgesForRoot(0) );
+	xvsyTruthCheck = new TProfile( xvsyTruthName.c_str(), xvsyTruthName.c_str(), distributionIndices->GetBinNumber(0) - 2, distributionIndices->GetBinLowEdgesForRoot(0) );
 
 	//Make a summary for the y data values
 	yValueSummary = new StatisticsSummary();
@@ -173,9 +169,7 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 	stringstream idString;
 	idString << thisPlotID;
 	string xvsyTruthName = xName + yName + priorName + "TruthCheck" + idString.str();
-	string xTruthName = xName + priorName + "TruthCheck" + idString.str();
-	xvsyTruthCheck = new TH1F( xvsyTruthName.c_str(), xvsyTruthName.c_str(), distributionIndices->GetBinNumber(0) - 2, distributionIndices->GetBinLowEdgesForRoot(0) );
-	xTruthCheck = new TH1F( xTruthName.c_str(), xTruthName.c_str(), distributionIndices->GetBinNumber(0) - 2, distributionIndices->GetBinLowEdgesForRoot(0) );
+	xvsyTruthCheck = new TProfile( xvsyTruthName.c_str(), xvsyTruthName.c_str(), distributionIndices->GetBinNumber(0) - 2, distributionIndices->GetBinLowEdgesForRoot(0) );
 
 	//Make a summary for the y data values
 	yValueSummary = new StatisticsSummary();
@@ -193,7 +187,6 @@ XvsYNormalisedPlotMaker::XvsYNormalisedPlotMaker( string XVariableName, string Y
 XvsYNormalisedPlotMaker::~XvsYNormalisedPlotMaker()
 {
 	delete xvsyTruthCheck;
-	delete xTruthCheck;
 	delete distributionIndices;
 	delete XvsYUnfolder;
 	for ( unsigned int experimentIndex = 0; experimentIndex < systematicUnfolders.size(); experimentIndex++ )
@@ -306,16 +299,7 @@ void XvsYNormalisedPlotMaker::StoreMatch( IFileInput * TruthInput, IFileInput * 
 		if ( useInPrior )
 		{
 			//Store values for checking the delinearisation
-			if ( correctionType <= 0 )
-			{
-				xTruthCheck->Fill( xReconstructedValue, reconstructedWeight );
-				xvsyTruthCheck->Fill( xReconstructedValue, yReconstructedValue * reconstructedWeight );
-			}
-			else
-			{
-				xTruthCheck->Fill( xTruthValue, truthWeight );
-				xvsyTruthCheck->Fill( xTruthValue, yTruthValue * truthWeight );
-			}
+			xvsyTruthCheck->Fill( xTruthValue, yTruthValue, truthWeight );
 		}
 	}
 }
@@ -345,11 +329,10 @@ void XvsYNormalisedPlotMaker::StoreMiss( IFileInput * TruthInput )
 		truthValues.push_back( yTruthValue );
 		XvsYUnfolder->StoreUnreconstructedTruth( truthValues, truthWeight, useInPrior );
 
-		if ( useInPrior && correctionType > 0 )
+		if ( useInPrior )
 		{
 			//Store values for checking the delinearisation
-			xTruthCheck->Fill( xTruthValue, truthWeight );
-			xvsyTruthCheck->Fill( xTruthValue, yTruthValue * truthWeight );
+			xvsyTruthCheck->Fill( xTruthValue, yTruthValue, truthWeight );
 		}
 	}
 }
@@ -378,14 +361,6 @@ void XvsYNormalisedPlotMaker::StoreFake( IFileInput * ReconstructedInput )
 		//Store the y value
 		reconstructedValues.push_back( yReconstructedValue );
 		XvsYUnfolder->StoreReconstructedFake( reconstructedValues, reconstructedWeight, useInPrior );
-
-
-		if ( useInPrior && correctionType <= 0 )
-		{
-			//Store values for checking the delinearisation
-			xTruthCheck->Fill( xReconstructedValue, reconstructedWeight );
-			xvsyTruthCheck->Fill( xReconstructedValue, yReconstructedValue * reconstructedWeight );
-		}
 	}
 }
 void XvsYNormalisedPlotMaker::StoreData( IFileInput * DataInput )
@@ -473,11 +448,13 @@ void XvsYNormalisedPlotMaker::Correct( unsigned int MostIterations, bool SkipUnf
 		//Retrieve some other bits for debug
 		TH1F * XvsYUncorrected = XvsYUnfolder->GetUncorrectedHistogram( XvsYName + "Uncorrected", XvsYTitle + " Uncorrected Distribution" );
 		TH1F * XvsYTruth = XvsYUnfolder->GetTruthHistogram( XvsYName + "Truth", XvsYTitle + " Truth Distribution" );
+		TH1F * XvsYReco = XvsYUnfolder->GetReconstructedHistogram( XvsYName + "Reco", XvsYTitle + " Reco Distribution" );
 
 		//De-linearise the x vs y distributions
 		TH1F * DelinearisedXvsYCorrected = MakeProfile( XvsYCorrected );
 		TH1F * DelinearisedXvsYUncorrected = MakeProfile( XvsYUncorrected );
 		TH1F * DelinearisedXvsYTruth = MakeProfile( XvsYTruth );
+		TH1F * DelinearisedXvsYReco = MakeProfile( XvsYReco );
 
 		//And the systematics
 		for ( unsigned int experimentIndex = 0; experimentIndex < systematicUnfolders.size(); experimentIndex++ )
@@ -531,12 +508,13 @@ void XvsYNormalisedPlotMaker::Correct( unsigned int MostIterations, bool SkipUnf
 		DelinearisedXvsYCorrected->Scale( scaleFactor );
 		DelinearisedXvsYUncorrected->Scale( scaleFactor );
 		DelinearisedXvsYTruth->Scale( scaleFactor );
+		DelinearisedXvsYReco->Scale( scaleFactor );
+		xvsyTruthCheck->Scale( scaleFactor );
 
 		//Check for data loss in the delinearisation
-		xvsyTruthCheck->Divide( xvsyTruthCheck, xTruthCheck, scaleFactor, 1.0 );
 		bool dataLost = false;
 		double averagePercentError = 0.0;
-		for ( int binIndex = 0; binIndex < xTruthCheck->GetNbinsX() + 2; binIndex++ )
+		for ( int binIndex = 0; binIndex < xvsyTruthCheck->GetNbinsX() + 2; binIndex++ )
 		{
 			//Compare the delinearised value with one calculated without going through delinearisation
 			double correctValue = xvsyTruthCheck->GetBinContent( binIndex );
@@ -566,7 +544,7 @@ void XvsYNormalisedPlotMaker::Correct( unsigned int MostIterations, bool SkipUnf
 				}
 			}
 		}
-		averagePercentError /= (double)( xTruthCheck->GetNbinsX() + 2 );
+		averagePercentError /= (double)( xvsyTruthCheck->GetNbinsX() + 2 );
 		cout << "Average bin error from delinearisation: " << averagePercentError << "\%" << endl;
 		if ( dataLost || averagePercentError > 0.5 )
 		{
@@ -581,26 +559,32 @@ void XvsYNormalisedPlotMaker::Correct( unsigned int MostIterations, bool SkipUnf
 		delete yValueSummary;
 
 		//Get the y range to plot
-		double yMinimum = distributionIndices->GetBinLowEdgesForRoot(1)[0] * scaleFactor;
-		double yMaximum = distributionIndices->GetBinLowEdgesForRoot(1)[ distributionIndices->GetBinNumber(1) - 1 ] * scaleFactor;
+		//double yMinimum = distributionIndices->GetBinLowEdgesForRoot(1)[0] * scaleFactor;
+		//double yMaximum = distributionIndices->GetBinLowEdgesForRoot(1)[ distributionIndices->GetBinNumber(1) - 2 ] * scaleFactor;
 
 		//Format and save the corrected distribution
 		correctedDistribution = DelinearisedXvsYCorrected;
 		correctedDistribution->SetXTitle( xName.c_str() );
 		correctedDistribution->SetYTitle( yName.c_str() );
-		correctedDistribution->GetYaxis()->SetRangeUser( yMinimum, yMaximum );
+		//correctedDistribution->GetYaxis()->SetRangeUser( yMinimum, yMaximum );
 
 		//Format and save the uncorrected distribution
 		uncorrectedDistribution = DelinearisedXvsYUncorrected;
 		uncorrectedDistribution->SetXTitle( xName.c_str() );
 		uncorrectedDistribution->SetYTitle( yName.c_str() );
-		uncorrectedDistribution->GetYaxis()->SetRangeUser( yMinimum, yMaximum );
+		//uncorrectedDistribution->GetYaxis()->SetRangeUser( yMinimum, yMaximum );
 
 		//Format and save the truth distribution
 		mcTruthDistribution = DelinearisedXvsYTruth;
 		mcTruthDistribution->SetXTitle( xName.c_str() );
 		mcTruthDistribution->SetYTitle( yName.c_str() );
-		mcTruthDistribution->GetYaxis()->SetRangeUser( yMinimum, yMaximum );
+		//mcTruthDistribution->GetYaxis()->SetRangeUser( yMinimum, yMaximum );
+
+		//Format and save the reco distribution
+		mcRecoDistribution = DelinearisedXvsYReco;
+		mcRecoDistribution->SetXTitle( xName.c_str() );
+		mcRecoDistribution->SetYTitle( yName.c_str() );
+		//mcRecoDistribution->GetYaxis()->SetRangeUser( yMinimum, yMaximum );
 
 		//Format and save the smearing matrix
 		if ( doPlotSmearing )
@@ -703,6 +687,19 @@ TH1F * XvsYNormalisedPlotMaker::MCTruthHistogram()
 		exit(1);
 	}
 }
+TH1F * XvsYNormalisedPlotMaker::MCRecoHistogram()
+{
+	if ( finalised )
+	{
+		return mcRecoDistribution;
+	}
+	else
+	{
+		cerr << "Trying to retrieve MC reco plot from unfinalised XvsYNormalisedPlotMaker" << endl;
+		exit(1);
+	}
+}
+
 
 //Return a distribution for use in the cross-checks
 Distribution * XvsYNormalisedPlotMaker::PriorDistributionForCrossCheck()

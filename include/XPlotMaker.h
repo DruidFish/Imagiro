@@ -54,6 +54,7 @@ class XPlotMaker : public IPlotMaker
 		virtual TH1F * CorrectedHistogram();
 		virtual TH1F * UncorrectedHistogram();
 		virtual TH1F * MCTruthHistogram();
+		virtual TH1F * MCRecoHistogram();
 		virtual TH2F * SmearingHistogram();
 		virtual vector< TH1F* > SystematicHistograms();
 
@@ -93,7 +94,7 @@ class XPlotMaker : public IPlotMaker
 		bool finalised, normalise;
 		double scaleFactor;
 		vector< double > correctedDataErrors;
-		TH1F *correctedDistribution, *uncorrectedDistribution, *mcTruthDistribution;
+		TH1F *correctedDistribution, *uncorrectedDistribution, *mcTruthDistribution, *mcRecoDistribution;
 		TH2F *smearingMatrix, *covarianceMatrix;
 		vector< TH1F* > systematicResults;
 };

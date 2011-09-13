@@ -60,6 +60,7 @@ class XvsYNormalisedPlotMaker : public IPlotMaker
 		virtual TH1F * CorrectedHistogram();
 		virtual TH1F * UncorrectedHistogram();
 		virtual TH1F * MCTruthHistogram();
+		virtual TH1F * MCRecoHistogram();
 		virtual TH2F * SmearingHistogram();
 		virtual vector< TH1F* > SystematicHistograms();
 
@@ -92,7 +93,7 @@ class XvsYNormalisedPlotMaker : public IPlotMaker
 		TH1F * MakeProfile( TH1F * LinearisedDistribution );
 		vector< double > DelineariseErrors( vector< double > InputSumWeightSquares );
 
-		TProfile * simpleDataProfile; 
+		TProfile *simpleDataProfile, *xvsyTruthCheck;
 		int correctionType;
 		unsigned int thisPlotID, xBinNumber, yBinNumber;
 		ICorrection *XvsYUnfolder;
@@ -104,7 +105,7 @@ class XvsYNormalisedPlotMaker : public IPlotMaker
 		vector< double > correctedDataErrors;
 	       	vector< vector< double > > systematicOffsets, systematicWidths;
 		StatisticsSummary * yValueSummary;
-		TH1F *correctedDistribution, *uncorrectedDistribution, *mcTruthDistribution, *xvsyTruthCheck, *xTruthCheck;
+		TH1F *correctedDistribution, *uncorrectedDistribution, *mcTruthDistribution, *mcRecoDistribution;
 		TH2F *smearingMatrix, *covarianceMatrix;
 		vector< TH1F* > systematicResults;
 		TRandom3 * systematicRandom;

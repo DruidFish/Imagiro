@@ -21,9 +21,11 @@
 
 using namespace std;
 
-//const int MC_CHECK_OFFSET = 1;
-const int BAYESIAN_MODE = 2;
+const int FOLDING_MODE = -1;
 const int NO_CORRECTION_MODE = 0;
+const int BIN_BY_BIN_MODE = 1;
+const int BAYESIAN_MODE = 2;
+
 
 //Default constructor - useless
 MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker()
@@ -239,7 +241,7 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 	else
 	{
 		int mostIterations = 0;
-		string plotDescription = allPlots[ 0 ]->Description( true );
+		plotDescription = allPlots[ 0 ]->Description( true );
 
 		//Do the unfolding cross-check to find out good conditions for convergence
 		cout << endl << "--------------- Started correcting " << plotDescription << " ----------------" << endl;
@@ -312,8 +314,25 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 		}
 
 		//Make a canvas to display the plots
-		string plotName = allPlots[0]->Description(false) + "CorrectedDistribution";
-		string plotTitle = allPlots[0]->Description(true) + " Corrected Distribution";
+		string correctionDescription;
+		if ( correctionType == FOLDING_MODE )
+		{
+			correctionDescription = "Folded";
+		}
+		else if ( correctionType == NO_CORRECTION_MODE )
+		{
+			correctionDescription = "Uncorrected";
+		}
+		else if ( correctionType == BIN_BY_BIN_MODE )
+		{
+			correctionDescription = "Bin-by-bin";
+		}
+		else if ( correctionType == BAYESIAN_MODE )
+		{
+			correctionDescription = "Corrected";
+		}
+		string plotName = allPlots[0]->Description(false) + correctionDescription + "Distribution";
+		string plotTitle = allPlots[0]->Description(true) + correctionDescription + " Distribution";
 		plotCanvas = new TCanvas( plotName.c_str(), plotTitle.c_str(), 0, 0, 800, 600 );
 		plotCanvas->Range( 0, 0, 1, 1 );
 		plotCanvas->SetFillColor( kWhite );
@@ -344,9 +363,24 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 			allPlots[ plotIndex ]->Correct( mostIterations, !usePrior[ plotIndex ], ErrorMode, WithSmoothing );
 
 			//Make a local copy of the truth plot
-			string truthPlotName = "localCopy" + allPlots[ plotIndex ]->PriorName() + "Truth";
+			string truthPlotName = "mcTruth" + allPlots[ plotIndex ]->PriorName();
 			TH1F * newTruthHistogram = ( TH1F* )allPlots[ plotIndex ]->MCTruthHistogram()->Clone( truthPlotName.c_str() );
-			allTruthPlots[ plotIndex ] = newTruthHistogram;
+			truthHistograms.push_back( newTruthHistogram );
+
+			//Make a local copy of the reco plot
+			string recoPlotName = "mcReco" + allPlots[ plotIndex ]->PriorName();
+			TH1F * newRecoHistogram = ( TH1F* )allPlots[ plotIndex ]->MCRecoHistogram()->Clone( recoPlotName.c_str() );
+			reconstructedHistograms.push_back( newRecoHistogram );
+
+			//Select an MC plot to compare the data to
+			if ( correctionType == NO_CORRECTION_MODE || correctionType == FOLDING_MODE )
+			{
+				allTruthPlots[ plotIndex ] = newRecoHistogram;
+			}
+			else
+			{
+				allTruthPlots[ plotIndex ] = newTruthHistogram;
+			}
 
 			//Only use the unfolded output if the closure test was passed
 			if ( usePrior[ plotIndex ] )
@@ -393,6 +427,13 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 					combinedCorrectedHistogramWithSystematics = new TH1F( *correctedHistogram );
 					combinedCorrectedHistogramWithStatistics = new TH1F( *correctedHistogram );
 
+					string correctedPlotName = "dataCorrected" + plotDescription;
+					correctedData = ( TH1F* )correctedHistogram->Clone( correctedPlotName.c_str() );
+					string statisticalPlotName = "dataStatErrors" + plotDescription;
+					statisticalErrors = ( TH1F* )correctedHistogram->Clone( statisticalPlotName.c_str() );
+					string systematicPlotName = "dataSystErrors" + plotDescription;
+					systematicErrors = ( TH1F* )correctedHistogram->Clone( systematicPlotName.c_str() );
+
 					//Copy a smearing matrix if it exists
 					smearingMatrix = NULL;
 					if ( allPlots[ plotIndex ]->SmearingHistogram() )
@@ -415,6 +456,10 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 					{
 						covarianceMatrix = 0;
 					}
+
+					//Make a local copy of the uncorrected data
+					string uncorrectedPlotName = "dataUncorrected" + plotDescription;
+					uncorrectedData = ( TH1F* )allPlots[ plotIndex ]->UncorrectedHistogram()->Clone( uncorrectedPlotName.c_str() );
 
 					firstPlot = false;
 				}
@@ -453,7 +498,12 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 
 			//Combine the statistical and systematic errors in quadrature
 			yBothErrorLow[ binIndex ] = sqrt( variance + ( statistic * statistic ) );
-			yBothErrorHigh[ binIndex ] = sqrt( variance + ( statistic * statistic ) );
+			yBothErrorHigh[ binIndex ] = yBothErrorLow[ binIndex ];
+
+			//Store the results
+			correctedData->SetBinContent( binIndex, mean );
+			statisticalErrors->SetBinContent( binIndex, statistic );
+			systematicErrors->SetBinContent( binIndex, sqrt( variance ) );
 		}
 
 		//Get rid of the overflow bins
@@ -592,7 +642,7 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 		}
 
 		//Status message
-		cout << endl << "--------------- Finished unfolding " << plotDescription << " ---------------" << endl;
+		cout << endl << "--------------- Finished correcting " << plotDescription << " ---------------" << endl;
 
 		//Mark as done
 		finalised = true;
@@ -601,20 +651,49 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 
 void MonteCarloSummaryPlotMaker::SaveResult( TFile * OutputFile )
 {
-	//Save the output
+	//Save the output canvas
 	OutputFile->cd();
 	plotCanvas->Write();
 
+	//Make a directory for the other bits
+	string directoryName = plotDescription + "Components";
+	TDirectory * plotDirectory = OutputFile->mkdir( directoryName.c_str() );
+	plotDirectory->cd();
+
+	//Store the smearing matrix
 	if ( smearingMatrix )
 	{
 		smearingMatrix->Write();
 	}
 
+	//Store the covariance matrix
 	if ( covarianceMatrix )
 	{
 		covarianceMatrix->Write();
 	}
 
+	//Store the truth histograms
+	for ( unsigned int truthIndex = 0; truthIndex < truthHistograms.size(); truthIndex++ )
+	{
+		truthHistograms[ truthIndex ]->Write();
+	}
+
+	//Store the reconstructed histograms
+	for ( unsigned int recoIndex = 0; recoIndex < reconstructedHistograms.size(); recoIndex++ )
+	{
+		reconstructedHistograms[ recoIndex ]->Write();
+	}
+
+	//Store the data plots
+	uncorrectedData->Write();
+	correctedData->Write();
+	statisticalErrors->Write();
+	systematicErrors->Write();
+
+	//Return to the top directory	
+	OutputFile->cd();
+
+	//Write to disk
 	OutputFile->Flush();
 }
 

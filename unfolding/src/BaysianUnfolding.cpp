@@ -361,6 +361,12 @@ Distribution * BayesianUnfolding::GetTruthDistribution()
 	return truthDistribution;
 }
 
+//Retrieve the reconstructed distribution
+TH1F * BayesianUnfolding::GetReconstructedHistogram( string Name, string Title, bool Normalise )
+{
+        return reconstructedDistribution->MakeRootHistogram( Name, Title, Normalise );
+}
+
 //Retrieve the uncorrected data distribution
 TH1F * BayesianUnfolding::GetUncorrectedHistogram( string Name, string Title, bool Normalise )
 {
