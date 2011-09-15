@@ -18,6 +18,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <cmath>
+#include <algorithm>
 
 using namespace std;
 
@@ -25,7 +26,7 @@ const int FOLDING_MODE = -1;
 const int NO_CORRECTION_MODE = 0;
 const int BIN_BY_BIN_MODE = 1;
 const int BAYESIAN_MODE = 2;
-
+const double OUTSIDE_ONE_SIGMA = 0.159;
 
 //Default constructor - useless
 MonteCarloSummaryPlotMaker::MonteCarloSummaryPlotMaker()
@@ -353,6 +354,7 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 
 		//Unfold each plot and retrieve the information
 		vector< double > sumCorrectedData, sumSquareCorrectedData, combinedStatisticErrors;
+		vector< vector< double > > allResults;
 		TH1F *combinedCorrectedHistogramWithSystematics, *combinedCorrectedHistogramWithStatistics;
 		allTruthPlots = vector< TH1F* >( allPlots.size(), NULL );
 		bool firstPlot = true;
@@ -402,6 +404,7 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 						sumCorrectedData.push_back( binContent );
 						sumSquareCorrectedData.push_back( binContent * binContent );
 						combinedStatisticErrors.push_back( plotErrors[ binIndex ] );
+						allResults.push_back( vector< double >( 1, binContent ) );
 					}
 					else
 					{
@@ -409,6 +412,7 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 						sumCorrectedData[ binIndex ] += binContent;
 						sumSquareCorrectedData[ binIndex ] += ( binContent * binContent );
 						combinedStatisticErrors[ binIndex ] += plotErrors[ binIndex ];
+						allResults[ binIndex ].push_back( binContent );
 					}
 
 					//Do the systematic histograms as well
@@ -417,6 +421,7 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 						binContent = systematicHistograms[ experimentIndex ]->GetBinContent( binIndex );
 						sumCorrectedData[ binIndex ] += binContent;
 						sumSquareCorrectedData[ binIndex ] += ( binContent * binContent );
+						allResults[ binIndex ].push_back( binContent );
 					}
 				}
 
@@ -479,6 +484,16 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 		Double_t yBothErrorHigh[ graphSize ];
 		for ( int binIndex = 1; binIndex < graphSize - 1; binIndex++ )
 		{
+			//Sort the results in this bin
+			sort( allResults[ binIndex ].begin(), allResults[ binIndex ].end() );
+
+			//Calculate how many results to discard
+			int discardNumber = ceil( allResults[ binIndex ].size() * OUTSIDE_ONE_SIGMA );
+
+			//Pick the upper and lower systematic bounds
+			double sysLow = allResults[ binIndex ][ discardNumber ];
+			double sysHigh = allResults[ binIndex ][ allResults[ binIndex ].size() - discardNumber - 1 ];
+
 			//The x-axis values can just come straight from the histogram class
 			xValues[ binIndex ] = combinedCorrectedHistogramWithStatistics->GetBinCenter( binIndex );
 			xError[ binIndex ] = xValues[ binIndex ] - combinedCorrectedHistogramWithStatistics->GetBinLowEdge( binIndex );
@@ -504,6 +519,10 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 			correctedData->SetBinContent( binIndex, mean );
 			statisticalErrors->SetBinContent( binIndex, statistic );
 			systematicErrors->SetBinContent( binIndex, sqrt( variance ) );
+
+			//Debug
+			cout << sysLow << ", " << mean - sqrt( variance ) << endl;
+			cout << sysHigh << ", " << mean + sqrt( variance ) << endl;
 		}
 
 		//Get rid of the overflow bins

@@ -11,7 +11,9 @@
 #ifndef COMPARISON_H
 #define COMPARISON_H
 
+#include "IIndexCalculator.h"
 #include "Distribution.h"
+#include "TH1F.h"
 #include <string>
 
 using namespace std;
@@ -24,8 +26,11 @@ class Comparison
 		~Comparison();
 
 		void CompareDistributions( Distribution * FirstInput, Distribution * SecondInput, double & ChiSquared, double & Kolmogorov, bool IsClosureTest = false );
+		void DelineariseAndCompare( Distribution * FirstInput, Distribution * SecondInput, double & ChiSquared, double & Kolmogorov, IIndexCalculator * InputIndices );
 
 	private:
+		TH1F * MakeProfile( TH1F * LinearisedDistribution, IIndexCalculator * InputIndices );
+
 		string name;
 		int internalID, uniqueID;
 

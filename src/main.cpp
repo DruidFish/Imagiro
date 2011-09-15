@@ -174,7 +174,7 @@ int main ( int argc, char * argv[] )
 	//1D Unfolding
 
 	//Lead jet pT
-	XPlotMaker * leadJetPtPlot = new XPlotMaker( "MaxJetPt", "PYTHIA6-AMBT1", jetPtBinEdges, PLOT_MODE, 1.0, true );
+/*	XPlotMaker * leadJetPtPlot = new XPlotMaker( "MaxJetPt", "PYTHIA6-AMBT1", jetPtBinEdges, PLOT_MODE, 1.0, true );
 	MonteCarloSummaryPlotMaker * leadJetPtSummary = new MonteCarloSummaryPlotMaker( leadJetPtPlot, mcInfo, COMBINE_MC );
 	leadJetPtSummary->SetYRange( 1E-13, 1.0 );
 	leadJetPtSummary->UseLogScale();
@@ -183,7 +183,7 @@ int main ( int argc, char * argv[] )
 	//N charge towards
 	XPlotMaker * nChargedTowardPlot = new XPlotMaker( "NChargeToward", "PYTHIA6-AMBT1", nChargeBinEdges, PLOT_MODE, 1.0, true );
 	MonteCarloSummaryPlotMaker * nChargedTowardSummary = new MonteCarloSummaryPlotMaker( nChargedTowardPlot, mcInfo, COMBINE_MC );
-	allPlotMakers.push_back( nChargedTowardSummary );
+	allPlotMakers.push_back( nChargedTowardSummary );*/
 
 	//mean pT towards
 /*	XPlotMaker * meanPtTowardPlot = new XPlotMaker( "MeanPtToward", "PYTHIA6-AMBT1", meanPtBinEdges, PLOT_MODE, 1.0, true );
@@ -200,7 +200,7 @@ int main ( int argc, char * argv[] )
 	//Make a plot of number of charged particles in the toward region vs lead jet pT
 	XvsYNormalisedPlotMaker * pTvsNChargeTowardPlot = new XvsYNormalisedPlotMaker( "MaxJetPt", "NChargeToward", "PYTHIA6-AMBT1",
 			jetPtBinEdges, nChargeBinEdges, PLOT_MODE, scaleFactor );
-	//pTvsNChargeTowardPlot->AddSystematic( vector<double>( 2, 10.0 ), vector<double>( 2, 10.0 ), 10 );
+	//pTvsNChargeTowardPlot->AddSystematic( vector<double>( 2, 0.0 ), vector<double>( 2, 10.0 ), 100 );
 	//pTvsNChargeTowardPlot->AddSystematic( vector<double>( 2, -10.0 ), vector<double>( 2, 10.0 ), 10 );
 	MonteCarloSummaryPlotMaker * pTvsNChargeTowardSummary = new MonteCarloSummaryPlotMaker( pTvsNChargeTowardPlot, mcInfo, COMBINE_MC );
 	//pTvsNChargeTowardSummary->SetYRange( 0.1, 5.9 );
@@ -208,7 +208,7 @@ int main ( int argc, char * argv[] )
 	allPlotMakers.push_back( pTvsNChargeTowardSummary );
 
 	//Make a plot of number of charged particles in the away region vs lead jet pT
-	XvsYNormalisedPlotMaker * pTvsNChargeAwayPlot = new XvsYNormalisedPlotMaker( "MaxJetPt", "NChargeAway", "PYTHIA6-AMBT1",
+/*	XvsYNormalisedPlotMaker * pTvsNChargeAwayPlot = new XvsYNormalisedPlotMaker( "MaxJetPt", "NChargeAway", "PYTHIA6-AMBT1",
 			jetPtBinEdges, nChargeBinEdges, PLOT_MODE, scaleFactor );
 	MonteCarloSummaryPlotMaker * pTvsNChargeAwaySummary = new MonteCarloSummaryPlotMaker( pTvsNChargeAwayPlot, mcInfo, COMBINE_MC );
 	pTvsNChargeAwaySummary->SetYRange( 0.1, 5.9 );
@@ -221,7 +221,7 @@ int main ( int argc, char * argv[] )
 	MonteCarloSummaryPlotMaker * pTvsNChargeTransSummary = new MonteCarloSummaryPlotMaker( pTvsNChargeTransPlot, mcInfo, COMBINE_MC );
 	pTvsNChargeTransSummary->SetYRange( 0.1, 2.9 );
 	pTvsNChargeTransSummary->SetAxisLabels( "p_{T}^{lead} [MeV]", "<d^{2}N_{ch}/d#etad#phi>" );
-	allPlotMakers.push_back( pTvsNChargeTransSummary );
+	allPlotMakers.push_back( pTvsNChargeTransSummary );*/
 
 	//Make a plot of mean pT of charged particles in the toward region vs lead jet pT
 /*	XvsYNormalisedPlotMaker * pTvsMeanPtTowardPlot = new XvsYNormalisedPlotMaker( "MaxJetPt", "MeanPtToward", "PYTHIA6-AMBT1",
@@ -319,7 +319,7 @@ int main ( int argc, char * argv[] )
 	// Load the data - Again, set this up yourself            //
 	//                                                        //
 	////////////////////////////////////////////////////////////
-	IFileInput * dataInput = mcInfo->MakeReconstructedInput( 2, relevanceChecker );
+	IFileInput * dataInput = mcInfo->MakeReconstructedInput( 0, relevanceChecker );
 	//IFileInput * dataInput = mcInfo->MakeTruthInput( 3, relevanceChecker );
 
 	//Unfold!

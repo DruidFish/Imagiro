@@ -10,7 +10,7 @@
 
 #include <sstream>
 #include "Comparison.h"
-#include "TH1F.h"
+#include "TProfile.h"
 #include "TFile.h"
 #include <iostream>
 #include <cmath>
@@ -111,4 +111,66 @@ void Comparison::CompareDistributions( Distribution * FirstInput, Distribution *
 		delete secondPlot;
 	}
 	internalID++;
+}
+
+void Comparison::DelineariseAndCompare( Distribution * FirstInput, Distribution * SecondInput, double & ChiSquared, double & Kolmogorov, IIndexCalculator * InputIndices )
+{
+	//Set up the name for both plots in this comparison
+	stringstream internalName;
+	internalName << name << "." << uniqueID << "." << internalID;
+
+	//Make a plot of the first distribution
+	string firstPlotName = "FirstPlot" + internalName.str();
+	TH1F * firstPlot = FirstInput->MakeRootHistogram( firstPlotName, firstPlotName );
+
+	//Make a plot of the second distribution
+	string secondPlotName = "SecondPlot" + internalName.str();
+	TH1F * secondPlot = SecondInput->MakeRootHistogram( secondPlotName, secondPlotName );
+
+	//Delinearise
+	firstPlot = MakeProfile( firstPlot, InputIndices );
+	secondPlot = MakeProfile( secondPlot, InputIndices );
+
+	//Do the comparison
+	ChiSquared = firstPlot->Chi2Test( secondPlot, "UUCHI2" );
+	Kolmogorov = firstPlot->KolmogorovTest( secondPlot, "" );
+	internalID++;
+}
+
+
+//Convert from an X*Y linearised distribution to an X vs Y plot
+//WARNING: this method deletes the argument object
+TH1F * Comparison::MakeProfile( TH1F * LinearisedDistribution, IIndexCalculator * InputIndices )
+{
+	//Make an instance of TProfile
+	unsigned int binNumber = InputIndices->GetBinNumber(0);
+	string name = LinearisedDistribution->GetName();
+	string title = LinearisedDistribution->GetTitle();
+	TProfile * profilePlot = new TProfile( "temporaryProfile", "temporaryProfile", binNumber - 2, InputIndices->GetBinLowEdgesForRoot( 0 ) );
+
+	//Populate the profile
+	vector< unsigned int > separateIndices;
+	vector< double > centralValues;
+	for ( unsigned int binIndex = 0; binIndex < InputIndices->GetBinNumber(); binIndex++ )
+	{
+		//Work out the delinearised bin index and central value
+		separateIndices = InputIndices->GetNDimensionalIndex( binIndex );
+		centralValues = InputIndices->GetCentralValues( separateIndices );
+
+		//Store the values
+		profilePlot->Fill( centralValues[0], centralValues[1], LinearisedDistribution->GetBinContent( binIndex ) );
+	}
+
+	//Copy it into a histogram to avoid the stupid bug in Copy() with a profile cast as TH1D
+	delete LinearisedDistribution;
+	TH1F * returnHisto = new TH1F( name.c_str(), title.c_str(), binNumber - 2, InputIndices->GetBinLowEdgesForRoot( 0 ) );
+	for ( unsigned int binIndex = 0; binIndex < binNumber; binIndex++ )
+	{
+		double content = profilePlot->GetBinContent( binIndex );
+		returnHisto->SetBinContent( binIndex, content );
+	}
+
+	//Return result
+	delete profilePlot;
+	return returnHisto;
 }

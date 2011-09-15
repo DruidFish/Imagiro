@@ -269,10 +269,16 @@ unsigned int BayesianUnfolding::MonteCarloCrossCheck( Distribution * InputPriorD
 	//Finalise the smearing matrix
 	InputSmearing->Finalise();
 
+	cout << "------------- Cross-Check -------------" << endl;
+
+	//Test
+	//double lastDelinC, lastDelinK;
+	//distributionComparison->DelineariseAndCompare( truthDistribution, reconstructedDistribution, lastDelinC, lastDelinK, indexCalculator );
+	//cout << lastDelinC << ", " << lastDelinK << endl;
+
 	//Compare the uncorrected reco to the truth
 	double lastChiSquared, lastKolmogorov;
 	distributionComparison->CompareDistributions( truthDistribution, reconstructedDistribution, lastChiSquared, lastKolmogorov );
-	cout << "------------- Cross-Check -------------" << endl;
 	cout << "0: " << lastChiSquared << ", " << lastKolmogorov;
 
 	//Iterate, making new distribution from data, old distribution and smearing matrix
@@ -295,6 +301,11 @@ unsigned int BayesianUnfolding::MonteCarloCrossCheck( Distribution * InputPriorD
 		double referenceChi2, referenceKolmogorov;
 		distributionComparison->CompareDistributions( adjustedDistribution, truthDistribution, referenceChi2, referenceKolmogorov );
 
+		//Test
+		//double delinC, delinK;
+		//distributionComparison->DelineariseAndCompare( adjustedDistribution, truthDistribution, delinC, delinK, indexCalculator );
+		//cout << endl << delinC << ", " << delinK << endl;
+
 		//Reset for next iteration
 		if ( iteration != 0 )
 		{
@@ -305,6 +316,7 @@ unsigned int BayesianUnfolding::MonteCarloCrossCheck( Distribution * InputPriorD
 
 		//Check to see if things have got worse
 		if ( referenceChi2 > lastChiSquared || referenceKolmogorov < lastKolmogorov || ( referenceChi2 == lastChiSquared && referenceKolmogorov == lastKolmogorov ) )
+		//if ( delinC > lastDelinC || delinK < lastDelinK || ( delinC == lastDelinC && delinK == lastDelinK ) )
 		{
 			//Return the criteria
 			cout << " <--" << endl << iteration + 1 << ": " << referenceChi2 << ", " << referenceKolmogorov << endl;
@@ -326,6 +338,8 @@ unsigned int BayesianUnfolding::MonteCarloCrossCheck( Distribution * InputPriorD
 			//Update the last values
 			lastChiSquared = referenceChi2;
 			lastKolmogorov = referenceKolmogorov;
+			//lastDelinC = delinC;
+			//lastDelinK = delinK;
 			cout << endl << iteration + 1 << ": " << referenceChi2 << ", " << referenceKolmogorov;
 		}
 	}
