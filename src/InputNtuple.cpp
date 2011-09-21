@@ -97,11 +97,16 @@ InputNtuple::InputNtuple( string FilePath, string NtuplePath, string Description
 	{
 		//Load the row
 		currentRowNumber = rowIndex;
-		wrappedNtuple->GetEvent( rowIndex );
+		//wrappedNtuple->GetEvent( rowIndex );
+		eventNumberBranch->GetEvent( rowIndex );
 
 		//Map the event number
 		eventNumberToRow[ currentEventNumber ] = rowIndex;
 	}
+
+	//Load a valid row
+	currentRowNumber = 0;
+	wrappedNtuple->GetEvent( 0 );
 }
 
 //Destructor
@@ -138,7 +143,18 @@ bool InputNtuple::ReadRow( unsigned long RowIndex, unsigned int FileIndex )
 		{
 			//Load the corresponding row from the file
 			currentRowNumber = RowIndex;
-			wrappedNtuple->GetEvent( RowIndex );
+
+			//Slow
+			//wrappedNtuple->GetEvent( RowIndex );
+
+			//Fast
+			eventNumberBranch->GetEvent( RowIndex );
+			eventWeightBranch->GetEvent( RowIndex );
+			for ( unsigned int branchIndex = 0; branchIndex < branches.size(); branchIndex++ )
+			{
+				branches[ branchIndex ]->GetEvent( RowIndex );
+			}
+
 			return true;
 		}
 	}
@@ -172,7 +188,18 @@ bool InputNtuple::ReadEvent( UInt_t EventNumber, unsigned int FileIndex )
 		{
 			//Load the corresponding row from the file
 			currentRowNumber = eventIterator->second;
-			wrappedNtuple->GetEvent( eventIterator->second );
+
+			//Slow
+			//wrappedNtuple->GetEvent( eventIterator->second );
+
+			//Fast
+			eventNumberBranch->GetEvent( currentRowNumber );
+			eventWeightBranch->GetEvent( currentRowNumber );
+			for ( unsigned int branchIndex = 0; branchIndex < branches.size(); branchIndex++ )
+			{
+				branches[ branchIndex ]->GetEvent( currentRowNumber );
+			}
+
 			return true;
 		}
 	}
@@ -228,7 +255,7 @@ unsigned int InputNtuple::NumberOfFiles()
 }
 unsigned int InputNtuple::CurrentFile()
 {
-        return 0;
+	return 0;
 }
 
 //Get the description of the source

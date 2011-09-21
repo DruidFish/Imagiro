@@ -355,7 +355,6 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 		//Unfold each plot and retrieve the information
 		vector< double > sumCorrectedData, sumSquareCorrectedData, combinedStatisticErrors;
 		vector< vector< double > > allResults;
-		TH1F *combinedCorrectedHistogramWithSystematics, *combinedCorrectedHistogramWithStatistics;
 		allTruthPlots = vector< TH1F* >( allPlots.size(), NULL );
 		bool firstPlot = true;
 		double meanDenominator = 0.0;
@@ -429,9 +428,6 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 				if ( firstPlot )
 				{
 					//Copy the format of the data histograms
-					combinedCorrectedHistogramWithSystematics = new TH1F( *correctedHistogram );
-					combinedCorrectedHistogramWithStatistics = new TH1F( *correctedHistogram );
-
 					string correctedPlotName = "dataCorrected" + plotDescription;
 					correctedData = ( TH1F* )correctedHistogram->Clone( correctedPlotName.c_str() );
 					string statisticalPlotName = "dataStatErrors" + plotDescription;
@@ -482,52 +478,76 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 		Double_t yStatError[ graphSize ];
 		Double_t yBothErrorLow[ graphSize ];
 		Double_t yBothErrorHigh[ graphSize ];
+		bool systematicErrorWarning =  false;
 		for ( int binIndex = 1; binIndex < graphSize - 1; binIndex++ )
 		{
 			//Sort the results in this bin
 			sort( allResults[ binIndex ].begin(), allResults[ binIndex ].end() );
 
 			//Calculate how many results to discard
-			int discardNumber = ceil( allResults[ binIndex ].size() * OUTSIDE_ONE_SIGMA );
+			int discardNumber = floor( allResults[ binIndex ].size() * OUTSIDE_ONE_SIGMA );
 
 			//Pick the upper and lower systematic bounds
 			double sysLow = allResults[ binIndex ][ discardNumber ];
 			double sysHigh = allResults[ binIndex ][ allResults[ binIndex ].size() - discardNumber - 1 ];
 
 			//The x-axis values can just come straight from the histogram class
-			xValues[ binIndex ] = combinedCorrectedHistogramWithStatistics->GetBinCenter( binIndex );
-			xError[ binIndex ] = xValues[ binIndex ] - combinedCorrectedHistogramWithStatistics->GetBinLowEdge( binIndex );
+			xValues[ binIndex ] = correctedData->GetBinCenter( binIndex );
+			xError[ binIndex ] = xValues[ binIndex ] - correctedData->GetBinLowEdge( binIndex );
 
 			//Calculate the mean and standard deviation
 			double mean = sumCorrectedData[ binIndex ] / meanDenominator;
 			double variance = sumSquareCorrectedData[ binIndex ] / meanDenominator;
 			variance -= mean * mean;
+			double sigma = sqrt( variance );
 
 			//Get the y-values by taking the means of the corrected distributions
 			yValues[ binIndex ] = mean;
-			combinedCorrectedHistogramWithStatistics->SetBinContent( binIndex, yValues[ binIndex ] );
+			sysLow = mean - sysLow;
+			sysHigh = sysHigh - mean;
+
+			//Warn if the asymmetric systematic error is dramatically different
+			if ( sigma / sysLow > 2.0 || sigma / sysLow < 0.5 || sigma / sysHigh > 2.0 || sigma / sysHigh < 0.5 )
+			{
+				systematicErrorWarning = true;
+			}
 
 			//Get the mean statistical error
 			double statistic = combinedStatisticErrors[ binIndex ] / meanDenominator;
 			yStatError[ binIndex ] = statistic;
 
 			//Combine the statistical and systematic errors in quadrature
-			yBothErrorLow[ binIndex ] = sqrt( variance + ( statistic * statistic ) );
-			yBothErrorHigh[ binIndex ] = yBothErrorLow[ binIndex ];
+			yBothErrorLow[ binIndex ] = sqrt( ( sysLow * sysLow ) + ( statistic * statistic ) );
+			yBothErrorHigh[ binIndex ] = sqrt( ( sysHigh * sysHigh ) + ( statistic * statistic ) );
 
 			//Store the results
 			correctedData->SetBinContent( binIndex, mean );
 			statisticalErrors->SetBinContent( binIndex, statistic );
 			systematicErrors->SetBinContent( binIndex, sqrt( variance ) );
+		}
 
-			//Debug
-			cout << sysLow << ", " << mean - sqrt( variance ) << endl;
-			cout << sysHigh << ", " << mean + sqrt( variance ) << endl;
+		//Do the error warning
+		if ( systematicErrorWarning )
+		{
+			cout << "WARNING: The asymmetric systematic errors were significantly different to the symmetric systematic error. This is not necessarily a fault, but check you aren't doing anything weird with systematic error propagation." << endl;
 		}
 
 		//Get rid of the overflow bins
-		double lowEdge = combinedCorrectedHistogramWithSystematics->GetBinLowEdge( 1 );
-		double highEdge = combinedCorrectedHistogramWithSystematics->GetBinLowEdge( graphSize - 1 );
+		double lowEdge = correctedData->GetBinLowEdge( 1 );
+		double highEdge = correctedData->GetBinLowEdge( graphSize - 1 );
+		double gap = highEdge - lowEdge;
+		xValues[ 0 ] = lowEdge - gap;
+		xError[ 0 ] = 0.0;
+		yValues[ 0 ] = 0.0;
+		yStatError[ 0 ] = 0.0;
+		yBothErrorLow[ 0 ] = 0.0;
+		yBothErrorHigh[ 0 ] = 0.0;
+		xValues[ graphSize - 1 ] = highEdge + gap;
+		xError[ graphSize - 1 ] = 0.0;
+		yValues[ graphSize - 1 ] = 0.0;
+		yStatError[ graphSize - 1 ] = 0.0;
+		yBothErrorLow[ graphSize - 1 ] = 0.0;
+		yBothErrorHigh[ graphSize - 1 ] = 0.0;
 
 		//Draw the combined error graph - asymmetric errors
 		TGraphAsymmErrors * graphWithSystematics = new TGraphAsymmErrors( graphSize, xValues, yValues, xError, xError, yBothErrorLow, yBothErrorHigh );
@@ -545,7 +565,7 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 		graphWithSystematics->GetYaxis()->SetTitleOffset(0.95);
 		if ( manualLabels )
 		{
-			//Maunally label the y axis
+			//Manually label the y axis
 			graphWithSystematics->GetYaxis()->SetTitle( yAxisLabel.c_str() );
 		}
 		graphWithSystematics->Draw( "A2" );
@@ -646,7 +666,7 @@ void MonteCarloSummaryPlotMaker::Process( int ErrorMode, bool WithSmoothing )
 			TH1F * truthRatioPlot = ( TH1F* )allTruthPlots[ plotIndex ]->Clone( truthRatioPlotName.c_str() );
 
 			//Divide by the data
-			truthRatioPlot->Divide( combinedCorrectedHistogramWithStatistics );
+			truthRatioPlot->Divide( correctedData );
 
 			//Format
 			TGraph * temporaryGraph = new TGraph( truthRatioPlot );

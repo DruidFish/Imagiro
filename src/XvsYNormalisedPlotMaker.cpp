@@ -248,6 +248,12 @@ void XvsYNormalisedPlotMaker::AddSystematic( vector< double > SystematicOffset, 
 		exit(1);
 	}
 
+	//Check for dodgy business
+	if ( ( SystematicWidth[0] != 0.0 && SystematicOffset[0] != 0.0 ) || ( SystematicWidth[1] != 0.0 && SystematicOffset[1] != 0.0 ) )
+	{
+		cout << "WARNING: Doing a systematic width and offset at the same time can bias the final result. Tread carefully!" << endl;
+	}
+
 	//Make the random number generator
 	if ( !systematicRandom && ( SystematicWidth[0] != 0.0 || SystematicWidth[1] != 0.0 ) )
 	{
@@ -558,33 +564,25 @@ void XvsYNormalisedPlotMaker::Correct( unsigned int MostIterations, bool SkipUnf
 		//Free some memory
 		delete yValueSummary;
 
-		//Get the y range to plot
-		//double yMinimum = distributionIndices->GetBinLowEdgesForRoot(1)[0] * scaleFactor;
-		//double yMaximum = distributionIndices->GetBinLowEdgesForRoot(1)[ distributionIndices->GetBinNumber(1) - 2 ] * scaleFactor;
-
 		//Format and save the corrected distribution
 		correctedDistribution = DelinearisedXvsYCorrected;
 		correctedDistribution->SetXTitle( xName.c_str() );
 		correctedDistribution->SetYTitle( yName.c_str() );
-		//correctedDistribution->GetYaxis()->SetRangeUser( yMinimum, yMaximum );
 
 		//Format and save the uncorrected distribution
 		uncorrectedDistribution = DelinearisedXvsYUncorrected;
 		uncorrectedDistribution->SetXTitle( xName.c_str() );
 		uncorrectedDistribution->SetYTitle( yName.c_str() );
-		//uncorrectedDistribution->GetYaxis()->SetRangeUser( yMinimum, yMaximum );
 
 		//Format and save the truth distribution
 		mcTruthDistribution = DelinearisedXvsYTruth;
 		mcTruthDistribution->SetXTitle( xName.c_str() );
 		mcTruthDistribution->SetYTitle( yName.c_str() );
-		//mcTruthDistribution->GetYaxis()->SetRangeUser( yMinimum, yMaximum );
 
 		//Format and save the reco distribution
 		mcRecoDistribution = DelinearisedXvsYReco;
 		mcRecoDistribution->SetXTitle( xName.c_str() );
 		mcRecoDistribution->SetYTitle( yName.c_str() );
-		//mcRecoDistribution->GetYaxis()->SetRangeUser( yMinimum, yMaximum );
 
 		//Format and save the smearing matrix
 		if ( doPlotSmearing )

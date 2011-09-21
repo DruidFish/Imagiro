@@ -132,14 +132,16 @@ InputUETree::InputUETree( string FilePath, string NtuplePath, string Description
 	for ( unsigned long rowIndex = 0; rowIndex < wrappedNtuple->GetEntries(); rowIndex++ )
 	{
 		//Load the row
-		wrappedNtuple->GetEvent( rowIndex );
+		//wrappedNtuple->GetEvent( rowIndex );
+		eventNumberBranch->GetEvent( rowIndex );
 
 		//Perform a cut if required
 		bool storeEvent = true;
 		if ( calculateCut )
 		{
-			double cutValue = GetValue( CutName );
-			storeEvent = ( cutValue >= CutMinimum && cutValue < CutMaximum );
+			valueBranches[ cutColumnIndex ]->GetEvent( rowIndex );
+			double cutValue = currentValues[ cutColumnIndex ];//GetValue( CutName );
+			storeEvent = ( cutValue >= CutMinimum && cutValue <= CutMaximum );
 		}
 
 		//Make maps to the event
@@ -232,7 +234,23 @@ bool InputUETree::ReadRow( unsigned long RowIndex, unsigned int FileIndex )
 		{
 			//Load the corresponding row from the file
 			currentRowNumber = RowIndex;
-			wrappedNtuple->GetEvent( externalRowToInternalRow[ RowIndex ] );
+			unsigned long loadRow = externalRowToInternalRow[ currentRowNumber ];
+
+			//Slow
+			//wrappedNtuple->GetEvent( loadRow );
+
+			//Fast
+			eventNumberBranch->GetEvent( loadRow );
+			eventWeightBranch->GetEvent( loadRow );
+			for ( unsigned int branchIndex = 0; branchIndex < valueBranches.size(); branchIndex++ )
+			{
+				valueBranches[ branchIndex ]->GetEvent( loadRow );
+			}
+			for ( unsigned int branchIndex = 0; branchIndex < vectorBranches.size(); branchIndex++ )
+			{
+				vectorBranches[ branchIndex ]->GetEvent( loadRow );
+			}
+
 			return true;
 		}
 	}
@@ -266,7 +284,23 @@ bool InputUETree::ReadEvent( UInt_t EventNumber, unsigned int FileIndex )
 		{
 			//Load the corresponding row from the file
 			currentRowNumber = eventIterator->second;
-			wrappedNtuple->GetEvent( externalRowToInternalRow[ currentRowNumber ] );
+			unsigned long loadRow = externalRowToInternalRow[ currentRowNumber ];
+
+			//Slow
+			//wrappedNtuple->GetEvent( loadRow );
+
+			//Fast
+			eventNumberBranch->GetEvent( loadRow );
+			eventWeightBranch->GetEvent( loadRow );
+			for ( unsigned int branchIndex = 0; branchIndex < valueBranches.size(); branchIndex++ )
+			{
+				valueBranches[ branchIndex ]->GetEvent( loadRow );
+			}
+			for ( unsigned int branchIndex = 0; branchIndex < vectorBranches.size(); branchIndex++ )
+			{
+				vectorBranches[ branchIndex ]->GetEvent( loadRow );
+			}
+
 			return true;
 		}
 	}

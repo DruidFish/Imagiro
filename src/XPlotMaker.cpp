@@ -96,7 +96,7 @@ XPlotMaker::XPlotMaker( string XVariableName, string PriorName, IIndexCalculator
 	//Set up for systematics
 	systematicOffsets = InputOffsets;
 	systematicWidths = InputWidths;
-	if ( InputOffsets.size() == 0 )
+	if ( systematicWidths.size() == 0 )
 	{
 		systematicRandom = 0;
 	}
@@ -115,7 +115,10 @@ XPlotMaker::XPlotMaker( string XVariableName, string PriorName, IIndexCalculator
 	XUnfolder = MakeCorrector( correctionType );
 
 	//Make the systematic unfolders too
-	systematicUnfolders = vector< ICorrection* >( systematicOffsets.size(), XUnfolder->CloneShareSmearingMatrix() );
+	for ( unsigned int experimentIndex = 0; experimentIndex < systematicWidths.size(); experimentIndex++ )
+	{
+		systematicUnfolders.push_back( XUnfolder->CloneShareSmearingMatrix() );
+	}
 }
 
 //Destructor
@@ -165,6 +168,12 @@ void XPlotMaker::AddSystematic( vector< double > SystematicOffset, vector< doubl
 	{
 		cerr << "ERROR: You need to pick a number of pseudoexperiments to propagate this systematic width" << endl;
 		exit(1);
+	}
+
+	//Check for dodgy business
+	if ( SystematicWidth[0] != 0.0 && SystematicOffset[0] != 0.0 )
+	{
+		cout << "WARNING: Doing a systematic width and offset at the same time can bias the final result. Tread carefully!" << endl;
 	}
 
 	//Make the random number generator
@@ -335,7 +344,9 @@ void XPlotMaker::Correct( unsigned int MostIterations, bool SkipUnfolding, unsig
 			stringstream systematicString;
 			systematicString << thisPlotID << xName << priorName << "Systematic" << experimentIndex;
 
-			systematicResults.push_back( systematicUnfolders[ experimentIndex ]->GetCorrectedHistogram( systematicString.str(), systematicString.str() ) );
+			TH1F * systematicPlot = systematicUnfolders[ experimentIndex ]->GetCorrectedHistogram( systematicString.str(), systematicString.str(), normalise );
+			systematicPlot->Scale( scaleFactor );
+			systematicResults.push_back( systematicPlot );
 		}
 
 		//Retrieve some other bits for debug
