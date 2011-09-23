@@ -16,37 +16,100 @@ Execution
 
 	Just run bin/imagiro. However, Root tends to produce a bunch of annoying and useless error messages, so you are recommended to pipe standard out to a log file and ignore standard error:
 
-	bin/imagiro > log.txt
+bin/imagiro > log.txt
 
-	Anything relevant that turns up in standard error that is worth reading will be followed by Imagiro terminating immediately, so you'll know what's important!
+Anything relevant that turns up in standard error that is worth reading will be followed by Imagiro terminating immediately, so you'll know what's important!
 
-	Also, Imagiro won't just run "out of the box" because...
+Also, Imagiro won't just run "out of the box" because...
 
 ________________________________
 Use
 
-	Imagiro has no user interface at all. Sorry!
-If you try and run the binary straight away (i.e. by just typing bin/imagiro) then chances are it will crash. First you must edit src/main.cpp and src/MonteCarloInformation.cpp to specify the locations of input files.
+	Imagiro has no user interface at all. Sorry! If you try and run the binary straight away (i.e. by just typing bin/imagiro) then chances are it will crash.
+First you must edit src/main.cpp and src/MonteCarloInformation.cpp to specify the locations of input files.
 Imagiro expects 2 input TTrees per MC sample (one for truth, one for reconstructed), each containing branches called "EventNumber" and "EventWeight", and then a branch for each variable to unfold.
-There must also be a similar input file for the data to unfold. The code will look like this:
+There must also be a similar input file for the data to unfold.
 
-InputNtuple * dataNtuple = new InputNtuple( "data/user.bwynne.LeadingJetModifiedv3.Data.CaloJet/mergedFile.root", "benTuple", "7TeVData" );
+________________________________
+Editing MonteCarloInformation.cpp
+
+	There are two ways of specifying a Monte Carlo sample. If there is no need to combine information from multiple files then proceed like this:
+
+combineFiles.push_back( false );
+truthPaths.push_back( "data/user.bwynne.LeadingJetModifiedv3.Pythia6.MC.TruthJet/mergedFile.root" );
+recoPaths.push_back( "data/user.bwynne.LeadingJetModifiedv3.Pythia6.MC.CaloJet/mergedFile.root" );
+descriptions.push_back( "PYTHIA6 ATLAS MC09" );
+colours.push_back( kMagenta );
+styles.push_back( 2 );
+inputTypes.push_back( "InputNtuple" );
+internalTruth.push_back( "benTuple" );
+internalReco.push_back( "benTuple" );
+
+	- truthPaths and recoPaths refer to the file on disk where the data is stored - they can be two separate TTrees in the same file.
+	- internalTruth and internalReco are the paths to the TTrees within the files.
+	- colours and styles refer to how the corresponding lines on the plots should appear.
+	- descriptions holds the name to use for this sample.
+	- inputTypes refers to the format of the TTree: InputNtuple (all branches floats) and InputUETree (all branches doubles, event number as unsigned int) are supported.
+
+If you want to combine multiple files into a single sample then you can use this method:
+
+
+truthPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version7/J0_AMBT1/combined.Truth.AntiKt4TopoEM.root" );
+vector< string > pythiaExtraTruth;
+pythiaExtraTruth.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version7/J1_AMBT1/combined.Truth.AntiKt4TopoEM.root" );
+pythiaExtraTruth.push_back( etc...
+extraTruthPaths.push_back( pythiaExtraTruth );
+
+recoPaths.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version7/J0_AMBT1/combined.TriggerName.AntiKt4TopoEM.root" );
+vector< string > pythiaExtraReco;
+pythiaExtraReco.push_back( "/Disk/speyside7/Grid/grid-files/bwynne/Version7/J1_AMBT1/combined.TriggerName.AntiKt4TopoEM.root" );
+pythiaExtraReco.push_back( etc...
+extraRecoPaths.push_back( pythiaExtraReco );
+
+vector< double > pythiaWeights;
+pythiaWeights.push_back( 9.8608E+06 / 199973.0 );
+pythiaWeights.push_back( 6.7818E+05 / 199968.0 );
+pythiaWeights.push_back( etc...
+inputWeights.push_back( pythiaWeights );
+
+descriptions.push_back( "PYTHIA6 ATLAS MC09" );
+colours.push_back( kMagenta );
+styles.push_back( 2 );
+inputTypes.push_back( "InputNtuple" );
+internalTruth.push_back( "benTuple" );
+internalReco.push_back( "benTuple" );
+
+The extra file paths are stored as vectors in extraTruthPaths and extraRecoPaths. You must also specify the relative weights for each file, even if you just want to use 1.0.
+
+________________________________
+Editing main.cpp
+
+The code in src/main.cpp for loading the data file will look like this:
+
+InputNtuple * dataNtuple = new InputNtuple( "data/user.bwynne.LeadingJetModifiedv3.Data.CaloJet/mergedFile.root", "benTuple", "7 TeV Data" );
 
 	- The first argument is the path to the input file
 	- The second argument is the location of the TTree within the file
 	- The third argument should describe the input (for setting titles on plots, and debug messages)
 
+You can use InputUETree or CombinedFileInput here instead, as mentioned above for MonteCarloInformation.
+
 Also in src/main.cpp you must specify the plots you wish to make. The code will look like this:
 
-XvsYNormalisedPlotMaker * pTvsNChargedTowardPlot = new XvsYNormalisedPlotMaker( "MaxJetPt", "NChargeToward", "Pythia6", jetPtBins, jetPtMin, jetPtMax, nChargeBins, nChargeMin, nChargeMax, scaleFactor );
+XvsYNormalisedPlotMaker * pTvsNChargedTowardPlot = new XvsYNormalisedPlotMaker( "MaxJetPt", "NChargeToward", "Pythia6", jetPtBins, jetPtMin, jetPtMax, nChargeBins, nChargeMin, nChargeMax, PLOT_MODE, scaleFactor );
 
-	- The first two arguments are the names of the variables to unfold
-	- The third argument describes the MC model - essentially just a dummy as the MonteCarloSummaryPlotMaker will repeat for all MC samples
-	- The fourth-ninth arguments describe the binning of each variable
-	- The tenth argument can be a number to scale the y-variable by (eg the detector acceptance)
+or
 
-The available plot types are XPlotmaker, XvsYNormalisedPlotMaker, XFolding and XvsYNormalisedFolding. These are for unfolding or folding (i.e. applying a smearing matrix to) 1D or 2D distributions.
-A 1D plot maker will have arguments like this:
+XvsYNormalisedPlotMaker * pTvsNChargedTowardPlot = new XvsYNormalisedPlotMaker( "MaxJetPt", "NChargeToward", "Pythia6", jetPtBinEdges, nChargeBinEdges, PLOT_MODE, scaleFactor );
+
+	- "MaxJetPt" and "NChargeToward" are the names of the variables to unfold.
+	- "Pythia6" describes the MC model - essentially just a dummy as the MonteCarloSummaryPlotMaker will repeat for all MC samples.
+	- PLOT_MODE is the operation that Imagiro should perform: -1 for Folding, 0 for No Correction, 1 for Bin-by-bin Unfolding and 2 for Bayesian Unfolding.
+	- scaleFactor is an optional value to multiply each bin value by.
+	- The other arguments describe the binning of the plots, either with lists of bin low edges (jetPtBinEdges, nChargeBinEdges)
+		or with numbers of bins and their maximum and minimum values (jetPtBins, jetPtMin, jetPtMax, nChargeBins, nChargeMin, nChargeMax).
+
+The available plot types are XPlotmaker and XvsYNormalisedPlotMaker. These are for 1D or 2D distributions. In comparison to the 2D example above, the 1D plot maker will have arguments like this:
 
 XPlotMaker * pTPlot = new XPlotMaker( "MaxJetPt", "Pythia6", jetPtBins, jetPtMin, jetPtMax, 1.0, true );
 
@@ -54,9 +117,9 @@ Note the last argument is a bool specifying whether the plot should be normalise
 
 Having set up a plot for one MC model, feed this to a MonteCarloSummaryPlotMaker and it will repeat the process for all the other MC samples:
 
-MonteCarloSummaryPlotMaker * pTvsNChargedTowardSummary = new MonteCarloSummaryPlotMaker( pTvsNChargedTowardPlot, mcInfo, true );
+MonteCarloSummaryPlotMaker * pTvsNChargedTowardSummary = new MonteCarloSummaryPlotMaker( pTvsNChargedTowardPlot, mcInfo, COMBINE_MC );
 
-	- The first argument is the plot you specified above
+	- The first argument is the plot you created earlier and want to duplicate
 	- The second argument is the object that holds all the locations of all the MC inputs
 	- The third argument sets whether all MC information should be combined into one smearing matrix, or if a separate matrix should be used for each sample ("true" to combine the MC is recommended).
 
@@ -71,21 +134,19 @@ Once you've set up the plot the way you want it, you must add it to the "allPlot
 
 allPlotMakers.push_back( pTvsNChargedTowardSummary );
 
-Make all these changes, compile, and run. With any luck, you will eventually get a file called "UnfoldedFinal.root" containing the plots you wanted.
+Make all these changes, compile, and run. With any luck, you will eventually get a file called "UnfoldedFinal.Data.root" containing the plots you wanted.
 
 ________________________________
 Tests
 
-	Binning the variable on the y-axis of a plot can potentially introduce errors. The 2D unfolded distributions compare the MC truth distributions (which are not affected by unfolding) with the corresponding
+	The number of iterations for unfolding is chosen by unfolding each MC sample with each other one as a prior, and chosing the average number of iterations that best reproduces the truth.
+This is only relevant for Bayesian Unfolding mode: none of the other processes are iterative.
+
+Binning the variable on the y-axis of a plot can potentially introduce errors. The 2D unfolded distributions compare the MC truth distributions (which are not affected by unfolding) with the corresponding
 truth distribution without the y-axis binning. The error arising will be quoted like this:
 
 Average bin error from delinearisation: 0%
 
-	Unfolding a reconstructed MC sample should exactly reproduce the corresponding truth distribution. This is checked for each unfolding, and the results are quoted like this:
+Unfolding a reconstructed MC sample with its own truth as a prior should reproduce the truth distribution. This is checked for each unfolding, and the results are quoted like this:
 
 Closure test passed: chi squared = 0.818614 and K-S probability = 0.998914
-
-	The unfolding iterations cease when the results of two iterations are sufficiently similar, or if the maximum allowed number of iterations is reached. Results are quoted like this,
-although it is not necessarily a problem if it does not converge:
-
-Converged: KS 0.98612 > 0.902129
