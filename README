@@ -3,6 +3,7 @@ Imagiro is an attempt to make Bayesian Iterative unfolding easier
 	- Lots of built in tests to try and avoid any serious pitfalls
 	- Results straight onto plots, with statistical and systematic errors
 	- Designed to work with many different MC samples at once
+	- Unfolding for correlated variables
 
 ________________________________
 Installation
@@ -11,9 +12,21 @@ Installation
 The Makefile should work with most destop Linux (including SLC5) and Mac OSX. The binary will be produced in the bin directory.
 
 ________________________________
+Execution
+
+	Just run bin/imagiro. However, Root tends to produce a bunch of annoying and useless error messages, so you are recommended to pipe standard out to a log file and ignore standard error:
+
+	bin/imagiro > log.txt
+
+	Anything relevant that turns up in standard error that is worth reading will be followed by Imagiro terminating immediately, so you'll know what's important!
+
+	Also, Imagiro won't just run "out of the box" because...
+
+________________________________
 Use
 
-	If you try and run the binary straight away (i.e. by just typing bin/imagiro) then chances are it will crash. First you must edit src/main.cpp and src/MonteCarloInformation.cpp to specify the locations of input files.
+	Imagiro has no user interface at all. Sorry!
+If you try and run the binary straight away (i.e. by just typing bin/imagiro) then chances are it will crash. First you must edit src/main.cpp and src/MonteCarloInformation.cpp to specify the locations of input files.
 Imagiro expects 2 input TTrees per MC sample (one for truth, one for reconstructed), each containing branches called "EventNumber" and "EventWeight", and then a branch for each variable to unfold.
 There must also be a similar input file for the data to unfold. The code will look like this:
 
